@@ -1,0 +1,6 @@
+{
+  "appId": "fr.jtortarolo.fichesjdr",
+  "appName": "Fiches JDR",
+  "webDir": "www",
+  "android": { "backgroundColor": "#1b1c1f" }
+}

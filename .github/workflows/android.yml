@@ -1,0 +1,55 @@
+name: Construire l'APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Construire l'appli web
+        run: npm run build
+
+      - name: Copier dans le projet Android
+        run: npx cap sync android
+
+      - name: Construire l'APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Renommer l'APK
+        run: cp android/app/build/outputs/apk/release/app-release.apk fiches-jdr.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fiches-jdr-apk
+          path: fiches-jdr.apk
+
+      - name: Publier la version
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Fiches JDR v1.${{ github.run_number }}
+          body: "Télécharge **fiches-jdr.apk** ci-dessous et installe-le sur ton téléphone Android."
+          files: fiches-jdr.apk
+          make_latest: true

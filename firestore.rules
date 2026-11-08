@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Membre du groupe = a un profil dans /users (créé avec le bon code)
+    function membre() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    // Le code du groupe : invisible depuis l'appli
+    match /config/{docId} {
+      allow read, write: if false;
+    }
+
+    // Profils des joueurs
+    match /users/{uid} {
+      allow read: if request.auth != null && (request.auth.uid == uid || membre());
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.code == get(/databases/$(database)/documents/config/acces).data.code;
+      allow update, delete: if false;
+    }
+
+    // Fiches : chacun ne modifie que les siennes (ou une fiche sans propriétaire)
+    match /persos/{id} {
+      allow read, create: if membre();
+      allow update, delete: if membre()
+        && (resource.data.ownerId == "" || resource.data.ownerId == request.auth.uid);
+    }
+
+    // Données communes du groupe
+    match /{col}/{id} {
+      allow read, write: if membre()
+        && col in ['biblio', 'sessions', 'courses', 'commun', 'groupe'];
+    }
+  }
+}
