@@ -1,9 +1,9 @@
 
 import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from "firebase/auth";
-import { initializeFirestore, persistentLocalCache, doc, collection, onSnapshot, setDoc, updateDoc, deleteDoc, getDoc, FieldPath, writeBatch } from "firebase/firestore";
+import { initializeFirestore, persistentLocalCache, doc, collection, onSnapshot, setDoc, updateDoc, deleteDoc, getDoc, FieldPath, writeBatch, deleteField } from "firebase/firestore";
 import { firebaseConfig } from "./firebase-config.js";
-const fs={doc,collection,onSnapshot,setDoc,updateDoc,deleteDoc,getDoc,FieldPath,writeBatch};
+const fs={doc,collection,onSnapshot,setDoc,updateDoc,deleteDoc,getDoc,FieldPath,writeBatch,deleteField};
 (function(){
 "use strict";
 // ---------- Règles ----------
@@ -19,7 +19,7 @@ const ECOLES=["Abjuration","Divination","Enchantement","Évocation","Illusion","
 const RARETES=["Commun","Peu commun","Rare","Très rare","Légendaire","Artefact"];
 const COLORS=["#7bd88f","#6cb6ff","#b48cff","#f0a35e","#e5645c","#f2d16b","#5fd3c8","#e88ad0","#c0c0c0"];
 const TABS=[["id","Identité","🪪"],["car","Caracs","🎲"],["comp","Compét.","📜"],["combat","Combat","⚔️"],["sorts","Sorts","✨"],["inv","Inventaire","🎒"],["dons","Dons","⭐"],["perso","Perso","🧩"],["notes","Notes","📝"]];
-const HTABS=[["persos","Persos","🧙"],["mj","Vue MJ","👁️"],["biblio","Biblio","📚"],["commun","Commun","💰"],["planning","Planning","📅"],["journal","Journal","📖"]];
+const HTABS=[["persos","Persos","🧙"],["combat","Combat","⚔️"],["mj","Vue MJ","👁️"],["biblio","Biblio","📚"],["commun","Commun","💰"],["planning","Planning","📅"],["journal","Journal","📖"]];
 const DISPO=["","oui","peut","non"];const DLAB={"":"?","oui":"Oui","peut":"Peut-être","non":"Non"};
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -49,7 +49,7 @@ const classLine=c=>c.classes.filter(x=>x.nom).map(x=>x.nom+" "+x.niv).join(" / "
 // ---------- Stockage partagé (Firebase) ----------
 const COLS=["persos","biblio","sessions","courses","commun"];
 const S={};COLS.forEach(c=>S[c]=new Map());
-const GDEF=()=>({journal:{texte:""},commun:{monnaie:{pp:0,po:0,pe:0,pa:0,pc:0}},planning:{joueurs:[]}});
+const GDEF=()=>({journal:{texte:""},commun:{monnaie:{pp:0,po:0,pe:0,pa:0,pc:0}},planning:{joueurs:[]},combat:{actif:false,round:1,tour:"",lignes:{}}});
 let G=GDEF();
 let remote=null,myId=null,me=null,readOnly=false,saveStatus="Connexion…";
 const USERS=new Map();
@@ -94,8 +94,8 @@ function subscribe(){
       if(ch){lsSave();softRender()}
     },()=>setStatus("Hors ligne, enregistré sur l'appareil"));
   });
-  ["journal","commun","planning"].forEach(k=>{
-    fs.onSnapshot(ref("groupe",k),snap=>{if(busyKey(keyOf("groupe",k)))return;if(snap.exists()){G[k]=Object.assign(GDEF()[k],clone(snap.data()));lsSave();softRender()}},()=>{});
+  ["journal","commun","planning","combat"].forEach(k=>{
+    fs.onSnapshot(ref("groupe",k),snap=>{if(k!=="combat"&&busyKey(keyOf("groupe",k)))return;if(snap.exists()){G[k]=Object.assign(GDEF()[k],clone(snap.data()));lsSave();softRender()}},()=>{});
   });
   fs.onSnapshot(fs.collection(db,"users"),snap=>{snap.docs.forEach(d=>USERS.set(d.id,d.data().nom||""));softRender()},()=>{});
 }
@@ -140,11 +140,11 @@ function render(){
       '<div class="wrap">'+roBanner()+(!readOnly&&!canEdit(c)?'<div class="ro">🔒 Fiche d\'un autre joueur : lecture seule.</div>':'')+(!readOnly&&!c.ownerId&&myId?'<div class="ro" style="border-color:var(--acc);color:var(--acc);background:#1f3326">Cette fiche n\'a pas encore de propriétaire. <button class="btn sm" data-act="mine" style="margin-left:6px">C\'est mon perso</button></div>':'')+'<div id="pane">'+pane(c)+'</div></div>'+
       '<nav class="tabs"><div class="in">'+TABS.map(t=>'<button data-tab="'+t[0]+'" class="'+(state.tab===t[0]?"on":"")+'"><b>'+t[2]+'</b>'+t[1]+'</button>').join("")+'</div></nav>';
     derive();lockRO();return}
-  const title={persos:"⚔️ Fiches JDR",mj:"👁️ Vue MJ",biblio:"📚 Bibliothèque",commun:"💰 Inventaire commun",planning:"📅 Planning",journal:"📖 Journal"}[state.home];
+  const title={persos:"⚔️ Fiches JDR",combat:"⚔️ Combat",mj:"👁️ Vue MJ",biblio:"📚 Bibliothèque",commun:"💰 Inventaire commun",planning:"📅 Planning",journal:"📖 Journal"}[state.home];
   app.innerHTML='<div class="top"><div class="wrap"><h1>'+title+'</h1><span class="status" id="st">'+esc(saveStatus)+'</span>'+(state.home==="persos"?'<button class="ico" data-act="io" title="Importer / exporter">⇅</button><button class="ico" data-act="logout" title="Se déconnecter">⎋</button>':'')+'</div></div>'+
     '<div class="wrap">'+roBanner()+'<div id="hpane">'+homePane()+'</div></div>'+
     '<nav class="tabs"><div class="in">'+HTABS.map(t=>'<button data-htab="'+t[0]+'" class="'+(state.home===t[0]?"on":"")+'"><b>'+t[2]+'</b>'+t[1]+'</button>').join("")+'</div></nav>';
-  lockRO();
+  lockRO();if(state.home==="combat")derive();
 }
 function lockRO(){if(state.view==="sheet"&&!canEdit(cur())){app.querySelectorAll("#pane input,#pane select,#pane textarea,#pane button:not([data-tab])").forEach(e=>e.disabled=true);return}if(!readOnly)return;app.querySelectorAll("#pane input,#pane select,#pane textarea,#hpane input,#hpane select,#hpane textarea").forEach(e=>{if(e.id!=="bibq"&&e.id!=="bibniv")e.disabled=true})}
 
@@ -153,6 +153,7 @@ function nextAllDate(){const pl=G.planning.joueurs.filter(Boolean);if(!pl.length
 
 function homePane(){
   switch(state.home){
+  case "combat":return combatPane();
   case "persos":{const all=persos();const list=all.filter(c=>state.persoFilter==="tous"?true:state.persoFilter==="retires"?c.retire:!c.retire);
     const mine=list.filter(c=>myId&&c.ownerId===myId),others=list.filter(c=>!(myId&&c.ownerId===myId));
     const nx=nextAllDate();
@@ -265,7 +266,7 @@ function pane(c){
 
   case "sorts": return '<div class="card"><h3>Incantation</h3><label class="f">Caractéristique d\'incantation</label><select data-k="sortCar">'+ABS.map(([k,n])=>'<option value="'+k+'" '+(c.sortCar===k?"selected":"")+'>'+n+'</option>').join("")+'</select>'+
     '<div class="big" style="margin-top:10px;grid-template-columns:1fr 1fr"><div><div class="small mute">DD des sorts</div><div class="v" data-d="dd"></div></div><div><div class="small mute">Attaque de sort</div><div class="v" data-d="satk"></div></div></div></div>'+
-    '<div class="card"><h3>Emplacements de sorts</h3><div class="hint" style="margin:-4px 0 6px">Indique le max, puis touche les ronds pour marquer ceux utilisés.</div>'+
+    '<div class="card"><h3>Emplacements de sorts</h3>'+((calcSlots(c).slots.length||calcSlots(c).pacte)?'<button class="btn sm" data-act="slotcalc" style="margin-bottom:8px">✨ Calculer selon les règles D&D</button>':'')+'<div class="hint" style="margin:-4px 0 6px">Indique le max, puis touche les ronds pour marquer ceux utilisés.</div>'+
     c.slots.map((s,i)=>'<div class="slot"><b>Niv '+(i+1)+'</b><input type="number" min="0" max="9" data-k="slots.'+i+'.max" data-t="n" data-rr value="'+s.max+'"><div class="pips">'+Array.from({length:num(s.max)},(_,j)=>'<button class="pip vio '+(s.used>j?"on":"")+'" data-slot="'+i+'" data-v="'+(j+1)+'"></button>').join("")+'</div></div>').join("")+
     '<h3 style="margin-top:14px">Emplacements de pacte (occultiste)</h3><div class="grid g2">'+F("Niveau des emplacements","pacte.niv",c,"number",'data-t="n"')+F("Nombre","pacte.max",c,"number",'data-t="n" data-rr')+'</div>'+
     '<div class="pips" style="margin-top:8px">'+Array.from({length:num(c.pacte.max)},(_,j)=>'<button class="pip vio '+(c.pacte.used>j?"on":"")+'" data-pacte="'+(j+1)+'"></button>').join("")+'</div>'+
@@ -338,7 +339,7 @@ function derive(){
 }
 
 // ---------- Événements ----------
-function rerenderPane(){const y=window.scrollY;if(state.view==="sheet"){const c=cur();const p=document.getElementById("pane");if(!p||!c)return;p.innerHTML=pane(c);derive()}else{const p=document.getElementById("hpane");if(p)p.innerHTML=homePane()}lockRO();window.scrollTo(0,y)}
+function rerenderPane(){const y=window.scrollY;if(state.view==="sheet"){const c=cur();const p=document.getElementById("pane");if(!p||!c)return;p.innerHTML=pane(c);derive()}else{const p=document.getElementById("hpane");if(p)p.innerHTML=homePane();if(state.home==="combat")derive()}lockRO();window.scrollTo(0,y)}
 function schedule(c){save("persos",c.id)}
 function applyHP(c,v,heal){
   if(!heal){let r=v;const t=num(c.pv.temp);if(t){const u=Math.min(t,r);c.pv.temp=t-u;r-=u}const b=c.pv.act;c.pv.act=Math.max(0,c.pv.act-r);if(b>0&&c.pv.act===0){c.tombe0++;toast(c.nom+" tombe à 0 PV !")}}
@@ -350,6 +351,8 @@ app.addEventListener("input",e=>{
   if(el.id==="bibq"){state.bibQ=el.value;clearTimeout(rerenderPane.q);rerenderPane.q=setTimeout(()=>{rerenderPane();const i=document.getElementById("bibq");if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}},250);return}
   if(el.id==="bibniv"){state.bibNiv=el.value;rerenderPane();return}
   if(readOnly)return;
+  if(el.dataset.cinit||el.dataset.cpv||el.dataset.cpvmax){const id=el.dataset.cinit||el.dataset.cpv||el.dataset.cpvmax;const f=el.dataset.cinit?"init":el.dataset.cpv?"pv":"pvmax";const l=(G.combat.lignes||{})[id];if(!l)return;
+    const v=el.value===""&&f==="init"?"":num(el.value);l[f]=v;clearTimeout(cbTimers[id+f]);cbTimers[id+f]=setTimeout(()=>cbUpdate({["lignes."+id+"."+f]:v}),600);return}
   if(el.dataset.gk){const [col,id,path]=el.dataset.gk.split("|");const o=getObj(col,id);if(!o)return;let v=el.type==="checkbox"?el.checked:el.value;if(el.dataset.t==="n")v=num(v);setP(o,path,v);save(col,id);
     if(el.dataset.rr!==undefined&&el.type==="checkbox")rerenderPane();return}
   const k=el.dataset.k;if(!k)return;const c=cur();if(!c||!canEdit(c))return;
@@ -377,7 +380,7 @@ app.addEventListener("click",e=>{
   if(d.dispo){const s=S.sessions.get(d.dispo);if(!s)return;s.dispo=s.dispo||{};const nv=DISPO[(DISPO.indexOf(s.dispo[d.p]||"")+1)%DISPO.length];s.dispo[d.p]=nv;upd("sessions",s.id,"dispo",d.p,nv);rerenderPane();return}
   if(d.delc){const [col,id]=d.delc.split("|");del(col,id);rerenderPane();return}
   if(d.rmj!==undefined){G.planning.joueurs.splice(num(d.rmj),1);save("groupe","planning",true);rerenderPane();return}
-  if(!c||state.view!=="sheet"||!canEdit(c))return;
+  if(!c||!(state.view==="sheet"||state.home==="combat")||!canEdit(c))return;
   if(d.color){c.couleur=d.color;schedule(c);render();return}
   if(d.inc){let v=num(getP(c,d.inc))+num(d.v);if(d.min!==undefined)v=Math.max(num(d.min),v);setP(c,d.inc,v);schedule(c);
     const inp=b.parentElement.querySelector('input[data-k="'+d.inc+'"]');if(inp)inp.value=v;derive();if(d.inc.startsWith("custom."))rerenderPane();return}
@@ -397,8 +400,10 @@ function act(a,c,d){
   if(a==="io")return ioModal();
   if(a==="logout"){signOut(window.__auth).then(()=>location.reload());return}
   if(a==="seed"){act.seeding||(act.seeding=1,importSeed());return}
+  if(a==="eco"||a==="ecoreset"||a==="sexp"||a==="cbperso"){combatAct(a,d);return}
   if(a==="togpast"){state.showPast=!state.showPast;rerenderPane();return}
   if(readOnly)return;
+  if(combatAct(a,d))return;
   if(a==="new"){const n=blank();S.persos.set(n.id,n);save("persos",n.id,true);state.cur=n.id;state.view="sheet";state.tab="id";render();return}
   if(a==="newbib")return bibModal(null);
   if(a==="addcommun"){const id=uid();S.commun.set(id,{id,nom:"",qty:1,note:"",porteur:""});save("commun",id,true);rerenderPane();return}
@@ -410,6 +415,8 @@ function act(a,c,d){
   if(!c)return;
   if(a==="mine"){if(c.ownerId&&c.ownerId!==myId)return;c.ownerId=myId||"";schedule(c);render();toast("C'est maintenant ton perso");return}
   if(!canEdit(c))return;
+  if(a==="cast"){castSpell(c,+d.i);return}
+  if(a==="slotcalc"){const r=calcSlots(c);return confirmBox("Mettre tes emplacements selon les règles D&D ? "+slotText(r)+".",()=>{applySlots(c);state.showCalc=false;schedule(c);rerenderPane();toast("Emplacements mis à jour")},"Appliquer")}
   if(a==="release"){c.ownerId="";schedule(c);render();toast("Fiche libérée");return}
   if(a==="pickbib")return pickBib(c,d.bt);
   if(a==="del")return confirmBox("Supprimer « "+c.nom+" » pour tout le groupe ? Action définitive. Tu peux aussi le marquer comme retiré.",()=>{del("persos",c.id);state.view="home";render();toast("Personnage supprimé")});
@@ -468,6 +475,119 @@ function ioModal(){
   const im=m.querySelector("[data-im]");if(im)im.onclick=()=>{try{let d=JSON.parse(m.querySelector("#imp").value);if(!Array.isArray(d))d=[d];let n=0;
     d.forEach(x=>{if(x&&typeof x==="object"&&x.car&&x.id){const c=normPerso(clone(x));S.persos.set(c.id,c);save("persos",c.id,true);n++}});
     m.remove();render();toast(n+" fiche(s) importée(s)")}catch(e){toast("Texte invalide")}};
+}
+
+// ---------- Combat ----------
+const FULLC=["Barde","Clerc","Druide","Ensorceleur","Magicien"],HALFC=["Paladin","Rôdeur"];
+const SLOTTBL={1:[2],2:[3],3:[4,2],4:[4,3],5:[4,3,2],6:[4,3,3],7:[4,3,3,1],8:[4,3,3,2],9:[4,3,3,3,1],10:[4,3,3,3,2],11:[4,3,3,3,2,1],12:[4,3,3,3,2,1],13:[4,3,3,3,2,1,1],14:[4,3,3,3,2,1,1],15:[4,3,3,3,2,1,1,1],16:[4,3,3,3,2,1,1,1],17:[4,3,3,3,2,1,1,1,1],18:[4,3,3,3,3,1,1,1,1],19:[4,3,3,3,3,2,1,1,1],20:[4,3,3,3,3,2,2,1,1]};
+const PACTN=[0,1,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,4,4,4,4],PACTL=[0,1,1,2,2,3,3,4,4,5,5,5,5,5,5,5,5,5,5,5,5];
+// Emplacements selon les règles D&D 5e (multiclasse comprise)
+function calcSlots(c){
+  const cls=c.classes.filter(x=>x.nom);
+  const third=x=>["Guerrier","Roublard"].includes(x.nom)&&/occulte|arcanique|eldritch|trickster/i.test(x.sous||"");
+  const casters=cls.filter(x=>FULLC.includes(x.nom)||HALFC.includes(x.nom)||x.nom==="Artificier"||third(x));
+  const multi=casters.length>1;let lvl=0;
+  casters.forEach(x=>{const n=num(x.niv);
+    if(FULLC.includes(x.nom))lvl+=n;
+    else if(x.nom==="Artificier")lvl+=Math.ceil(n/2);
+    else if(HALFC.includes(x.nom))lvl+=multi?Math.floor(n/2):(n>=2?Math.ceil(n/2):0);
+    else lvl+=multi?Math.floor(n/3):(n>=3?Math.ceil(n/3):0)});
+  const slots=SLOTTBL[Math.min(20,lvl)]||[];
+  const w=cls.find(x=>x.nom==="Occultiste");let pacte=null;
+  if(w){const n=clamp(num(w.niv),0,20);pacte={niv:PACTL[n],max:PACTN[n]}}
+  return {slots,pacte,lvl};
+}
+function slotText(r){const p=[];if(r.slots.length)p.push(r.slots.map((n,i)=>n+" × niv "+(i+1)).join(", "));if(r.pacte)p.push("pacte : "+r.pacte.max+" × niv "+r.pacte.niv);return p.join(" ; ")||"aucun emplacement (classe sans sorts)"}
+function applySlots(c){const r=calcSlots(c);c.slots=c.slots.map((s,i)=>{const m=r.slots[i]||0;return{max:m,used:Math.min(num(s.used),m)}});if(r.pacte)c.pacte={niv:r.pacte.niv,max:r.pacte.max,used:Math.min(num(c.pacte.used),r.pacte.max)};return r}
+
+const ECO=[["action","Action"],["bonus","Action bonus"],["reac","Réaction"],["mouv","Mouvement"]];
+state.eco={};state.sopen={};let lastTour=null;
+function lignesTriees(cb){return Object.entries(cb.lignes||{}).map(([id,l])=>Object.assign({id},l)).sort((a,b)=>{const ai=a.init===""||a.init==null?-999:num(a.init),bi=b.init===""||b.init==null?-999:num(b.init);return bi-ai||String(a.nom).localeCompare(b.nom)})}
+function cbUpdate(fields){const k="groupe/combat";lsSave();if(!remote)return;enqueue(k,()=>fs.updateDoc(ref("groupe","combat"),fields))}
+const cbTimers={};
+function combatPane(){
+  const cb=G.combat||GDEF().combat;
+  const mine=persos().filter(c=>c.ownerId===myId&&!c.retire);
+  if(!state.cbPerso||!S.persos.get(state.cbPerso)||S.persos.get(state.cbPerso).ownerId!==myId)state.cbPerso=(mine[0]||{}).id||"";
+  let h="";
+  if(!cb.actif){
+    h+='<div class="card"><h3>Combat</h3><p class="small mute" style="margin-top:0">Lance un combat pour suivre l\'initiative de tout le groupe en direct. Chaque joueur entre son initiative (ou lance le dé), le MJ ajoute les monstres.</p>'+(readOnly?'':'<button class="btn pri" data-act="cbstart" style="width:100%;padding:12px">⚔️ Lancer un combat</button>')+'</div>';
+  }else{
+    const L=lignesTriees(cb);
+    h+='<div class="card"><div class="row"><h3 style="flex:1;margin:0">Round '+num(cb.round||1)+'</h3><button class="btn sm" data-act="cbend">Terminer le combat</button></div><div class="ini">'+
+      L.map(l=>{const on=l.id===cb.tour;const p=l.persoId&&S.persos.get(l.persoId);const ed=!readOnly&&(!l.persoId||canEdit(p));
+        return '<div class="inil'+(on?' on':'')+'"><span class="arrow">'+(on?'▶':'')+'</span>'+(p?avatar(p,30):'<div class="av" style="width:30px;height:30px;font-size:14px">👹</div>')+
+        '<div class="grow"><b>'+esc(l.nom||"?")+'</b>'+(p?'<div class="small mute">PV '+p.pv.act+'/'+p.pv.max+' · CA '+p.ca+(p.etats.length?' · <span style="color:var(--warn)">'+esc(p.etats.join(", "))+'</span>':'')+'</div>':
+          '<div class="small mute row" style="gap:4px">PV <input class="mini-in" type="number" data-cpv="'+l.id+'" value="'+num(l.pv)+'"> / <input class="mini-in" type="number" data-cpvmax="'+l.id+'" value="'+num(l.pvmax)+'"></div>')+'</div>'+
+        '<input class="ini-in" type="number" inputmode="numeric" placeholder="Init" data-cinit="'+l.id+'" value="'+(l.init===""||l.init==null?"":l.init)+'" '+(ed?"":"disabled")+'>'+
+        (p&&ed?'<button class="ico" data-act="cbroll" data-line="'+l.id+'" title="Lancer 1d20 + initiative">🎲</button>':'')+
+        (!l.persoId&&!readOnly?'<button class="del" data-act="cbdel" data-line="'+l.id+'">✕</button>':'')+'</div>'}).join("")+'</div>'+
+      (readOnly?'':'<div class="row" style="margin-top:10px"><button class="btn" data-act="cbaddpnj" style="flex:1">+ Monstre / PNJ</button><button class="btn pri" data-act="cbnext" style="flex:1">Tour suivant ▶</button></div>')+'</div>';
+    // Remise à zéro des actions quand c'est mon tour
+    const tl=(cb.lignes||{})[cb.tour];
+    if(cb.tour!==lastTour){if(tl&&tl.persoId===state.cbPerso)state.eco={};lastTour=cb.tour}
+  }
+  if(!mine.length)h+='<div class="card"><p class="small mute" style="margin:0">Ouvre ta fiche et touche « C\'est mon perso » pour avoir ton panneau de combat ici.</p></div>';
+  else{const c=S.persos.get(state.cbPerso);state.cur=c.id;
+    if(mine.length>1)h+='<div class="seg">'+mine.map(m=>'<button data-act="cbperso" data-id="'+m.id+'" class="'+(m.id===c.id?"on":"")+'">'+esc(m.nom)+'</button>').join("")+'</div>';
+    h+=combatSheet(c)}
+  return h;
+}
+function combatSheet(c){
+  const r=calcSlots(c);const noSlots=!c.slots.some(s=>num(s.max))&&!num(c.pacte.max);const canCalc=r.slots.length||r.pacte;
+  const slotRows=c.slots.map((s,i)=>num(s.max)?'<div class="slot"><b>Niv '+(i+1)+'</b><span class="small mute">'+Math.max(0,num(s.max)-num(s.used))+' / '+num(s.max)+'</span><div class="pips">'+Array.from({length:num(s.max)},(_,j)=>'<button class="pip vio '+(s.used>j?"on":"")+'" data-slot="'+i+'" data-v="'+(j+1)+'"></button>').join("")+'</div></div>':'').join("")+
+    (num(c.pacte.max)?'<div class="slot"><b>Pacte</b><span class="small mute">niv '+num(c.pacte.niv)+' · '+Math.max(0,num(c.pacte.max)-num(c.pacte.used))+' / '+num(c.pacte.max)+'</span><div class="pips">'+Array.from({length:num(c.pacte.max)},(_,j)=>'<button class="pip vio '+(c.pacte.used>j?"on":"")+'" data-pacte="'+(j+1)+'"></button>').join("")+'</div></div>':'');
+  const lv={};c.sorts.forEach((s,i)=>{(lv[num(s.niv)]=lv[num(s.niv)]||[]).push([s,i])});
+  const sortsHtml=Object.keys(lv).sort((a,b)=>a-b).map(n=>'<div class="catt">'+(+n?"Niveau "+n:"Tours de magie")+'</div>'+lv[n].map(([s,i])=>
+    '<div class="sp"><div class="row"><button class="lnk3" data-act="sexp" data-i="'+i+'">'+esc(s.nom||"Sort")+(s.conc?' <span class="tag">C</span>':'')+'</button><button class="btn sm pri" data-act="cast" data-i="'+i+'">Lancer</button></div>'+
+    (state.sopen[i]&&s.note?'<div class="small desc2">'+esc(s.note)+'</div>':'')+'</div>').join("")).join("");
+  return '<div class="card" style="border-left:5px solid '+c.couleur+'"><div class="row">'+avatar(c,40)+'<div class="grow" style="min-width:0"><b class="lnk2">'+esc(c.nom)+'</b><div class="small mute">'+esc(classLine(c))+'</div></div><button class="btn sm" data-open="'+c.id+'">Fiche</button></div>'+
+    '<div class="bar" style="height:26px;margin-top:12px"><i data-d="pvbar"></i><i data-d="tmpbar" style="background:var(--blue);opacity:.7"></i><div class="t" data-d="pvtxt"></div></div>'+
+    '<div class="row" style="margin-top:8px"><input type="number" inputmode="numeric" id="dmg" placeholder="Valeur" style="flex:1"><button class="btn" data-act="dmg" style="color:var(--bad)">Dégâts</button><button class="btn" data-act="heal" style="color:var(--acc)">Soin</button></div>'+
+    '<div class="row small" style="margin-top:8px;gap:6px"><span class="mute">PV temp.</span><div class="counter"><button data-inc="pv.temp" data-v="-1" data-min="0">−</button><input type="number" data-k="pv.temp" data-t="n" value="'+num(c.pv.temp)+'"><button data-inc="pv.temp" data-v="1">+</button></div></div>'+
+    (c.pv.act===0?'<div class="ds"><b>À terre : jets contre la mort</b><div class="row" style="justify-content:space-between;margin-top:6px"><span class="small">Succès</span><div class="pips">'+[1,2,3].map(i=>'<button class="pip '+(c.dsSucc>=i?"on":"")+'" data-pip="dsSucc" data-v="'+i+'"></button>').join("")+'</div><span class="small">Échecs</span><div class="pips">'+[1,2,3].map(i=>'<button class="pip bad '+(c.dsEch>=i?"on":"")+'" data-pip="dsEch" data-v="'+i+'"></button>').join("")+'</div></div></div>':'')+
+    '<div class="stats4"><div><small>CA</small><b>'+c.ca+'</b></div><div><small>Init</small><b data-d="init"></b></div><div><small>Perc. pass.</small><b data-d="pp"></b></div><div><small>DD sorts</small><b data-d="dd"></b></div></div>'+
+    '<div class="catt">Ce tour-ci</div><div class="eco">'+ECO.map(([k,l])=>'<button class="chip ecob '+(state.eco[k]?"used":"")+'" data-act="eco" data-e="'+k+'">'+(state.eco[k]?"✓ ":"")+l+'</button>').join("")+'<button class="chip" data-act="ecoreset" title="Nouveau tour">↺</button></div>'+
+    '<div class="catt">Attaques</div>'+(c.attaques.length?c.attaques.map(a=>'<div class="atk"><b>'+esc(a.nom||"Attaque")+'</b><span>'+esc(a.bonus||"")+'</span><span class="mute">'+esc(a.degats||"")+'</span></div>').join(""):'<div class="small mute">Ajoute tes attaques dans l\'onglet Combat de ta fiche.</div>')+
+    (c.ressources.length?'<div class="catt">Charges et ressources</div>'+c.ressources.map((x,i)=>'<div class="row res2"><span class="grow small">'+esc(x.nom)+'</span><div class="counter"><button data-inc="ressources.'+i+'.act" data-v="-1" data-min="0">−</button><input type="number" data-k="ressources.'+i+'.act" data-t="n" value="'+num(x.act)+'"><button data-inc="ressources.'+i+'.act" data-v="1">+</button></div><span class="small mute">/ '+num(x.max)+'</span></div>').join(""):'')+
+    '<div class="catt">Emplacements de sorts</div>'+(slotRows||'<div class="small mute">Aucun emplacement renseigné.</div>')+
+    (canCalc&&(noSlots||state.showCalc)?'<button class="btn add" data-act="slotcalc">✨ Calculer mes emplacements (règles D&D) : '+esc(slotText(r))+'</button>':'')+
+    (c.sorts.length?'<div class="catt">Sorts</div>'+sortsHtml:'')+
+    '<div class="catt">États</div><div class="chips">'+ETATS.map(e=>'<button class="chip '+(c.etats.includes(e)?"on":"")+'" data-etat="'+e+'">'+e+'</button>').join("")+'</div>'+
+    (c.dons.length?'<div class="catt">Dons et capacités</div>'+c.dons.map(d=>'<details class="don"><summary>'+esc(d.nom)+'</summary><div class="small">'+esc(d.desc||"")+'</div></details>').join(""):'')+
+    '<button class="btn" data-act="short" style="width:100%;margin-top:14px">☕ Repos court</button></div>';
+}
+function castSpell(c,i){
+  const s=c.sorts[i];if(!s)return;const n=num(s.niv);
+  const done=lbl=>{if(s.conc&&!c.etats.includes("Concentration"))c.etats.push("Concentration");schedule(c);rerenderPane();toast(s.nom+" lancé"+(lbl?" ("+lbl+")":""))};
+  if(n===0)return done("");
+  const opts=[];c.slots.forEach((sl,j)=>{if(j+1>=n&&num(sl.used)<num(sl.max))opts.push(["s"+j,"Emplacement niv "+(j+1)+" ("+(num(sl.max)-num(sl.used))+" restant)"])});
+  if(num(c.pacte.max)&&num(c.pacte.niv)>=n&&num(c.pacte.used)<num(c.pacte.max))opts.unshift(["p","Emplacement de pacte niv "+num(c.pacte.niv)+" ("+(num(c.pacte.max)-num(c.pacte.used))+" restant)"]);
+  const m=modal('<h2>'+esc(s.nom)+'</h2>'+(s.note?'<p class="small">'+esc(s.note)+'</p>':'')+(opts.length?'<div class="grid">'+opts.map(o=>'<button class="btn" data-o="'+o[0]+'">'+o[1]+'</button>').join("")+'</div>':'<p class="small" style="color:var(--bad)">Plus d\'emplacement disponible pour ce niveau.</p>')+
+    '<div class="acts"><button class="btn" data-free>Sans emplacement</button><button class="btn" data-x>Annuler</button></div>');
+  m.querySelector("[data-x]").onclick=()=>m.remove();
+  m.querySelector("[data-free]").onclick=()=>{m.remove();done("gratuit")};
+  m.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{const o=b.dataset.o;if(o==="p"){c.pacte.used=num(c.pacte.used)+1;m.remove();done("pacte")}else{const j=+o.slice(1);c.slots[j].used=num(c.slots[j].used)+1;m.remove();done("niv "+(j+1))}});
+}
+function combatAct(a,d){
+  const cb=G.combat||GDEF().combat;
+  if(a==="cbstart"){const lignes={};persos().filter(p=>!p.retire).forEach(p=>{lignes["p"+p.id]={nom:p.nom,init:"",persoId:p.id}});G.combat={actif:true,round:1,tour:"",lignes};save("groupe","combat",true);rerenderPane();return true}
+  if(a==="cbend")return confirmBox("Terminer le combat ? L'ordre d'initiative sera effacé.",()=>{G.combat={actif:false,round:1,tour:"",lignes:{}};save("groupe","combat",true);state.eco={};rerenderPane()},"Terminer"),true;
+  if(a==="cbnext"){const L=lignesTriees(cb);if(!L.length)return true;const i=L.findIndex(l=>l.id===cb.tour);let tour,round=num(cb.round||1);
+    if(i<0)tour=L[0].id;else if(i>=L.length-1){tour=L[0].id;round++}else tour=L[i+1].id;
+    G.combat.tour=tour;G.combat.round=round;cbUpdate({tour,round});rerenderPane();return true}
+  if(a==="cbaddpnj"){const m=modal('<h2>Ajouter un monstre / PNJ</h2><div class="grid"><div><label class="f">Nom</label><input id="pn" placeholder="Gobelin 1"></div><div class="grid g2"><div><label class="f">Initiative</label><input id="pi" type="number" inputmode="numeric"></div><div><label class="f">PV (facultatif)</label><input id="pp" type="number" inputmode="numeric"></div></div><div><label class="f">Nombre</label><input id="pq" type="number" value="1" min="1" max="20"></div></div><div class="acts"><button class="btn" data-x>Annuler</button><button class="btn pri" data-ok>Ajouter</button></div>');
+    m.querySelector("[data-x]").onclick=()=>m.remove();
+    m.querySelector("[data-ok]").onclick=()=>{const nom=m.querySelector("#pn").value.trim()||"Monstre",init=m.querySelector("#pi").value,pv=num(m.querySelector("#pp").value),qn=clamp(num(m.querySelector("#pq").value)||1,1,20);const f={};
+      for(let k=0;k<qn;k++){const id="m"+uid();const l={nom:qn>1?nom+" "+(k+1):nom,init:init===""?"":num(init),persoId:"",pv,pvmax:pv};G.combat.lignes[id]=l;f["lignes."+id]=l}
+      cbUpdate(f);m.remove();rerenderPane()};return true}
+  if(a==="cbdel"){delete G.combat.lignes[d.line];cbUpdate({["lignes."+d.line]:fs.deleteField()});rerenderPane();return true}
+  if(a==="cbroll"){const l=cb.lignes[d.line];const p=l&&S.persos.get(l.persoId);if(!p)return true;const r=1+Math.floor(Math.random()*20),v=r+mod(p.car.dex)+num(p.initBonus);l.init=v;cbUpdate({["lignes."+d.line+".init"]:v});rerenderPane();toast("🎲 "+r+" "+sg(mod(p.car.dex)+num(p.initBonus))+" = "+v);return true}
+  if(a==="cbperso"){state.cbPerso=d.id;state.eco={};rerenderPane();return true}
+  if(a==="eco"){state.eco[d.e]=!state.eco[d.e];rerenderPane();return true}
+  if(a==="ecoreset"){state.eco={};rerenderPane();return true}
+  if(a==="sexp"){state.sopen[d.i]=!state.sopen[d.i];rerenderPane();return true}
+  return false;
 }
 
 // ---------- Démarrage, connexion ----------

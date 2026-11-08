@@ -140,3 +140,24 @@ input:disabled,select:disabled,textarea:disabled{opacity:.75}
 .err{color:var(--bad);font-size:13px;min-height:18px}
 .lnkbtn{background:none;border:none;color:var(--acc);padding:6px 0;font-size:14px}
 .owner{font-size:11px;color:var(--acc)}
+.ini{display:grid;gap:6px;margin-top:10px}
+.inil{display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:7px 8px}
+.inil.on{border-color:var(--acc);background:#1f3326;box-shadow:0 0 0 1px var(--acc) inset}
+.inil .arrow{width:12px;color:var(--acc);font-size:12px}
+.inil .grow{flex:1;min-width:0}
+.ini-in{width:62px;text-align:center;font-weight:700;font-size:17px;padding:6px 4px}
+.mini-in{width:56px;padding:3px 4px;text-align:center;font-size:12px}
+.eco{display:flex;flex-wrap:wrap;gap:6px}
+.chip.used{background:#2b2d31;color:var(--mute);text-decoration:line-through;border-style:dashed}
+.ecob{font-weight:600}
+.atk{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:7px 0;border-bottom:1px solid var(--line)}
+.atk span:last-child{grid-column:1/3;font-size:13px}
+.res2{padding:4px 0}
+.sp{padding:6px 0;border-bottom:1px solid var(--line)}
+.lnk3{background:none;border:none;padding:4px 0;flex:1;text-align:left;font-weight:600}
+.desc2{color:#c9c8c3;margin-top:4px}
+.lnk2{font-family:Georgia,serif;font-size:17px}
+.ds{background:#3a1f1f;border:1px solid var(--bad);border-radius:12px;padding:10px;margin-top:10px}
+details.don{border-bottom:1px solid var(--line);padding:7px 0}
+details.don summary{font-weight:600;cursor:pointer}
+details.don div{margin-top:6px;color:#c9c8c3}
