@@ -1,9 +1,10 @@
-// À remplacer par le bloc firebaseConfig de ta console Firebase
+// Configuration du projet Firebase « fiches-jdr »
 export const firebaseConfig = {
-  apiKey: "A_REMPLACER",
-  authDomain: "A_REMPLACER.firebaseapp.com",
-  projectId: "A_REMPLACER",
-  storageBucket: "A_REMPLACER.appspot.com",
-  messagingSenderId: "A_REMPLACER",
-  appId: "A_REMPLACER"
+  apiKey: "AIzaSyDE5AyBdljIiL8zQNQXswliNr8_7DcIKuE",
+  authDomain: "fiches-jdr-d1de1.firebaseapp.com",
+  projectId: "fiches-jdr-d1de1",
+  storageBucket: "fiches-jdr-d1de1.firebasestorage.app",
+  messagingSenderId: "837348141299",
+  appId: "1:837348141299:web:e183732757eb432851af86",
+  measurementId: "G-LFMFNMGK0H"
 };
