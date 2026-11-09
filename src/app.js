@@ -763,24 +763,33 @@ function deckCards(c){
   c.sorts.forEach((s,i)=>{
     const ai=c.attaques.findIndex(a=>isStruct(a)&&a.nom&&nrm(a.nom).startsWith(nrm(s.nom)));if(ai>=0)used.add(ai);
     const a=ai>=0?c.attaques[ai]:null;const dmg=a&&a.des&&a.des[0];
-    cards.push({key:"sort:"+s.nom,type:"sort",nom:s.nom,icon:dmg?(TYPICON[dmg.type]||"✨"):"✨",eco:ecoOf(s.note,"action"),
+    cards.push({elem:dmg?dmg.type:"arcane",medal:num(s.niv)?String(num(s.niv)):"T",flavor:(s.note||"").split("\n").pop().slice(0,110),key:"sort:"+s.nom,type:"sort",nom:s.nom,icon:dmg?(TYPICON[dmg.type]||"✨"):"✨",eco:ecoOf(s.note,"action"),
       sub:(num(s.niv)?"Niveau "+num(s.niv):"Tour de magie")+(dmg?" · "+(a.des||[]).map(d=>d.n+" "+(d.type||"")).join(" + "):""),
       tags:[s.conc?"Concentration":"",a&&a.jetAttaque?"Jet d'attaque":"",(a&&a.degats||"").match(/JdS \w+ DD \d+/)?(a.degats.match(/JdS \w+ DD \d+/)[0]):""].filter(Boolean),
       cost:num(s.niv)?"Emplacement niv "+num(s.niv)+"+":"Gratuit",desc:s.note||"",play:()=>castSpell(c,i,()=>{if(ai>=0)attackModal(c,"dice",ai)})})});
   c.attaques.forEach((a,i)=>{if(!isStruct(a)||used.has(i))return;const r=a.cout&&c.ressources.find(x=>x.nom===a.cout);const dmg=a.des&&a.des[0];
-    cards.push({key:"atk:"+a.nom,type:atkKind(a)==="sort"?"sort":"attaque",nom:a.nom,icon:atkKind(a)==="arme"?"⚔️":(dmg&&TYPICON[dmg.type])||"🌀",
+    cards.push({elem:dmg?dmg.type:"tranchant",medal:a.carac&&atkRoll(a)?sg(atkHit(c,a)):(dmg?dmg.n:"-"),flavor:a.degats||"",key:"atk:"+a.nom,type:atkKind(a)==="sort"?"sort":"attaque",nom:a.nom,icon:atkKind(a)==="arme"?"⚔️":(dmg&&TYPICON[dmg.type])||"🌀",
       eco:atkKind(a)==="arme"?"action":ecoOf(a.degats,"action"),sub:(a.des||[]).map(d=>d.n+" "+(d.type||"")).join(" + ")+(a.carac&&atkRoll(a)?" · "+sg(atkHit(c,a))+" toucher":""),
       tags:[a.main?MAINS[a.main]:""].filter(Boolean),cost:r?r.nom+" : "+num(r.act)+"/"+num(r.max):"",empty:r&&num(r.act)<=0,desc:a.degats||"",play:()=>attackModal(c,"dice",i)})});
   c.dons.forEach((d,i)=>{const e=ecoOf(d.desc,"passif");const r=e!=="passif"?linkRes(c,d.nom):null;
-    cards.push({key:"cap:"+d.nom,type:"capacite",nom:d.nom,icon:e==="passif"?"🛡️":"🌀",eco:e,sub:r?r.nom+" : "+num(r.act)+"/"+num(r.max):(e==="passif"?"Effet permanent":""),
+    cards.push({elem:e==="passif"?"passif":"capa",medal:r?String(num(r.act)):(e==="passif"?"∞":"•"),flavor:(d.desc||"").slice(0,110),key:"cap:"+d.nom,type:"capacite",nom:d.nom,icon:e==="passif"?"🛡️":"🌀",eco:e,sub:r?r.nom+" : "+num(r.act)+"/"+num(r.max):(e==="passif"?"Effet permanent":""),
       tags:[],cost:r?"1 utilisation":"",empty:r&&num(r.act)<=0,desc:d.desc||"",play:e==="passif"?null:()=>{if(r){if(num(r.act)<=0){toast("Plus d'utilisation pour "+r.nom);return}r.act=num(r.act)-1;schedule(c)}toast(d.nom+" utilisé"+(r?" ("+r.act+" restant)":""));rerenderPane()}})});
   return cards;
 }
+const ECOI={action:"⚔",bonus:"✦",reac:"↺",passif:"◈",libre:"•"};
+const TYPEL={attaque:"Attaque",sort:"Sort",capacite:"Capacité"};
+function artHtml(k){
+  const bolts=k.elem==="foudre"?'<svg class="artfx" viewBox="0 0 100 70" preserveAspectRatio="none"><path d="M20 0 L30 22 L24 24 L38 52 L30 30 L36 28 Z M70 0 L64 18 L72 20 L58 48 L66 26 L60 24 Z" fill="#bff0ff" opacity=".55"/></svg>':
+    k.elem==="feu"?'<svg class="artfx" viewBox="0 0 100 70" preserveAspectRatio="none"><path d="M30 70 C10 50 30 35 28 18 C40 30 42 40 50 22 C56 40 70 30 66 12 C84 34 88 52 70 70 Z" fill="#ff7a1a" opacity=".45"/></svg>':
+    k.elem==="nécrotique"?'<svg class="artfx" viewBox="0 0 100 70" preserveAspectRatio="none"><circle cx="50" cy="34" r="22" fill="none" stroke="#9b6bff" stroke-width="1.5" opacity=".5"/><circle cx="50" cy="34" r="30" fill="none" stroke="#5fd38a" stroke-width=".8" stroke-dasharray="3 4" opacity=".45"/></svg>':
+    '<svg class="artfx" viewBox="0 0 100 70" preserveAspectRatio="none"><path d="M0 70 L30 40 L45 52 L70 25 L100 55 L100 70 Z" fill="#000" opacity=".35"/></svg>';
+  return '<div class="art el-'+nrm(k.elem).replace(/[^a-z]/g,"")+'">'+bolts+'<div class="artico">'+k.icon+'</div></div>'}
 function cardHtml(k,small){const fav=(state._favs||[]).includes(k.key);const pl=state.played[k.key];
-  return '<button class="card3 t-'+k.type+(small?" sm":"")+(pl?" played":"")+(k.empty?" empty":"")+'" data-act="cardopen" data-key="'+esc(k.key)+'">'+
-    '<div class="c3top"><span class="c3eco e-'+k.eco+'">'+ECOL[k.eco]+'</span>'+(fav?'<span class="c3fav">★</span>':'')+'</div>'+
-    '<div class="c3ico">'+k.icon+'</div><div class="c3nom">'+esc(k.nom)+'</div><div class="c3sub">'+esc(k.sub||"")+'</div>'+
-    (k.cost?'<div class="c3cost">'+esc(k.cost)+'</div>':'')+(pl?'<div class="c3pl">Jouée</div>':'')+'</button>'}
+  return '<button class="card4 t-'+k.type+(small?" sm":"")+(pl?" played":"")+(k.empty?" empty":"")+'" data-act="cardopen" data-key="'+esc(k.key)+'">'+
+    artHtml(k)+'<div class="ribbon"><div class="medal">'+esc(k.medal)+'</div><div class="ecoic e-'+k.eco+'" title="'+ECOL[k.eco]+'">'+ECOI[k.eco]+'</div></div>'+
+    (fav?'<div class="favst">★</div>':'')+
+    '<div class="parch"><div class="ptitle">'+esc(k.nom)+'</div><div class="psub">'+esc(k.sub||ECOL[k.eco])+'</div></div>'+
+    '<div class="cfoot"><span>'+TYPEL[k.type]+'</span><span>'+ECOL[k.eco]+'</span></div>'+(pl?'<div class="c3pl">Jouée</div>':'')+'</button>'}
 function deckHtml(c){
   const cards=deckCards(c);state._favs=c.favs||[];state._deck=cards;state._deckC=c.id;
   const favs=cards.filter(k=>state._favs.includes(k.key));
@@ -792,11 +801,11 @@ function deckHtml(c){
 }
 function cardModal(c,key){
   const k=(state._deck||deckCards(c)).find(x=>x.key===key);if(!k)return;const fav=(c.favs||[]).includes(key);
-  const m=modal('<div class="bigcard t-'+k.type+'"><div class="c3top"><span class="c3eco e-'+k.eco+'">'+ECOL[k.eco]+'</span><span class="small">'+({attaque:"Attaque",sort:"Sort",capacite:"Capacité"})[k.type]+'</span></div>'+
-    '<div class="c3ico" style="font-size:46px">'+k.icon+'</div><h2 style="text-align:center">'+esc(k.nom)+'</h2><div class="c3sub" style="text-align:center">'+esc(k.sub||"")+'</div>'+
-    (k.tags.length?'<div class="chips" style="justify-content:center;margin-top:8px">'+k.tags.map(t=>'<span class="chip">'+esc(t)+'</span>').join("")+'</div>':'')+
-    (k.cost?'<div class="c3cost" style="text-align:center;margin-top:8px">Coût : '+esc(k.cost)+'</div>':'')+
-    '<div class="bcdesc">'+(esc(k.desc)||'<span class="mute">Pas de description.</span>').replace(/\n/g,"<br>")+'</div></div>'+
+  const m=modal('<div class="card4 bigc t-'+k.type+'">'+artHtml(k)+'<div class="ribbon"><div class="medal">'+esc(k.medal)+'</div><div class="ecoic e-'+k.eco+'">'+ECOI[k.eco]+'</div></div>'+
+    '<div class="parch"><div class="ptitle">'+esc(k.nom)+'</div><div class="psub">'+esc(k.sub||"")+'</div>'+
+    (k.tags.length||k.cost?'<div class="ptags">'+k.tags.concat(k.cost?["Coût : "+k.cost]:[]).map(t=>'<span>'+esc(t)+'</span>').join("")+'</div>':'')+
+    '<div class="pdesc">'+(esc(k.desc)||'<i>Pas de description.</i>').replace(/\n/g,"<br>")+'</div></div>'+
+    '<div class="cfoot"><span>'+TYPEL[k.type]+'</span><span>'+ECOL[k.eco]+'</span></div></div>'+
     '<div class="acts"><button class="btn" data-fav>'+(fav?"★ Retirer de ma main":"☆ Mettre dans ma main")+'</button><button class="btn" data-x>Fermer</button>'+(k.play&&!readOnly?'<button class="btn pri" data-play'+(k.empty?" disabled":"")+'>'+(k.empty?"Épuisée":"Jouer")+'</button>':'')+'</div>');
   m.classList.add("cardm");
   m.querySelector("[data-x]").onclick=()=>m.remove();
