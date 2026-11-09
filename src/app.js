@@ -19,7 +19,7 @@ const ECOLES=["Abjuration","Divination","Enchantement","Évocation","Illusion","
 const RARETES=["Commun","Peu commun","Rare","Très rare","Légendaire","Artefact"];
 const COLORS=["#7bd88f","#6cb6ff","#b48cff","#f0a35e","#e5645c","#f2d16b","#5fd3c8","#e88ad0","#c0c0c0"];
 const TABS=[["id","Identité","🪪"],["car","Caracs","🎲"],["comp","Compét.","📜"],["combat","Combat","⚔️"],["sorts","Sorts","✨"],["inv","Inventaire","🎒"],["dons","Dons","⭐"],["perso","Perso","🧩"],["notes","Notes","📝"]];
-const HTABS=[["persos","Persos","🧙"],["combat","Combat","⚔️"],["mj","Vue MJ","👁️"],["biblio","Biblio","📚"],["commun","Commun","💰"],["planning","Planning","📅"],["journal","Journal","📖"]];
+const HTABS=[["persos","Persos","🧙"],["combat","Combat","⚔️"],["mj","Vue MJ","👁️"],["biblio","Biblio","📚"],["cartes","Cartes","🗺️"],["commun","Commun","💰"],["planning","Planning","📅"],["journal","Journal","📖"]];
 const DISPO=["","oui","peut","non"];const DLAB={"":"?","oui":"Oui","peut":"Peut-être","non":"Non"};
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -97,6 +97,7 @@ function subscribe(){
   ["journal","commun","planning","combat"].forEach(k=>{
     fs.onSnapshot(ref("groupe",k),snap=>{if(k!=="combat"&&busyKey(keyOf("groupe",k)))return;if(snap.exists()){if(k==="combat"){const was=G.combat&&G.combat.actif,now=snap.data().actif;if(now&&!was&&started&&G.combat)swordsAnim(true)}G[k]=Object.assign(GDEF()[k],clone(snap.data()));lsSave();softRender()}},()=>{});
   });
+  fs.onSnapshot(fs.collection(db,"groupe"),snap=>{let ch=false;snap.docChanges().forEach(x=>{const id=x.doc.id;if(!id.startsWith("carte-"))return;if(x.type==="removed")CARTES.delete(id);else CARTES.set(id,Object.assign({id},x.doc.data()));ch=true});if(ch&&state.home==="cartes"&&state.view==="home")softRender()},()=>{});
   fs.onSnapshot(fs.collection(db,"users"),snap=>{snap.docs.forEach(d=>USERS.set(d.id,d.data().nom||""));softRender()},()=>{});
 }
 const ownerName=c=>c.ownerId?(c.ownerId===myId?"toi":(USERS.get(c.ownerId)||"un joueur")):"";
@@ -140,7 +141,7 @@ function render(){
       '<div class="wrap">'+roBanner()+(!readOnly&&!canEdit(c)?'<div class="ro">🔒 Fiche d\'un autre joueur : lecture seule.</div>':'')+(!readOnly&&!c.ownerId&&myId?'<div class="ro" style="border-color:var(--acc);color:var(--acc);background:#1f3326">Cette fiche n\'a pas encore de propriétaire. <button class="btn sm" data-act="mine" style="margin-left:6px">C\'est mon perso</button></div>':'')+'<div id="pane">'+pane(c)+'</div></div>'+
       '<nav class="tabs"><div class="in">'+TABS.map(t=>'<button data-tab="'+t[0]+'" class="'+(state.tab===t[0]?"on":"")+'"><b>'+t[2]+'</b>'+t[1]+'</button>').join("")+'</div></nav>';
     derive();lockRO();return}
-  const title={persos:"⚔️ Fiches JDR",combat:"⚔️ Combat",mj:"👁️ Vue MJ",biblio:"📚 Bibliothèque",commun:"💰 Inventaire commun",planning:"📅 Planning",journal:"📖 Journal"}[state.home];
+  const title={persos:"⚔️ Fiches JDR",combat:"⚔️ Combat",mj:"👁️ Vue MJ",biblio:"📚 Bibliothèque",cartes:"🗺️ Cartes",commun:"💰 Inventaire commun",planning:"📅 Planning",journal:"📖 Journal"}[state.home];
   app.innerHTML='<div class="top"><div class="wrap"><h1>'+title+'</h1><span class="status" id="st">'+esc(saveStatus)+'</span>'+(state.home==="persos"?'<button class="ico" data-act="io" title="Importer / exporter">⇅</button><button class="ico" data-act="logout" title="Se déconnecter">⎋</button>':'')+'</div></div>'+
     '<div class="wrap">'+roBanner()+'<div id="hpane">'+homePane()+'</div></div>'+
     '<nav class="tabs"><div class="in">'+HTABS.map(t=>'<button data-htab="'+t[0]+'" class="'+(state.home===t[0]?"on":"")+'"><b>'+t[2]+'</b>'+t[1]+'</button>').join("")+'</div></nav>';
@@ -196,6 +197,7 @@ function homePane(){
         '<select data-gk="commun|'+x.id+'|porteur"><option value="">Porté par : personne</option>'+ps.map(c=>'<option value="'+c.id+'" '+(x.porteur===c.id?"selected":"")+'>Porté par : '+esc(c.nom)+'</option>').join("")+'</select></div><button class="del" data-delc="commun|'+x.id+'">✕</button></div>').join("")+
       '</div>'+(readOnly?'':'<button class="btn add" data-act="addcommun">+ Objet commun</button>')+'</div>';}
 
+  case "cartes":return cartesPane();
   case "planning":{const pl=G.planning.joueurs;const t0=today();
     const ses=[...S.sessions.values()].sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999"));
     const up=ses.filter(s=>!s.date||s.date>=t0),past=ses.filter(s=>s.date&&s.date<t0);const nx=nextAllDate();
@@ -396,6 +398,9 @@ app.addEventListener("click",e=>{
     let arr=getP(c,d.push);if(!Array.isArray(arr)){setP(c,d.push,[]);arr=getP(c,d.push)}arr.push(clone(T[d.push.split(".").pop()]));schedule(c);rerenderPane();return}
 });
 function act(a,c,d){
+  if(a==="carteadd")return carteAddModal();
+  if(a==="carteview")return carteView(d.id);
+  if(a==="cartedel"){const k=CARTES.get(d.id);return confirmBox("Supprimer la carte « "+((k&&k.nom)||"")+" » pour tout le groupe ?",()=>{CARTES.delete(d.id);if(remote)enqueue(keyOf("groupe",d.id),()=>fs.deleteDoc(ref("groupe",d.id)));document.querySelectorAll(".modal").forEach(m=>m.remove());rerenderPane()},"Supprimer")}
   if(a==="back"){state.view="home";render();window.scrollTo(0,0);return}
   if(a==="io")return ioModal();
   if(a==="logout"){signOut(window.__auth).then(()=>location.reload());return}
@@ -650,6 +655,39 @@ function applyPreset(c){
 }
 
 // Animations d'ouverture des onglets
+// ===== Cartes du groupe =====
+const CARTES=new Map();
+const DDD_MAP="https://www.donjondudragon.fr/map";
+function cartesPane(){
+  const ks=[...CARTES.values()].sort((a,b)=>(b.ts||0)-(a.ts||0));
+  return '<div class="card"><h3>🗺️ Cartes</h3><div class="hint" style="margin:-4px 0 10px">Les cartes du groupe : monde, villes, donjons… Ajoute une photo ou une image, tout le monde la voit.</div>'+
+    '<a class="btn" href="'+DDD_MAP+'" target="_blank" rel="noopener" style="display:block;text-align:center;margin-bottom:8px;text-decoration:none;color:inherit;box-sizing:border-box">🌍 Ouvrir la carte de Donjon du Dragon</a>'+
+    (readOnly?'':'<button class="btn pri" data-act="carteadd" style="width:100%">➕ Ajouter une carte</button>')+'</div>'+
+    (ks.length?'<div class="cgrid">'+ks.map(k=>'<button class="cthumb" data-act="carteview" data-id="'+esc(k.id)+'"><img src="'+esc(k.img||k.url||"")+'" alt="" loading="lazy"><span>'+esc(k.nom||"Carte")+'</span></button>').join("")+'</div>'
+      :'<div class="card hint" style="text-align:center">Aucune carte pour l\'instant.</div>');
+}
+function shrinkImg(file){return new Promise((ok,ko)=>{const fr=new FileReader();fr.onerror=()=>ko(new Error("Lecture impossible"));fr.onload=()=>{const im=new Image();im.onerror=()=>ko(new Error("Image illisible"));im.onload=()=>{let max=2000,q=.82,out="";for(let t=0;t<8;t++){const r=Math.min(1,max/Math.max(im.width,im.height));const cv=document.createElement("canvas");cv.width=Math.round(im.width*r);cv.height=Math.round(im.height*r);cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);out=cv.toDataURL("image/jpeg",q);if(out.length<900000)return ok(out);if(q>.6)q-=.1;else max=Math.round(max*.8)}ok(out)};im.src=fr.result};fr.readAsDataURL(file)})}
+function carteAddModal(){
+  const m=modal('<h2>Ajouter une carte</h2><label class="f">Nom</label><input id="cnom" placeholder="Ex. Quartier des canaux"><label class="f" style="margin-top:10px">Image</label><input id="cfile" type="file" accept="image/*"><div class="hint" style="margin:6px 0">ou un lien vers une image :</div><input id="curl" placeholder="https://…" autocapitalize="off"><div id="cerr" class="hint" style="color:var(--bad);margin-top:6px"></div><div class="acts"><button class="btn" data-x>Annuler</button><button class="btn pri" data-ok>Ajouter</button></div>');
+  m.querySelector("[data-x]").onclick=()=>m.remove();
+  const err=t=>{m.querySelector("#cerr").textContent=t};
+  m.querySelector("[data-ok]").onclick=async()=>{
+    const nom=m.querySelector("#cnom").value.trim(),f=m.querySelector("#cfile").files[0],url=m.querySelector("#curl").value.trim();
+    if(!f&&!/^https?:\/\//.test(url))return err("Choisis une image ou colle un lien qui commence par http.");
+    const b=m.querySelector("[data-ok]");b.disabled=true;b.textContent="Envoi…";
+    try{const img=f?await shrinkImg(f):"";const id="carte-"+uid();const o={nom:nom||(f?f.name.replace(/\.[^.]+$/,""):"Carte"),img,url:f?"":url,par:(me&&me.nom)||"",ts:Date.now()};
+      CARTES.set(id,Object.assign({id},o));if(remote)enqueue(keyOf("groupe",id),()=>fs.setDoc(ref("groupe",id),o));m.remove();rerenderPane()}
+    catch(e){b.disabled=false;b.textContent="Ajouter";err(e.message||"Erreur")}};
+}
+function carteView(id){
+  const k=CARTES.get(id);if(!k)return;let z=1;
+  const m=modal('<div class="cview-h"><b>'+esc(k.nom||"Carte")+'</b><span class="hint">'+(k.par?"ajoutée par "+esc(k.par):"")+'</span></div><div class="cview"><img src="'+esc(k.img||k.url)+'" alt=""></div><div class="acts"><button class="btn" data-z="-1">➖</button><button class="btn" data-z="1">➕</button>'+(readOnly?'':'<button class="btn" data-act="cartedel" data-id="'+esc(id)+'" style="color:var(--bad)">Supprimer</button>')+'<button class="btn pri" data-x>Fermer</button></div>');
+  m.classList.add("cmodal");const im=m.querySelector(".cview img");
+  m.querySelector("[data-x]").onclick=()=>m.remove();
+  m.querySelectorAll("[data-z]").forEach(b=>b.onclick=()=>{z=Math.max(1,Math.min(5,z+Number(b.dataset.z)));im.style.width=(z*100)+"%"});
+  const del=m.querySelector("[data-act=cartedel]");if(del)del.onclick=()=>act("cartedel",null,{id});
+  im.ondblclick=()=>{z=z>1?1:2.5;im.style.width=(z*100)+"%"};
+}
 function tabAnim(kind){
   try{if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return}catch(e){}
   const d=document.createElement("div");d.className="tanim ta-"+kind;let dur=1700,html="";
