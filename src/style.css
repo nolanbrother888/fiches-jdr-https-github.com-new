@@ -319,7 +319,7 @@ details.rules{margin-top:12px}
 .card4.empty{filter:grayscale(.5) brightness(.75)}
 .card4 .c3pl{top:40%}
 .deck{grid-template-columns:repeat(auto-fill,minmax(108px,1fr))}
-.card4.bigc{aspect-ratio:auto;width:100%;max-width:360px;margin:0 auto;animation:cardflip .45s ease}
+.card4.bigc{aspect-ratio:auto;width:100%;max-width:360px;margin:0 auto;animation:cardflip .5s cubic-bezier(.2,1.1,.4,1)}
 .card4.bigc .art{height:220px;flex:none}
 .card4.bigc .artico{font-size:70px}
 .card4.bigc .ribbon{width:40px;left:14px;height:150px}
@@ -346,3 +346,154 @@ details.rules{margin-top:12px}
 .msrc{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;text-decoration:none;color:inherit;border:1px solid var(--line,#333);margin-bottom:8px;background:rgba(255,255,255,.02)}
 .msrc b{display:block;font-size:15px}.msrc small{display:block;color:var(--mute);font-size:12.5px;line-height:1.35;margin-top:2px}
 .msi{font-size:22px;width:28px;text-align:center;flex:none}.msa{margin-left:auto;color:var(--mute);flex:none}
+/* ===== Cartes vivantes ===== */
+.aw{position:absolute;left:0;top:0;width:100%;height:100%;animation:kb 13s ease-in-out infinite alternate;animation-delay:var(--sd,0s)}
+@supports (width:1cqw){.art.hasimg{container-type:size}.aw{width:max(100cqw,133.34cqh);height:max(100cqh,75cqw);left:calc((100cqw - max(100cqw,133.34cqh))*.6);top:calc((100cqh - max(100cqh,75cqw))*.35)}}
+.aw .artimg{object-position:50% 50%}
+@keyframes kb{0%{transform:scale(1.02) translate(0,0)}100%{transform:scale(1.13) translate(-2%,-1.5%)}}
+.artimg.ghost{mix-blend-mode:screen;opacity:0;filter:hue-rotate(35deg) saturate(1.7) brightness(1.2);animation:ghost 3.4s ease-in-out infinite}
+@keyframes ghost{0%,100%{opacity:0;transform:translate(0,0) scale(1)}35%{opacity:.55;transform:translate(-3%,1%) scale(1.03)}65%{opacity:.3;transform:translate(-6%,2%) scale(1.06)}}
+.cfx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:hidden;color:var(--glow,#fff)}
+.cfx *{transform-box:fill-box;transform-origin:center}
+.fb{opacity:0;animation:fbolt var(--t,3s) linear var(--d,0s) infinite}
+.fbg{fill:none;stroke:currentColor;stroke-width:5;opacity:.45;stroke-linecap:round;stroke-linejoin:round}
+.fbc{fill:none;stroke:#fff;stroke-width:1.2;stroke-linejoin:round}
+@keyframes fbolt{0%,14%,100%{opacity:0}1.5%{opacity:1}4%{opacity:.15}6%{opacity:1}10%{opacity:.5}}
+.ffl{fill:currentColor;opacity:0;animation:ffl var(--t,3s) linear var(--d,0s) infinite}
+@keyframes ffl{0%,14%,100%{opacity:0}1.5%{opacity:.22}4%{opacity:.04}6%{opacity:.16}}
+.fp{fill:currentColor;opacity:0;animation:fp var(--t,3s) linear var(--d,0s) infinite}
+.fp.w{fill:#fff}.fp.sh{fill:#1a1326;stroke:currentColor;stroke-width:.6}
+@keyframes fp{0%{opacity:0;transform:translate(0,0)}15%{opacity:.95}100%{opacity:0;transform:translate(var(--dx),var(--dy))}}
+.fp.sh{animation-name:fpsh}
+@keyframes fpsh{0%{opacity:0;transform:translate(0,0) rotate(0)}15%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(260deg)}}
+.fr{fill:none;stroke:currentColor;stroke-width:2.2;vector-effect:non-scaling-stroke;opacity:0;animation:fr var(--t,2.8s) cubic-bezier(.2,.6,.3,1) var(--d,0s) infinite}
+@keyframes fr{0%{opacity:.95;transform:scale(.12)}100%{opacity:0;transform:scale(1)}}
+.fs{fill:none;stroke:#fff;stroke-width:1.6;stroke-linecap:round;stroke-dasharray:.22 1;stroke-dashoffset:.22;opacity:0;animation:fs var(--t,3.6s) ease-in var(--d,0s) infinite}
+.fs.fsg{stroke:currentColor;stroke-width:6;filter:none}
+@keyframes fs{0%,62%{stroke-dashoffset:.22;opacity:0}64%{opacity:.95}82%{stroke-dashoffset:-1;opacity:.9}83%,100%{stroke-dashoffset:-1;opacity:0}}
+.fs.fsg{animation-name:fsg}
+@keyframes fsg{0%,62%{stroke-dashoffset:.22;opacity:0}64%{opacity:.4}82%{stroke-dashoffset:-1;opacity:.35}83%,100%{stroke-dashoffset:-1;opacity:0}}
+.fe{opacity:.2;animation:fe 3.2s ease-in-out infinite}
+@keyframes fe{0%,100%{opacity:.05;transform:scale(.7)}50%{opacity:.7;transform:scale(1.2)}}
+.fc{opacity:.4;animation:fc 2.4s ease-in-out infinite}
+@keyframes fc{0%,100%{opacity:.15;transform:scale(.8)}50%{opacity:.6;transform:scale(1.2)}}
+.fw{fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;opacity:0;animation:fw var(--t,4s) ease-in-out var(--d,0s) infinite}
+.fw.thin{stroke-width:1.5}
+@keyframes fw{0%{opacity:0;transform:translateY(22px)}30%{opacity:.6}100%{opacity:0;transform:translateY(-52px)}}
+.frr{animation:spin 20s linear infinite}.frr circle{fill:none;stroke:currentColor;stroke-width:1.2;stroke-dasharray:2 5;opacity:.7}.frr circle.in{stroke-dasharray:9 4;opacity:.4}.frr path{fill:currentColor;opacity:.85}
+.fry{animation:spin 30s linear infinite;opacity:.2}.fry path{fill:currentColor}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* scènes dessinées : le héros respire, l'effet pulse */
+.hand .shero,.bigc .shero{animation:breathe 3.2s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.4px)}}
+.hand .sfx,.bigc .sfx{animation:sfxp 2.2s ease-in-out infinite}
+@keyframes sfxp{0%,100%{opacity:.7}50%{opacity:1}}
+/* reflet qui balaie la carte */
+.card4::after{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;background:linear-gradient(112deg,transparent 38%,rgba(255,255,255,.2) 50%,transparent 62%);transform:translateX(-130%);animation:sheen 7s ease-in-out var(--sd,0s) infinite}
+@keyframes sheen{0%,70%{transform:translateX(-130%)}100%{transform:translateX(130%)}}
+.card4.played::after,.card4.empty::after,.card4.played .cfx,.card4.empty .cfx{display:none}
+.card4.played .aw,.card4.empty .aw,.card4.played .ghost{animation:none}
+/* distribution du deck */
+.deal .card4{animation:deal .5s cubic-bezier(.2,.9,.3,1.25) both;animation-delay:calc(var(--n,0)*42ms)}
+@keyframes deal{from{opacity:0;transform:translateY(46px) rotate(-9deg) scale(.7)}to{opacity:1;transform:none}}
+/* carte en grand : inclinaison et reflet */
+.card4.bigc,.card4.bigc:active{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .3s ease-out,box-shadow .3s}
+.card4.bigc.tilting{transition:transform .07s linear;box-shadow:0 18px 50px rgba(0,0,0,.8),0 0 34px -6px var(--glowc,#7fb4ff)}
+.card4.bigc::after{display:none}
+.bigc .art{touch-action:none}
+.bigc .aw .artimg:not(.ghost){transform:translate(var(--px,0px),var(--py,0px)) scale(1.05);transition:transform .12s linear}
+.bigc .cfx{transform:translate(calc(var(--px,0px)*-1.3),calc(var(--py,0px)*-1.3));transition:transform .12s linear}
+.glare{position:absolute;inset:0;z-index:4;pointer-events:none;border-radius:10px;background:radial-gradient(circle at var(--gx,50%) var(--gy,30%),rgba(255,255,255,.3),rgba(255,255,255,0) 46%),linear-gradient(115deg,transparent 28%,rgba(127,212,255,.13) 44%,rgba(180,140,255,.13) 56%,transparent 72%);mix-blend-mode:screen;opacity:0;transition:opacity .35s}
+.bigc.tilting .glare{opacity:1}
+/* carte jouée : plan de coupe */
+.cast{position:fixed;inset:0;z-index:90;background:rgba(4,5,8,.92);overflow:hidden;animation:castio 1.42s ease forwards;color:var(--glow,#9cf);cursor:pointer}
+@keyframes castio{0%{opacity:0}7%{opacity:1}84%{opacity:1}100%{opacity:0}}
+.cast-in{position:absolute;inset:0;animation:shk .3s linear .74s}
+.cast-lines i{position:absolute;left:0;height:2px;background:linear-gradient(90deg,transparent,#fff,transparent);opacity:0;animation:sline var(--t) linear var(--d) infinite}
+@keyframes sline{0%{transform:translateX(110vw);opacity:0}15%{opacity:.75}100%{transform:translateX(-70vw);opacity:0}}
+.cast-band{position:absolute;left:-12%;right:-12%;top:22%;height:38vh;transform:skewY(-7deg);overflow:hidden;border-top:3px solid currentColor;border-bottom:3px solid currentColor;box-shadow:0 0 46px -4px currentColor;background:#000;animation:bandin .32s cubic-bezier(.2,.9,.2,1) both}
+@keyframes bandin{from{clip-path:inset(50% 0)}to{clip-path:inset(0 0)}}
+.cast-art{position:absolute;inset:-14% 4%;animation:castpan 1.42s cubic-bezier(.1,.7,.2,1) both}
+@keyframes castpan{from{transform:skewY(7deg) translateX(8%) scale(1.12)}to{transform:skewY(7deg) translateX(-3%) scale(1.26)}}
+.cast-art img,.cast-art svg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cast-sheen{position:absolute;inset:0;background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,.5) 50%,transparent 65%);mix-blend-mode:screen;transform:translateX(-120%);animation:csheen .5s ease-out .3s forwards}
+@keyframes csheen{to{transform:translateX(120%)}}
+.cast-slash{position:absolute;inset:0;width:100%;height:100%;clip-path:inset(0 100% 0 0);filter:drop-shadow(0 0 12px currentColor);animation:cslash .16s ease-out .62s forwards,cout .3s ease 1s forwards}
+.cast-slash path{fill:#fff}
+@keyframes cslash{to{clip-path:inset(0 0 0 0)}}
+@keyframes cout{to{opacity:0}}
+.cast-ring{position:absolute;left:50%;top:41%;width:22vmin;height:22vmin;margin:-11vmin;border-radius:50%;border:4px solid currentColor;box-shadow:0 0 34px currentColor,inset 0 0 34px currentColor;opacity:0;animation:cring .55s ease-out .62s forwards}
+.cast-ring.r2{animation-delay:.74s;border-color:#fff}
+@keyframes cring{0%{opacity:1;transform:scale(.15)}100%{opacity:0;transform:scale(7)}}
+.cast-bolts{position:absolute;inset:0;width:100%;height:100%}
+.cast-bolts path{fill:none;stroke:#fff;stroke-width:2.5;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 6px currentColor);opacity:0;animation:cbolt .28s linear var(--d) forwards}
+@keyframes cbolt{0%{opacity:0}15%{opacity:1}40%{opacity:.2}60%{opacity:.9}100%{opacity:0}}
+.cast-fl{position:absolute;inset:0;background:#fff;opacity:0;mix-blend-mode:screen;animation:cfl .42s ease-out .72s forwards}
+@keyframes cfl{0%{opacity:.8}100%{opacity:0}}
+.cast-name{position:absolute;left:6vw;right:6vw;top:calc(22% + 38vh + 3vh);text-align:right;transform:skewY(-7deg)}
+.cast-name small{display:block;font:700 13px/1 system-ui,sans-serif;letter-spacing:.42em;text-transform:uppercase;color:currentColor;opacity:0;animation:cnm .3s ease .2s forwards}
+.cast-name b{display:block;margin-top:8px;font:italic 900 clamp(32px,11vw,62px)/.95 Georgia,serif;text-transform:uppercase;color:#fff;text-shadow:0 0 20px currentColor,3px 3px 0 #000;opacity:0;animation:cnb .36s cubic-bezier(.2,1.4,.4,1) .28s forwards}
+.cast-name.long b{font-size:clamp(22px,7.4vw,42px)}
+@keyframes cnm{to{opacity:.95}}
+@keyframes cnb{from{opacity:0;transform:translateX(70px) scale(1.3)}to{opacity:1;transform:none}}
+/* ===== Intros des onglets ===== */
+.tanim.intro{pointer-events:auto;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;--td:2.65s;overflow:hidden;background:radial-gradient(circle at 50% 40%,#1c1f2a 0,#07080b 72%);background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--ic,#7bd88f) 24%,#0c0d11) 0,#07080b 72%);animation:infade var(--td) ease forwards}
+@keyframes infade{0%{opacity:0}6%{opacity:1}80%{opacity:1}100%{opacity:0}}
+.in-bar{position:absolute;left:-10%;right:-10%;height:17vh;background:#020203;z-index:1}
+.in-bar.t{top:-5vh;transform:skewY(-4deg);border-bottom:2px solid var(--ic);box-shadow:0 0 24px -4px var(--ic);animation:inbt .5s cubic-bezier(.2,.9,.2,1) both}
+.in-bar.b{bottom:-5vh;transform:skewY(-4deg);border-top:2px solid var(--ic);box-shadow:0 0 24px -4px var(--ic);animation:inbb .5s cubic-bezier(.2,.9,.2,1) both}
+@keyframes inbt{from{transform:skewY(-4deg) translateY(-110%)}}
+@keyframes inbb{from{transform:skewY(-4deg) translateY(110%)}}
+.in-mote{position:absolute;width:4px;height:4px;border-radius:50%;background:var(--ic);box-shadow:0 0 6px var(--ic);opacity:0;animation:inmote var(--t) linear var(--d) infinite}
+@keyframes inmote{0%{opacity:0;translate:0 0}20%{opacity:.8}100%{opacity:0;translate:var(--dx) var(--dy)}}
+.in-stage{position:relative;width:100%;height:min(42vh,300px);display:grid;place-items:center;z-index:2}
+.in-emb{position:relative;display:grid;place-items:center;width:100%}
+.in-halo{position:absolute;left:50%;top:50%;width:min(96vw,420px);aspect-ratio:1;margin:calc(min(96vw,420px)/-2);border-radius:50%;background:repeating-conic-gradient(from 0deg,var(--ic) 0 5deg,transparent 5deg 18deg);-webkit-mask:radial-gradient(circle,#000 8%,transparent 66%);mask:radial-gradient(circle,#000 8%,transparent 66%);opacity:0;animation:spin 16s linear infinite,halo 2.6s ease both}
+@keyframes halo{0%{opacity:0}18%{opacity:.34}75%{opacity:.26}100%{opacity:0}}
+.in-t{position:relative;z-index:2;text-align:center;padding:0 18px}
+.in-name{font:800 clamp(32px,10.5vw,54px)/1 Georgia,serif;letter-spacing:.12em;text-transform:uppercase;color:#f6eed8;text-shadow:0 0 24px var(--ic),0 2px 0 #000}
+.in-name span{display:inline-block;opacity:0;animation:inl .46s cubic-bezier(.2,1.2,.4,1) forwards;animation-delay:calc(.28s + var(--i)*45ms)}
+@keyframes inl{from{opacity:0;transform:translateY(20px) scale(1.5);filter:blur(7px)}to{opacity:1;transform:none;filter:none}}
+.tanim .in-ul{display:block;width:min(64vw,270px);height:12px;margin:9px auto 7px;overflow:visible}
+.in-ul path{fill:none;stroke:var(--ic);stroke-width:3;stroke-linecap:round;vector-effect:non-scaling-stroke;stroke-dasharray:1;stroke-dashoffset:1;animation:draw1 .5s ease-out .62s forwards}
+@keyframes draw1{to{stroke-dashoffset:0}}
+.in-sub{font-size:14.5px;color:#d3d6dc;opacity:0;animation:insub .4s ease .82s forwards}
+@keyframes insub{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.in-skip{position:absolute;left:0;right:0;bottom:calc(20px + env(safe-area-inset-bottom));text-align:center;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:#8d9099;z-index:3}
+.swords.inl{position:relative;inset:auto;z-index:auto;background:none;animation:swfade 2.5s ease forwards;width:100%}
+.swords.inl svg{width:min(70vw,290px)}
+/* carte du monde */
+.mp-sheet{transform-origin:0 0;animation:mpin .6s cubic-bezier(.2,1.1,.4,1) .1s both}
+@keyframes mpin{0%{transform:scale(.1,.02) rotate(-10deg);opacity:0}55%{transform:scale(1.05,.35) rotate(2deg);opacity:1}100%{transform:none;opacity:1}}
+.mp-route{stroke-dashoffset:102;animation:mproute .8s ease-in-out .7s forwards}
+@keyframes mproute{to{stroke-dashoffset:2}}
+.mp-start{transform-box:fill-box;transform-origin:center;animation:stamp .25s cubic-bezier(.3,1.6,.5,1) .6s both}
+.mp-x{transform-box:fill-box;transform-origin:center;animation:stamp .32s cubic-bezier(.3,1.6,.5,1) 1.5s both}
+@keyframes stamp{from{opacity:0;transform:scale(3.2) rotate(-25deg)}to{opacity:1;transform:none}}
+.mp-rose{transform-box:fill-box;transform-origin:center;animation:rosein 1.1s cubic-bezier(.2,.9,.3,1.1) .45s both}
+@keyframes rosein{from{opacity:0;transform:scale(.2) rotate(-300deg)}to{opacity:1;transform:rotate(18deg)}}
+/* sablier */
+.hg{transform-origin:0 0;animation:hgflip .75s cubic-bezier(.3,1.35,.5,1) .05s both}
+@keyframes hgflip{from{opacity:0;transform:rotate(-180deg) scale(.5)}to{opacity:1;transform:none}}
+.hg-top{transform-box:fill-box;transform-origin:50% 100%;animation:hgtop 1.5s linear .75s both}
+@keyframes hgtop{from{transform:scaleY(1)}to{transform:scaleY(.08)}}
+.hg-bot{transform-box:fill-box;transform-origin:50% 100%;animation:hgbot 1.5s linear .75s both}
+@keyframes hgbot{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.hg-str{opacity:0;animation:hgstr .25s linear .75s 7}
+@keyframes hgstr{from{opacity:1;stroke-dashoffset:0}to{opacity:1;stroke-dashoffset:-9}}
+.hg-day{fill:#3a4252;stroke:#bfe8ff;stroke-width:1.2;transform-box:fill-box;transform-origin:center;transform:rotate(45deg);opacity:0;animation:hgday .3s ease forwards;animation-delay:calc(.7s + var(--i)*.13s)}
+.hg-day.on{animation-name:hgdayon}
+@keyframes hgday{from{opacity:0;transform:rotate(45deg) scale(.2)}to{opacity:1;transform:rotate(45deg)}}
+@keyframes hgdayon{from{opacity:0;transform:rotate(45deg) scale(.2)}to{opacity:1;transform:rotate(45deg) scale(1.5);fill:#f2d16b}}
+/* journal */
+.jr-page{transform-origin:0 0;animation:mpin .55s cubic-bezier(.2,1.1,.4,1) .05s both}
+.jr-l{fill:none;stroke:#2a2238;stroke-width:2.6;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;animation:draw1 .34s linear forwards;animation-delay:calc(.55s + var(--i)*.375s)}
+.jr-q{opacity:0;animation:jrq 1.5s linear .55s forwards}
+@keyframes jrq{0%{opacity:1;transform:translate(-76px,-50px)}22%{transform:translate(78px,-52px)}25%{transform:translate(-76px,-18px)}47%{transform:translate(78px,-20px)}50%{transform:translate(-76px,14px)}72%{transform:translate(78px,12px)}75%{transform:translate(-76px,46px)}92%{transform:translate(4px,38px)}100%{opacity:1;transform:translate(30px,14px)}}
+.jr-qi{transform-origin:0 0;animation:jrw .11s ease-in-out infinite alternate}
+@keyframes jrw{from{transform:rotate(-5deg)}to{transform:rotate(4deg)}}
+@media (prefers-reduced-motion:reduce){.cfx,.card4::after,.artimg.ghost{display:none}.aw,.deal .card4{animation:none}}
+.intro .eye{animation-duration:2.15s}.intro .popring,.intro .drop{animation-delay:1.52s}
+/* économie : les cartes hors écran ou masquées par un panneau ne s'animent pas */
+.deck .card4,.hand .card4{content-visibility:auto}
+body:has(.cast,.tanim,.modal) #app .card4 *,body:has(.cast,.tanim,.modal) #app .card4::after{animation-play-state:paused}
