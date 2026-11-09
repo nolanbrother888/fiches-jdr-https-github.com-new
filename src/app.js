@@ -37,7 +37,7 @@ function blank(){
     car:{for:10,dex:10,con:10,int:10,sag:10,cha:10},sauv:{},maitriseAuto:true,maitrise:2,comp:{},compBonus:{},inspiration:0,
     pv:{act:10,max:10,temp:0},ca:10,initBonus:0,vitesse:9,desVie:"",dsSucc:0,dsEch:0,tombe0:0,morts:0,armure:"Aucune",res:{},etats:[],epuisement:0,attaques:[],
     sortCar:"int",slots:Array.from({length:9},()=>({max:0,used:0})),pacte:{niv:1,max:0,used:0},sorts:[],ressources:[],
-    monnaie:{pc:0,pa:0,pe:0,po:0,pp:0},monnaieCustom:[],maxMagEquip:4,items:[],dons:[],histoire:"",notes:"",custom:[],retire:false,updated:Date.now()};
+    monnaie:{pc:0,pa:0,pe:0,po:0,pp:0},monnaieCustom:[],maxMagEquip:4,items:[],dons:[],histoire:"",notes:"",custom:[],passifs:[],retire:false,updated:Date.now()};
 }
 function normPerso(c){const b=blank();for(const k in b){if(c[k]===undefined)c[k]=b[k]}if(!Array.isArray(c.slots)||c.slots.length<9)c.slots=b.slots;return c}
 const level=c=>Math.max(1,c.classes.reduce((a,x)=>a+num(x.niv),0));
@@ -95,7 +95,7 @@ function subscribe(){
     },()=>setStatus("Hors ligne, enregistré sur l'appareil"));
   });
   ["journal","commun","planning","combat"].forEach(k=>{
-    fs.onSnapshot(ref("groupe",k),snap=>{if(k!=="combat"&&busyKey(keyOf("groupe",k)))return;if(snap.exists()){G[k]=Object.assign(GDEF()[k],clone(snap.data()));lsSave();softRender()}},()=>{});
+    fs.onSnapshot(ref("groupe",k),snap=>{if(k!=="combat"&&busyKey(keyOf("groupe",k)))return;if(snap.exists()){if(k==="combat"){const was=G.combat&&G.combat.actif,now=snap.data().actif;if(now&&!was&&started&&G.combat)swordsAnim(true)}G[k]=Object.assign(GDEF()[k],clone(snap.data()));lsSave();softRender()}},()=>{});
   });
   fs.onSnapshot(fs.collection(db,"users"),snap=>{snap.docs.forEach(d=>USERS.set(d.id,d.data().nom||""));softRender()},()=>{});
 }
@@ -261,8 +261,7 @@ function pane(c){
     RES.map(([k,n])=>{const mx=k==="physique"?cap:100;const v=Math.min(num(c.res[k]||0),mx);return '<div class="res"><span class="small">'+n+'</span><input type="range" min="0" max="'+mx+'" step="5" data-k="res.'+k+'" data-t="n" value="'+v+'"><span data-d="res:'+k+'">'+v+'%</span></div>'}).join("")+'</div>'+
     '<div class="card"><h3>États</h3><div class="chips">'+ETATS.map(e=>'<button class="chip '+(c.etats.includes(e)?"on":"")+'" data-etat="'+e+'">'+e+'</button>').join("")+'</div>'+
     '<label class="f" style="margin-top:12px">Épuisement (niveau 0 à 6)</label><div class="pips">'+[1,2,3,4,5,6].map(i=>'<button class="pip bad '+(c.epuisement>=i?"on":"")+'" data-pip="epuisement" data-v="'+i+'"></button>').join("")+'</div></div>'+
-    '<div class="card"><h3>Attaques</h3><div class="list">'+c.attaques.map((a,i)=>'<div class="it"><div class="grow"><input placeholder="Arme / attaque" data-k="attaques.'+i+'.nom" value="'+esc(a.nom)+'"><div class="grid g2"><input placeholder="Bonus (ex : +9)" data-k="attaques.'+i+'.bonus" value="'+esc(a.bonus)+'"><input placeholder="Dégâts (ex : 1d8+5 tr.)" data-k="attaques.'+i+'.degats" value="'+esc(a.degats)+'"></div></div><button class="del" data-rm="attaques.'+i+'">✕</button></div>').join("")+
-    '</div><button class="btn add" data-push="attaques">+ Attaque</button></div>';}
+    atkEditor(c);}
 
   case "sorts": return '<div class="card"><h3>Incantation</h3><label class="f">Caractéristique d\'incantation</label><select data-k="sortCar">'+ABS.map(([k,n])=>'<option value="'+k+'" '+(c.sortCar===k?"selected":"")+'>'+n+'</option>').join("")+'</select>'+
     '<div class="big" style="margin-top:10px;grid-template-columns:1fr 1fr"><div><div class="small mute">DD des sorts</div><div class="v" data-d="dd"></div></div><div><div class="small mute">Attaque de sort</div><div class="v" data-d="satk"></div></div></div></div>'+
@@ -350,6 +349,8 @@ app.addEventListener("input",e=>{
   const el=e.target;
   if(el.id==="bibq"){state.bibQ=el.value;clearTimeout(rerenderPane.q);rerenderPane.q=setTimeout(()=>{rerenderPane();const i=document.getElementById("bibq");if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}},250);return}
   if(el.id==="bibniv"){state.bibNiv=el.value;rerenderPane();return}
+  if(el.dataset.atkin!==undefined){const i=el.dataset.atkin;(state.atkIn[i]=state.atkIn[i]||{})[el.dataset.j]=el.value;return}
+  if(el.dataset.atkcrit!==undefined){(state.atkIn[el.dataset.atkcrit]=state.atkIn[el.dataset.atkcrit]||{}).crit=el.checked;return}
   if(readOnly)return;
   if(el.dataset.cinit||el.dataset.cpv||el.dataset.cpvmax){const id=el.dataset.cinit||el.dataset.cpv||el.dataset.cpvmax;const f=el.dataset.cinit?"init":el.dataset.cpv?"pv":"pvmax";const l=(G.combat.lignes||{})[id];if(!l)return;
     const v=el.value===""&&f==="init"?"":num(el.value);l[f]=v;clearTimeout(cbTimers[id+f]);cbTimers[id+f]=setTimeout(()=>cbUpdate({["lignes."+id+"."+f]:v}),600);return}
@@ -370,7 +371,7 @@ app.addEventListener("change",e=>{
 app.addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;const c=cur();const d=b.dataset;
   if(d.open){state.cur=d.open;state.view="sheet";state.tab="id";render();window.scrollTo(0,0);return}
-  if(d.htab){state.view="home";state.home=d.htab;render();window.scrollTo(0,0);return}
+  if(d.htab){if(d.htab==="combat"&&state.home!=="combat")swordsAnim(false);state.view="home";state.home=d.htab;render();window.scrollTo(0,0);return}
   if(d.tab){state.tab=d.tab;render();window.scrollTo(0,0);return}
   if(d.pf){state.persoFilter=d.pf;rerenderPane();return}
   if(d.bt&&!d.act){state.bibType=d.bt;state.bibNiv="";rerenderPane();return}
@@ -392,8 +393,8 @@ app.addEventListener("click",e=>{
   if(d.rm){const ks=d.rm.split(".");const i=num(ks.pop());const arr=getP(c,ks.join("."));
     if(ks[0]==="classes"&&arr.length<=1){toast("Il faut au moins une classe");return}
     arr.splice(i,1);schedule(c);rerenderPane();return}
-  if(d.push){const T={classes:{nom:"",sous:"",niv:1},attaques:{nom:"",bonus:"",degats:""},ressources:{nom:"",act:0,max:0,reset:"Repos long"},sorts:{niv:1,nom:"",prep:false,conc:false,note:""},dons:{nom:"",desc:""},monnaieCustom:{nom:"",val:0}};
-    c[d.push].push(clone(T[d.push]));schedule(c);rerenderPane();return}
+  if(d.push){const T={classes:{nom:"",sous:"",niv:1},attaques:{nom:"",bonus:"",degats:""},ressources:{nom:"",act:0,max:0,reset:"Repos long"},sorts:{niv:1,nom:"",prep:false,conc:false,note:""},dons:{nom:"",desc:""},monnaieCustom:{nom:"",val:0},des:{n:"1d6",type:""},fixe:{label:"",val:1,type:""},pct:{label:"",val:10,type:""},passifs:{label:"",val:0,type:"",parTour:false}};
+    let arr=getP(c,d.push);if(!Array.isArray(arr)){setP(c,d.push,[]);arr=getP(c,d.push)}arr.push(clone(T[d.push.split(".").pop()]));schedule(c);rerenderPane();return}
 });
 function act(a,c,d){
   if(a==="back"){state.view="home";render();window.scrollTo(0,0);return}
@@ -401,6 +402,8 @@ function act(a,c,d){
   if(a==="logout"){signOut(window.__auth).then(()=>location.reload());return}
   if(a==="seed"){act.seeding||(act.seeding=1,importSeed());return}
   if(a==="eco"||a==="ecoreset"||a==="sexp"||a==="cbperso"){combatAct(a,d);return}
+  if(a==="ptog"){const k="p_"+d.l;state.eco[k]=!state.eco[k];rerenderPane();return}
+  if(a==="atkgo"&&c){computeAtk(c,+d.i);rerenderPane();return}
   if(a==="togpast"){state.showPast=!state.showPast;rerenderPane();return}
   if(readOnly)return;
   if(combatAct(a,d))return;
@@ -416,6 +419,9 @@ function act(a,c,d){
   if(a==="mine"){if(c.ownerId&&c.ownerId!==myId)return;c.ownerId=myId||"";schedule(c);render();toast("C'est maintenant ton perso");return}
   if(!canEdit(c))return;
   if(a==="cast"){castSpell(c,+d.i);return}
+  if(a==="atknew"){c.attaques.push({nom:"",main:"",carac:"dex",maitrise:true,modDegats:true,bonusToucher:0,des:[{n:"1d8",type:"tranchant"}],fixe:[],pct:[],degats:""});schedule(c);rerenderPane();return}
+  if(a==="atkstruct"){const x=c.attaques[+d.i];Object.assign(x,{main:"",carac:"dex",maitrise:true,modDegats:true,bonusToucher:0,des:[{n:"1d8",type:""}],fixe:[],pct:[]});schedule(c);rerenderPane();return}
+  if(a==="atkpreset"){applyPreset(c);schedule(c);rerenderPane();toast("Armes préremplies : vérifie les dés de Kuroi Ventus");return}
   if(a==="slotcalc"){const r=calcSlots(c);return confirmBox("Mettre tes emplacements selon les règles D&D ? "+slotText(r)+".",()=>{applySlots(c);state.showCalc=false;schedule(c);rerenderPane();toast("Emplacements mis à jour")},"Appliquer")}
   if(a==="release"){c.ownerId="";schedule(c);render();toast("Fiche libérée");return}
   if(a==="pickbib")return pickBib(c,d.bt);
@@ -475,6 +481,84 @@ function ioModal(){
   const im=m.querySelector("[data-im]");if(im)im.onclick=()=>{try{let d=JSON.parse(m.querySelector("#imp").value);if(!Array.isArray(d))d=[d];let n=0;
     d.forEach(x=>{if(x&&typeof x==="object"&&x.car&&x.id){const c=normPerso(clone(x));S.persos.set(c.id,c);save("persos",c.id,true);n++}});
     m.remove();render();toast(n+" fiche(s) importée(s)")}catch(e){toast("Texte invalide")}};
+}
+
+// ---------- Attaques : calcul automatique des dégâts ----------
+const TYPES=["tranchant","perforant","contondant","nécrotique","radiant","feu","froid","foudre","tonnerre","poison","acide","force","psychique","vitalité"];
+const MAINS={D:"Main droite",G:"Main gauche","":""};
+const atkHit=(c,a)=>(a.carac?mod(c.car[a.carac]):0)+(a.maitrise!==false&&a.carac?prof(c):0)+num(a.bonusToucher);
+const isStruct=a=>Array.isArray(a.des);
+function typeSel(path,val){return '<select data-k="'+path+'" class="tsel"><option value=""'+(val?"":" selected")+'>(type)</option>'+TYPES.map(t=>'<option'+(t===val?" selected":"")+'>'+t+'</option>').join("")+(val&&!TYPES.includes(val)?'<option selected>'+esc(val)+'</option>':'')+'</select>'}
+// Éditeur dans la fiche (onglet Combat)
+function atkEditor(c){
+  return '<div class="card"><h3>Attaques</h3><div class="hint" style="margin:-4px 0 8px">Décris chaque arme une fois : l\'onglet ⚔️ Combat calculera tes dégâts à partir de tes vrais jets de dés.</div>'+
+  c.attaques.map((a,i)=>{const P="attaques."+i;
+    if(!isStruct(a))return '<div class="atkcard"><div class="row"><input placeholder="Arme / attaque" data-k="'+P+'.nom" value="'+esc(a.nom)+'"><button class="del" data-rm="'+P+'">✕</button></div><div class="grid g2" style="margin-top:6px"><input placeholder="Bonus" data-k="'+P+'.bonus" value="'+esc(a.bonus)+'"><input placeholder="Dégâts" data-k="'+P+'.degats" value="'+esc(a.degats)+'"></div><button class="btn sm" data-act="atkstruct" data-i="'+i+'" style="margin-top:8px">⚙️ Activer le calcul automatique</button></div>';
+    return '<div class="atkcard"><div class="row"><input placeholder="Arme / attaque" data-k="'+P+'.nom" value="'+esc(a.nom)+'"><button class="del" data-rm="'+P+'">✕</button></div>'+
+    '<div class="grid g3" style="margin-top:8px"><div><label class="f">Main</label><select data-k="'+P+'.main"><option value="">-</option><option value="D"'+(a.main==="D"?" selected":"")+'>Droite</option><option value="G"'+(a.main==="G"?" selected":"")+'>Gauche</option></select></div>'+
+    '<div><label class="f">Caractéristique</label><select data-k="'+P+'.carac" data-rr><option value="">Aucune</option>'+ABS.map(([k,n])=>'<option value="'+k+'"'+(a.carac===k?" selected":"")+'>'+n+'</option>').join("")+'</select></div>'+
+    '<div><label class="f">Bonus toucher</label><input type="number" data-k="'+P+'.bonusToucher" data-t="n" value="'+num(a.bonusToucher)+'"></div></div>'+
+    '<div class="row small" style="margin-top:6px;gap:14px;flex-wrap:wrap"><label class="row"><input type="checkbox" class="tog" data-k="'+P+'.maitrise" '+(a.maitrise!==false?"checked":"")+'> Maîtrise au toucher</label><label class="row"><input type="checkbox" class="tog" data-k="'+P+'.modDegats" '+(a.modDegats!==false?"checked":"")+'> Ajouter la carac. aux dégâts</label><label class="row"><input type="checkbox" class="tog" data-k="'+P+'.sansPassifs" '+(a.sansPassifs?"checked":"")+'> Sans bonus passifs</label></div>'+
+    '<div class="small" style="margin-top:6px">Toucher : <b>'+sg(atkHit(c,a))+'</b></div>'+
+    '<label class="f" style="margin-top:10px">Dés de dégâts</label>'+(a.des||[]).map((d,j)=>'<div class="row" style="margin-bottom:6px"><input style="width:80px" placeholder="1d8" data-k="'+P+'.des.'+j+'.n" value="'+esc(d.n)+'">'+typeSel(P+'.des.'+j+'.type',d.type)+'<button class="del" data-rm="'+P+'.des.'+j+'">✕</button></div>').join("")+'<button class="btn sm" data-push="'+P+'.des">+ Dé</button>'+
+    '<label class="f" style="margin-top:10px">Bonus fixes de cette arme</label>'+(a.fixe||[]).map((d,j)=>'<div class="row" style="margin-bottom:6px"><input placeholder="Nom" data-k="'+P+'.fixe.'+j+'.label" value="'+esc(d.label)+'"><input style="width:60px" type="number" data-k="'+P+'.fixe.'+j+'.val" data-t="n" value="'+num(d.val)+'">'+typeSel(P+'.fixe.'+j+'.type',d.type)+'<button class="del" data-rm="'+P+'.fixe.'+j+'">✕</button></div>').join("")+'<button class="btn sm" data-push="'+P+'.fixe">+ Bonus fixe</button>'+
+    '<label class="f" style="margin-top:10px">Bonus en % de cette arme</label>'+(a.pct||[]).map((d,j)=>'<div class="row" style="margin-bottom:6px"><input placeholder="Nom" data-k="'+P+'.pct.'+j+'.label" value="'+esc(d.label)+'"><input style="width:60px" type="number" data-k="'+P+'.pct.'+j+'.val" data-t="n" value="'+num(d.val)+'"><span>%</span>'+typeSel(P+'.pct.'+j+'.type',d.type)+'<button class="del" data-rm="'+P+'.pct.'+j+'">✕</button></div>').join("")+'<button class="btn sm" data-push="'+P+'.pct">+ Bonus en %</button>'+
+    '<input placeholder="Note (portée, effet…)" data-k="'+P+'.degats" value="'+esc(a.degats)+'" style="margin-top:10px"></div>'}).join("")+
+  '<button class="btn add" data-act="atknew">+ Attaque</button>'+
+  '<h3 style="margin-top:16px">Bonus passifs sur toutes tes attaques d\'arme</h3><div class="hint" style="margin:-4px 0 8px">Ex : Courroux du génie (+ maîtrise, 1 fois par tour), un objet qui donne +1 dégât…</div>'+
+  (c.passifs||[]).map((p,j)=>'<div class="atkcard"><div class="row"><input placeholder="Nom" data-k="passifs.'+j+'.label" value="'+esc(p.label)+'"><input style="width:60px" type="number" data-k="passifs.'+j+'.val" data-t="n" value="'+num(p.val)+'"><button class="del" data-rm="passifs.'+j+'">✕</button></div><div class="row" style="margin-top:6px">'+typeSel('passifs.'+j+'.type',p.type)+'<label class="row small"><input type="checkbox" class="tog" data-k="passifs.'+j+'.parTour" '+(p.parTour?"checked":"")+'> 1 fois par tour</label></div></div>').join("")+
+  '<button class="btn add" data-push="passifs">+ Bonus passif</button>'+
+  (presetFor(c)?'<button class="btn pri" data-act="atkpreset" style="width:100%;margin-top:10px">⚔️ Préremplir avec tes armes ('+esc(c.nom)+')</button>':'')+'</div>';
+}
+// Calculateur dans l'onglet Combat
+state.atkIn={};state.atkRes={};
+function atkCalc(c){
+  if(!c.attaques.length)return '<div class="small mute">Ajoute tes attaques dans l\'onglet Combat de ta fiche.</div>'+(presetFor(c)?'<button class="btn pri" data-act="atkpreset" style="width:100%;margin-top:8px">⚔️ Préremplir avec tes armes</button>':'');
+  const tp=(c.passifs||[]).filter(p=>p.parTour);
+  return (tp.length?'<div class="chips" style="margin-bottom:8px">'+tp.map(p=>{const used=state.eco["p_"+p.label];return '<button class="chip '+(used?"used":"on")+'" data-act="ptog" data-l="'+esc(p.label)+'">'+(used?"✓ ":"")+esc(p.label)+' +'+num(p.val)+(used?" (utilisé)":" dispo")+'</button>'}).join("")+'</div>':'')+
+  c.attaques.map((a,i)=>{
+    if(!isStruct(a))return '<div class="atk"><b>'+esc(a.nom||"Attaque")+'</b><span>'+esc(a.bonus||"")+'</span><span class="mute">'+esc(a.degats||"")+'</span></div>';
+    const inp=state.atkIn[i]||{};const res=state.atkRes[i];
+    return '<div class="atkc"><div class="row"><b style="flex:1">'+esc(a.nom||"Attaque")+'</b>'+(a.main?'<span class="tag">'+MAINS[a.main]+'</span>':'')+(a.carac?'<span class="tag">'+sg(atkHit(c,a))+' toucher</span>':'')+'</div>'+
+    (a.degats?'<div class="small mute">'+esc(a.degats)+'</div>':'')+
+    '<div class="dice">'+(a.des||[]).map((d,j)=>'<label class="dl"><span>'+esc(d.n||"dé")+' '+esc(d.type||"")+'</span><input type="number" inputmode="numeric" placeholder="jet" data-atkin="'+i+'" data-j="'+j+'" value="'+(inp[j]??"")+'"></label>').join("")+'</div>'+
+    '<div class="row" style="margin-top:6px"><label class="row small" style="flex:1"><input type="checkbox" class="tog" data-atkcrit="'+i+'" '+(inp.crit?"checked":"")+'> Critique (lance 2× les dés)</label><button class="btn sm pri" data-act="atkgo" data-i="'+i+'">Calculer</button></div>'+
+    (res?'<div class="atkres">'+res+'</div>':'')+'</div>'}).join("");
+}
+function computeAtk(c,i){
+  const a=c.attaques[i];const inp=state.atkIn[i]||{};const lines=[];const byType={};
+  const add=(label,v,type)=>{if(!v)return;lines.push([label,v,type||""]);const t=type||"(arme)";byType[t]=(byType[t]||0)+v};
+  (a.des||[]).forEach((d,j)=>add("Jet "+(d.n||"")+(inp.crit?" (critique)":""),num(inp[j]),d.type||(a.des[0]&&a.des[0].type)));
+  const mainType=(a.des&&a.des[0]&&a.des[0].type)||"";
+  if(a.carac&&a.modDegats!==false)add(ABN[a.carac],mod(c.car[a.carac]),mainType);
+  (a.fixe||[]).forEach(f=>add(f.label||"Bonus",num(f.val),f.type||mainType));
+  if(!a.sansPassifs)(c.passifs||[]).forEach(p=>{if(p.parTour){if(state.eco["p_"+p.label])return;state.eco["p_"+p.label]=true}add(p.label+(p.parTour?" (1×/tour)":""),num(p.val),p.type||mainType)});
+  const pl=[];(a.pct||[]).forEach(p=>{const base=byType[p.type||mainType]||0;const b=Math.floor(base*num(p.val)/100);if(b){pl.push([p.label+" +"+num(p.val)+" % "+(p.type||""),b,p.type||mainType]);byType[p.type||mainType]=base+b}});
+  const total=Object.values(byType).reduce((s,v)=>s+v,0);
+  state.atkRes[i]=lines.concat(pl).map(([l,v,t])=>'<div class="rl"><span>'+esc(l)+'</span><b>'+sg(v)+'</b><span class="mute">'+esc(t)+'</span></div>').join("")+
+    '<div class="rt">Total : <b>'+total+'</b> dégâts</div><div class="small mute">'+Object.entries(byType).map(([t,v])=>v+" "+t).join(" · ")+'</div>';
+}
+// Préréglages connus
+function presetFor(c){return c.nom==="Seiko"&&!c.attaques.some(isStruct)?"seiko":""}
+function applyPreset(c){
+  if(presetFor(c)!=="seiko")return;
+  const keep=c.attaques.filter(a=>!/^Ruine|^Lance|^Kuroi/i.test(a.nom||""));
+  c.attaques=[
+    {nom:"Kuroi Ventus de Berilium",main:"D",carac:"dex",maitrise:true,modDegats:true,bonusToucher:0,des:[{n:"1d8",type:"tranchant"}],fixe:[],pct:[],degats:"Dés à vérifier"},
+    {nom:"Ruine",main:"G",carac:"dex",maitrise:true,modDegats:true,bonusToucher:0,des:[{n:"1d8",type:"tranchant"},{n:"1d8",type:"nécrotique"}],fixe:[],pct:[{label:"Ruine",val:10,type:"nécrotique"}],degats:"Avaleuse de vie : +1d8 nécrotique"},
+    {nom:"Tempête nécrotique (Ruine, 1 charge)",main:"",carac:"",maitrise:false,modDegats:false,sansPassifs:true,bonusToucher:0,des:[{n:"4d6",type:"nécrotique"}],fixe:[],pct:[{label:"Ruine",val:10,type:"nécrotique"}],degats:"1 action, une cible à 9 m"}
+  ].concat(keep.filter(a=>!/Tempête/i.test(a.nom||"")));
+  c.passifs=[{label:"Courroux du génie",val:prof(c),type:"",parTour:true},{label:"Totem de force Brutus",val:1,type:"",parTour:false}];
+}
+// Animation des épées croisées
+function swordsAnim(big){
+  try{if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return}catch(e){}
+  const sw='<g class="sw"><rect x="-4" y="-150" width="8" height="140" rx="2" fill="url(#bl)"/><polygon points="-4,-150 4,-150 0,-168" fill="#e9eef5"/><rect x="-26" y="-12" width="52" height="9" rx="4" fill="#c9a24a"/><rect x="-4" y="-3" width="8" height="34" rx="3" fill="#5b3a22"/><circle cx="0" cy="36" r="7" fill="#c9a24a"/></g>';
+  const d=document.createElement("div");d.className="swords"+(big?" big":"");
+  d.innerHTML='<svg viewBox="-150 -150 300 300"><defs><linearGradient id="bl" x1="0" x2="1"><stop offset="0" stop-color="#9aa6b5"/><stop offset=".5" stop-color="#f4f7fb"/><stop offset="1" stop-color="#8793a3"/></linearGradient></defs>'+
+    '<g class="swl"><g transform="translate(0,70)">'+sw+'</g></g><g class="swr"><g transform="translate(0,70)">'+sw+'</g></g><g class="spark"><circle r="22" fill="#fff6c8"/><path d="M0-48L8-10 46-14 12 4 30 40 0 14-30 40-12 4-46-14-8-10Z" fill="#ffd34d"/></g></svg>'+(big?'<div class="swt">Au combat !</div>':'');
+  document.body.appendChild(d);setTimeout(()=>d.remove(),big?1700:1250);
+  try{navigator.vibrate&&navigator.vibrate(big?[40,60,40]:30)}catch(e){}
 }
 
 // ---------- Combat ----------
@@ -548,7 +632,7 @@ function combatSheet(c){
     (c.pv.act===0?'<div class="ds"><b>À terre : jets contre la mort</b><div class="row" style="justify-content:space-between;margin-top:6px"><span class="small">Succès</span><div class="pips">'+[1,2,3].map(i=>'<button class="pip '+(c.dsSucc>=i?"on":"")+'" data-pip="dsSucc" data-v="'+i+'"></button>').join("")+'</div><span class="small">Échecs</span><div class="pips">'+[1,2,3].map(i=>'<button class="pip bad '+(c.dsEch>=i?"on":"")+'" data-pip="dsEch" data-v="'+i+'"></button>').join("")+'</div></div></div>':'')+
     '<div class="stats4"><div><small>CA</small><b>'+c.ca+'</b></div><div><small>Init</small><b data-d="init"></b></div><div><small>Perc. pass.</small><b data-d="pp"></b></div><div><small>DD sorts</small><b data-d="dd"></b></div></div>'+
     '<div class="catt">Ce tour-ci</div><div class="eco">'+ECO.map(([k,l])=>'<button class="chip ecob '+(state.eco[k]?"used":"")+'" data-act="eco" data-e="'+k+'">'+(state.eco[k]?"✓ ":"")+l+'</button>').join("")+'<button class="chip" data-act="ecoreset" title="Nouveau tour">↺</button></div>'+
-    '<div class="catt">Attaques</div>'+(c.attaques.length?c.attaques.map(a=>'<div class="atk"><b>'+esc(a.nom||"Attaque")+'</b><span>'+esc(a.bonus||"")+'</span><span class="mute">'+esc(a.degats||"")+'</span></div>').join(""):'<div class="small mute">Ajoute tes attaques dans l\'onglet Combat de ta fiche.</div>')+
+    '<div class="catt">Attaques et dégâts</div>'+atkCalc(c)+
     (c.ressources.length?'<div class="catt">Charges et ressources</div>'+c.ressources.map((x,i)=>'<div class="row res2"><span class="grow small">'+esc(x.nom)+'</span><div class="counter"><button data-inc="ressources.'+i+'.act" data-v="-1" data-min="0">−</button><input type="number" data-k="ressources.'+i+'.act" data-t="n" value="'+num(x.act)+'"><button data-inc="ressources.'+i+'.act" data-v="1">+</button></div><span class="small mute">/ '+num(x.max)+'</span></div>').join(""):'')+
     '<div class="catt">Emplacements de sorts</div>'+(slotRows||'<div class="small mute">Aucun emplacement renseigné.</div>')+
     (canCalc&&(noSlots||state.showCalc)?'<button class="btn add" data-act="slotcalc">✨ Calculer mes emplacements (règles D&D) : '+esc(slotText(r))+'</button>':'')+
@@ -571,7 +655,7 @@ function castSpell(c,i){
 }
 function combatAct(a,d){
   const cb=G.combat||GDEF().combat;
-  if(a==="cbstart"){const lignes={};persos().filter(p=>!p.retire).forEach(p=>{lignes["p"+p.id]={nom:p.nom,init:"",persoId:p.id}});G.combat={actif:true,round:1,tour:"",lignes};save("groupe","combat",true);rerenderPane();return true}
+  if(a==="cbstart"){swordsAnim(true);const lignes={};persos().filter(p=>!p.retire).forEach(p=>{lignes["p"+p.id]={nom:p.nom,init:"",persoId:p.id}});G.combat={actif:true,round:1,tour:"",lignes};save("groupe","combat",true);rerenderPane();return true}
   if(a==="cbend")return confirmBox("Terminer le combat ? L'ordre d'initiative sera effacé.",()=>{G.combat={actif:false,round:1,tour:"",lignes:{}};save("groupe","combat",true);state.eco={};rerenderPane()},"Terminer"),true;
   if(a==="cbnext"){const L=lignesTriees(cb);if(!L.length)return true;const i=L.findIndex(l=>l.id===cb.tour);let tour,round=num(cb.round||1);
     if(i<0)tour=L[0].id;else if(i>=L.length-1){tour=L[0].id;round++}else tour=L[i+1].id;
