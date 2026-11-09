@@ -849,7 +849,7 @@ function deckCards(c){
 const ECOI={action:"⚔",bonus:"✦",reac:"↺",passif:"◈",libre:"•"};
 const TYPEL={attaque:"Attaque",sort:"Sort",capacite:"Capacité"};
 // Illustrations fournies par les joueurs (perso | début du nom de carte | type)
-const CARD_IMGS=[["seiko","kuroi ventus","attaque","img/seiko/kuroi-ventus.jpg"]];
+const CARD_IMGS=[["seiko","kuroi ventus","attaque","img/seiko/kuroi-ventus.jpg"],["seiko","fracassement",null,"img/seiko/fracassement.jpg"]];
 function cardImg(k){const c=S.persos.get(state._deckC)||{};const pn=nrm(c.nom),kn=nrm(k.nom);const f=CARD_IMGS.find(([p,n,t])=>p===pn&&kn.startsWith(n)&&(!t||t===k.type));return f&&f[3]}
 function artHtml(k){const im=cardImg(k);return '<div class="art el-'+nrm(k.elem).replace(/[^a-z]/g,"")+(im?' hasimg':'')+'">'+(im?'<img class="artimg" src="'+im+'" alt="" loading="lazy">':sceneSVG(k))+'<div class="artico mini">'+k.icon+'</div></div>'}
 function cardHtml(k,small){const fav=(state._favs||[]).includes(k.key);const pl=state.played[k.key];
