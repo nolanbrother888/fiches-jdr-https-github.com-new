@@ -37,7 +37,7 @@ function blank(){
     car:{for:10,dex:10,con:10,int:10,sag:10,cha:10},sauv:{},maitriseAuto:true,maitrise:2,comp:{},compBonus:{},inspiration:0,
     pv:{act:10,max:10,temp:0},ca:10,initBonus:0,vitesse:9,desVie:"",dsSucc:0,dsEch:0,tombe0:0,morts:0,armure:"Aucune",res:{},etats:[],epuisement:0,attaques:[],
     sortCar:"int",slots:Array.from({length:9},()=>({max:0,used:0})),pacte:{niv:1,max:0,used:0},sorts:[],ressources:[],
-    monnaie:{pc:0,pa:0,pe:0,po:0,pp:0},monnaieCustom:[],maxMagEquip:4,items:[],dons:[],histoire:"",notes:"",custom:[],passifs:[],retire:false,updated:Date.now()};
+    monnaie:{pc:0,pa:0,pe:0,po:0,pp:0},monnaieCustom:[],maxMagEquip:4,items:[],dons:[],histoire:"",notes:"",custom:[],passifs:[],favs:[],retire:false,updated:Date.now()};
 }
 function normPerso(c){const b=blank();for(const k in b){if(c[k]===undefined)c[k]=b[k]}if(!Array.isArray(c.slots)||c.slots.length<9)c.slots=b.slots;return c}
 const level=c=>Math.max(1,c.classes.reduce((a,x)=>a+num(x.niv),0));
@@ -401,6 +401,8 @@ function act(a,c,d){
   if(a==="logout"){signOut(window.__auth).then(()=>location.reload());return}
   if(a==="seed"){act.seeding||(act.seeding=1,importSeed());return}
   if(a==="eco"||a==="ecoreset"||a==="sexp"||a==="cbperso"){combatAct(a,d);return}
+  if(a==="cardopen"&&c){cardModal(c,d.key);return}
+  if(a==="deckf"){state.deckF=d.f;rerenderPane();return}
   if(a==="tlreset"){state.turnLog=[];rerenderPane();return}
   if(a==="ptog"){const k="p_"+d.l;state.eco[k]=!state.eco[k];rerenderPane();return}
   if(a==="togpast"){state.showPast=!state.showPast;rerenderPane();return}
@@ -745,6 +747,63 @@ function srdModal(b){
   m.querySelectorAll("[data-add]").forEach(x=>x.onclick=()=>{const c=S.persos.get(x.dataset.add);if(!c)return;const w=m.querySelector("#watk");const atk=addSortToPerso(c,b,w&&w.checked);toast(b.nom+" ajouté à "+c.nom+(atk?" (et aux attaques)":""));m.remove()});
 }
 
+// ---------- Deck de cartes (attaques, sorts, capacités) ----------
+state.played={};state.deckF="tout";
+const ECOL={action:"Action",bonus:"Bonus",reac:"Réaction",passif:"Passif",libre:"Libre"};
+const TYPICON={tranchant:"🗡️",perforant:"🏹",contondant:"🔨",nécrotique:"💀",radiant:"☀️",feu:"🔥",froid:"❄️",foudre:"⚡",tonnerre:"💥",poison:"☠️",acide:"🧪",force:"✴️",psychique:"🌀",vitalité:"❤️"};
+const nrm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+function ecoOf(txt,def){const t=nrm(txt);
+  if(/action bonus|bonus action/.test(t))return "bonus";
+  if(/reaction/.test(t))return "reac";
+  if(/(^|[^a-z])(1 action|une action|pour une action|action :|action d'attaque|\(action\))/.test(t))return "action";
+  return def||"passif"}
+function linkRes(c,nom){const n=nrm(nom);return c.ressources.find(r=>{const rn=nrm(r.nom);return rn&&(rn.includes(n)||n.includes(rn.split(" (")[0])||rn.split(/[^a-z]+/).filter(w=>w.length>5).some(w=>n.includes(w)))})}
+function deckCards(c){
+  const cards=[];const used=new Set();
+  c.sorts.forEach((s,i)=>{
+    const ai=c.attaques.findIndex(a=>isStruct(a)&&a.nom&&nrm(a.nom).startsWith(nrm(s.nom)));if(ai>=0)used.add(ai);
+    const a=ai>=0?c.attaques[ai]:null;const dmg=a&&a.des&&a.des[0];
+    cards.push({key:"sort:"+s.nom,type:"sort",nom:s.nom,icon:dmg?(TYPICON[dmg.type]||"✨"):"✨",eco:ecoOf(s.note,"action"),
+      sub:(num(s.niv)?"Niveau "+num(s.niv):"Tour de magie")+(dmg?" · "+(a.des||[]).map(d=>d.n+" "+(d.type||"")).join(" + "):""),
+      tags:[s.conc?"Concentration":"",a&&a.jetAttaque?"Jet d'attaque":"",(a&&a.degats||"").match(/JdS \w+ DD \d+/)?(a.degats.match(/JdS \w+ DD \d+/)[0]):""].filter(Boolean),
+      cost:num(s.niv)?"Emplacement niv "+num(s.niv)+"+":"Gratuit",desc:s.note||"",play:()=>castSpell(c,i,()=>{if(ai>=0)attackModal(c,"dice",ai)})})});
+  c.attaques.forEach((a,i)=>{if(!isStruct(a)||used.has(i))return;const r=a.cout&&c.ressources.find(x=>x.nom===a.cout);const dmg=a.des&&a.des[0];
+    cards.push({key:"atk:"+a.nom,type:atkKind(a)==="sort"?"sort":"attaque",nom:a.nom,icon:atkKind(a)==="arme"?"⚔️":(dmg&&TYPICON[dmg.type])||"🌀",
+      eco:atkKind(a)==="arme"?"action":ecoOf(a.degats,"action"),sub:(a.des||[]).map(d=>d.n+" "+(d.type||"")).join(" + ")+(a.carac&&atkRoll(a)?" · "+sg(atkHit(c,a))+" toucher":""),
+      tags:[a.main?MAINS[a.main]:""].filter(Boolean),cost:r?r.nom+" : "+num(r.act)+"/"+num(r.max):"",empty:r&&num(r.act)<=0,desc:a.degats||"",play:()=>attackModal(c,"dice",i)})});
+  c.dons.forEach((d,i)=>{const e=ecoOf(d.desc,"passif");const r=e!=="passif"?linkRes(c,d.nom):null;
+    cards.push({key:"cap:"+d.nom,type:"capacite",nom:d.nom,icon:e==="passif"?"🛡️":"🌀",eco:e,sub:r?r.nom+" : "+num(r.act)+"/"+num(r.max):(e==="passif"?"Effet permanent":""),
+      tags:[],cost:r?"1 utilisation":"",empty:r&&num(r.act)<=0,desc:d.desc||"",play:e==="passif"?null:()=>{if(r){if(num(r.act)<=0){toast("Plus d'utilisation pour "+r.nom);return}r.act=num(r.act)-1;schedule(c)}toast(d.nom+" utilisé"+(r?" ("+r.act+" restant)":""));rerenderPane()}})});
+  return cards;
+}
+function cardHtml(k,small){const fav=(state._favs||[]).includes(k.key);const pl=state.played[k.key];
+  return '<button class="card3 t-'+k.type+(small?" sm":"")+(pl?" played":"")+(k.empty?" empty":"")+'" data-act="cardopen" data-key="'+esc(k.key)+'">'+
+    '<div class="c3top"><span class="c3eco e-'+k.eco+'">'+ECOL[k.eco]+'</span>'+(fav?'<span class="c3fav">★</span>':'')+'</div>'+
+    '<div class="c3ico">'+k.icon+'</div><div class="c3nom">'+esc(k.nom)+'</div><div class="c3sub">'+esc(k.sub||"")+'</div>'+
+    (k.cost?'<div class="c3cost">'+esc(k.cost)+'</div>':'')+(pl?'<div class="c3pl">Jouée</div>':'')+'</button>'}
+function deckHtml(c){
+  const cards=deckCards(c);state._favs=c.favs||[];state._deck=cards;state._deckC=c.id;
+  const favs=cards.filter(k=>state._favs.includes(k.key));
+  const F=state.deckF;const list=cards.filter(k=>F==="tout"||k.type===F||(F==="dispo"&&k.eco!=="passif"&&!state.played[k.key]&&!k.empty));
+  const cnt=t=>cards.filter(k=>k.type===t).length;
+  return '<div class="catt">🃏 Ma main (favoris)</div>'+(favs.length?'<div class="hand">'+favs.map(k=>cardHtml(k,false)).join("")+'</div>':'<div class="small mute">Touche une carte puis ☆ pour l\'épingler ici : tu la retrouveras tout de suite au round 1.</div>')+
+    '<div class="catt">Mon deck</div><div class="seg deckseg">'+[["tout","Tout ("+cards.length+")"],["attaque","⚔️ "+cnt("attaque")],["sort","✨ "+cnt("sort")],["capacite","🌀 "+cnt("capacite")],["dispo","Dispo"]].map(([k,l])=>'<button data-act="deckf" data-f="'+k+'" class="'+(F===k?"on":"")+'">'+l+'</button>').join("")+'</div>'+
+    '<div class="deck">'+list.map(k=>cardHtml(k,true)).join("")+'</div>';
+}
+function cardModal(c,key){
+  const k=(state._deck||deckCards(c)).find(x=>x.key===key);if(!k)return;const fav=(c.favs||[]).includes(key);
+  const m=modal('<div class="bigcard t-'+k.type+'"><div class="c3top"><span class="c3eco e-'+k.eco+'">'+ECOL[k.eco]+'</span><span class="small">'+({attaque:"Attaque",sort:"Sort",capacite:"Capacité"})[k.type]+'</span></div>'+
+    '<div class="c3ico" style="font-size:46px">'+k.icon+'</div><h2 style="text-align:center">'+esc(k.nom)+'</h2><div class="c3sub" style="text-align:center">'+esc(k.sub||"")+'</div>'+
+    (k.tags.length?'<div class="chips" style="justify-content:center;margin-top:8px">'+k.tags.map(t=>'<span class="chip">'+esc(t)+'</span>').join("")+'</div>':'')+
+    (k.cost?'<div class="c3cost" style="text-align:center;margin-top:8px">Coût : '+esc(k.cost)+'</div>':'')+
+    '<div class="bcdesc">'+(esc(k.desc)||'<span class="mute">Pas de description.</span>').replace(/\n/g,"<br>")+'</div></div>'+
+    '<div class="acts"><button class="btn" data-fav>'+(fav?"★ Retirer de ma main":"☆ Mettre dans ma main")+'</button><button class="btn" data-x>Fermer</button>'+(k.play&&!readOnly?'<button class="btn pri" data-play'+(k.empty?" disabled":"")+'>'+(k.empty?"Épuisée":"Jouer")+'</button>':'')+'</div>');
+  m.classList.add("cardm");
+  m.querySelector("[data-x]").onclick=()=>m.remove();
+  m.querySelector("[data-fav]").onclick=()=>{c.favs=c.favs||[];if(fav)c.favs=c.favs.filter(x=>x!==key);else c.favs.push(key);schedule(c);m.remove();rerenderPane()};
+  const p=m.querySelector("[data-play]");if(p)p.onclick=()=>{m.remove();state.played[key]=true;if(k.eco==="action"&&k.type!=="attaque")state.eco.action=true;if(k.eco==="bonus")state.eco.bonus=true;if(k.eco==="reac")state.eco.reac=true;k.play();rerenderPane()};
+}
+
 // ---------- Combat ----------
 const FULLC=["Barde","Clerc","Druide","Ensorceleur","Magicien"],HALFC=["Paladin","Rôdeur"];
 const SLOTTBL={1:[2],2:[3],3:[4,2],4:[4,3],5:[4,3,2],6:[4,3,3],7:[4,3,3,1],8:[4,3,3,2],9:[4,3,3,3,1],10:[4,3,3,3,2],11:[4,3,3,3,2,1],12:[4,3,3,3,2,1],13:[4,3,3,3,2,1,1],14:[4,3,3,3,2,1,1],15:[4,3,3,3,2,1,1,1],16:[4,3,3,3,2,1,1,1],17:[4,3,3,3,2,1,1,1,1],18:[4,3,3,3,3,1,1,1,1],19:[4,3,3,3,3,2,1,1,1],20:[4,3,3,3,3,2,2,1,1]};
@@ -793,7 +852,7 @@ function combatPane(){
       (readOnly?'':'<div class="row" style="margin-top:10px"><button class="btn" data-act="cbaddpnj" style="flex:1">+ Monstre / PNJ</button><button class="btn pri" data-act="cbnext" style="flex:1">Tour suivant ▶</button></div>')+'</div>';
     // Remise à zéro des actions quand c'est mon tour
     const tl=(cb.lignes||{})[cb.tour];
-    if(cb.tour!==lastTour){if(tl&&tl.persoId===state.cbPerso){state.eco={};state.turnLog=[]}lastTour=cb.tour}
+    if(cb.tour!==lastTour){if(tl&&tl.persoId===state.cbPerso){state.eco={};state.turnLog=[];state.played={}}lastTour=cb.tour}
   }
   if(!mine.length)h+='<div class="card"><p class="small mute" style="margin:0">Ouvre ta fiche et touche « C\'est mon perso » pour avoir ton panneau de combat ici.</p></div>';
   else{const c=S.persos.get(state.cbPerso);state.cur=c.id;
@@ -816,19 +875,17 @@ function combatSheet(c){
     (c.pv.act===0?'<div class="ds"><b>À terre : jets contre la mort</b><div class="row" style="justify-content:space-between;margin-top:6px"><span class="small">Succès</span><div class="pips">'+[1,2,3].map(i=>'<button class="pip '+(c.dsSucc>=i?"on":"")+'" data-pip="dsSucc" data-v="'+i+'"></button>').join("")+'</div><span class="small">Échecs</span><div class="pips">'+[1,2,3].map(i=>'<button class="pip bad '+(c.dsEch>=i?"on":"")+'" data-pip="dsEch" data-v="'+i+'"></button>').join("")+'</div></div></div>':'')+
     '<div class="stats4"><div><small>CA</small><b>'+c.ca+'</b></div><div><small>Init</small><b data-d="init"></b></div><div><small>Perc. pass.</small><b data-d="pp"></b></div><div><small>DD sorts</small><b data-d="dd"></b></div></div>'+
     '<div class="catt">Ce tour-ci</div><div class="eco">'+ECO.map(([k,l])=>'<button class="chip ecob '+(state.eco[k]?"used":"")+'" data-act="eco" data-e="'+k+'">'+(state.eco[k]?"✓ ":"")+l+'</button>').join("")+'<button class="chip" data-act="ecoreset" title="Nouveau tour">↺</button></div>'+
-    '<div class="catt">Attaques et dégâts</div>'+atkCalc(c)+
+    deckHtml(c)+'<div class="catt">Attaques et dégâts</div>'+atkCalc(c)+
     (c.ressources.length?'<div class="catt">Charges et ressources</div>'+c.ressources.map((x,i)=>'<div class="row res2"><span class="grow small">'+esc(x.nom)+'</span><div class="counter"><button data-inc="ressources.'+i+'.act" data-v="-1" data-min="0">−</button><input type="number" data-k="ressources.'+i+'.act" data-t="n" value="'+num(x.act)+'"><button data-inc="ressources.'+i+'.act" data-v="1">+</button></div><span class="small mute">/ '+num(x.max)+'</span></div>').join(""):'')+
     '<div class="catt">Emplacements de sorts</div>'+(slotRows||'<div class="small mute">Aucun emplacement renseigné.</div>')+
     (canCalc&&(noSlots||state.showCalc)?'<button class="btn add" data-act="slotcalc">✨ Calculer mes emplacements (règles D&D) : '+esc(slotText(r))+'</button>':'')+
-    (c.sorts.length?'<div class="catt">Sorts</div>'+sortsHtml:'')+
     '<div class="catt">États</div><div class="chips">'+ETATS.map(e=>'<button class="chip '+(c.etats.includes(e)?"on":"")+'" data-etat="'+e+'">'+e+'</button>').join("")+'</div>'+
-    (c.dons.length?'<div class="catt">Dons et capacités</div>'+c.dons.map(d=>'<details class="don"><summary>'+esc(d.nom)+'</summary><div class="small">'+esc(d.desc||"")+'</div></details>').join(""):'')+
     '<details class="don rules"><summary>📜 Règles de la table</summary><div class="small"><b>Intervention</b> : quand une attaque (projectile, mêlée ou sort) cible un joueur, un autre joueur juste à côté peut, par sa réaction, utiliser la moitié de son déplacement encore disponible pour s\'interposer et l\'intercepter. Le jet à réussir et les conséquences sont décidés par le MJ.<br><br><b>Lancer intense</b> : le MJ peut demander un jet intense. Il devient critique : réussite ou échec critique selon le résultat. Aucun modificateur ne s\'ajoute.<br><br><b>À 0 PV</b> : jet contre la mort DD 10, +1 par tour. 20 = 3 succès, 1 = 2 échecs, subir des dégâts = 1 échec. Tu peux ajouter des dés de vie au jet. Un allié peut donner un succès avec Médecine DD 10.</div></details>'+
     '<button class="btn" data-act="short" style="width:100%;margin-top:14px">☕ Repos court</button></div>';
 }
-function castSpell(c,i){
+function castSpell(c,i,after){
   const s=c.sorts[i];if(!s)return;const n=num(s.niv);
-  const done=lbl=>{if(s.conc&&!c.etats.includes("Concentration"))c.etats.push("Concentration");schedule(c);rerenderPane();toast(s.nom+" lancé"+(lbl?" ("+lbl+")":""))};
+  const done=lbl=>{if(s.conc&&!c.etats.includes("Concentration"))c.etats.push("Concentration");schedule(c);rerenderPane();toast(s.nom+" lancé"+(lbl?" ("+lbl+")":""));if(after)setTimeout(after,250)};
   if(n===0)return done("");
   const opts=[];c.slots.forEach((sl,j)=>{if(j+1>=n&&num(sl.used)<num(sl.max))opts.push(["s"+j,"Emplacement niv "+(j+1)+" ("+(num(sl.max)-num(sl.used))+" restant)"])});
   if(num(c.pacte.max)&&num(c.pacte.niv)>=n&&num(c.pacte.used)<num(c.pacte.max))opts.unshift(["p","Emplacement de pacte niv "+num(c.pacte.niv)+" ("+(num(c.pacte.max)-num(c.pacte.used))+" restant)"]);
@@ -854,7 +911,7 @@ function combatAct(a,d){
   if(a==="cbroll"){const l=cb.lignes[d.line];const p=l&&S.persos.get(l.persoId);if(!p)return true;const r=1+Math.floor(Math.random()*20),v=r+mod(p.car.dex)+num(p.initBonus);l.init=v;cbUpdate({["lignes."+d.line+".init"]:v});rerenderPane();toast("🎲 "+r+" "+sg(mod(p.car.dex)+num(p.initBonus))+" = "+v);return true}
   if(a==="cbperso"){state.cbPerso=d.id;state.eco={};rerenderPane();return true}
   if(a==="eco"){state.eco[d.e]=!state.eco[d.e];rerenderPane();return true}
-  if(a==="ecoreset"){state.eco={};state.turnLog=[];rerenderPane();return true}
+  if(a==="ecoreset"){state.eco={};state.turnLog=[];state.played={};rerenderPane();return true}
   if(a==="sexp"){state.sopen[d.i]=!state.sopen[d.i];rerenderPane();return true}
   return false;
 }

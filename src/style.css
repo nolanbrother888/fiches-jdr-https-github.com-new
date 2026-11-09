@@ -253,3 +253,31 @@ details.rules{margin-top:12px}
 @keyframes coin{0%{opacity:1;transform:translate(0,0) scale(.4) rotate(0)}45%{opacity:1;transform:translate(calc(var(--x)*.6),var(--h)) scale(1) rotate(calc(var(--r)*.5))}100%{opacity:0;transform:translate(var(--x),120px) scale(.9) rotate(var(--r))}}
 
 @keyframes rollburn{0%,70%{opacity:1;filter:none}85%{opacity:.8;filter:brightness(.4) sepia(1)}100%{opacity:0}}
+/* ---- Cartes ---- */
+.hand{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x mandatory}
+.deck{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
+.deckseg button{font-size:12px;padding:7px 4px}
+.card3{position:relative;flex:0 0 132px;scroll-snap-align:start;min-height:178px;border-radius:14px;padding:8px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;border:2px solid var(--cc);background:linear-gradient(160deg,var(--cb1),var(--cb2));box-shadow:0 4px 12px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.06);color:#f2efe8;transition:transform .15s}
+.card3:active{transform:scale(.96)}
+.card3.sm{min-height:150px;padding:6px}
+.t-attaque{--cc:#e5645c;--cb1:#3a1b1b;--cb2:#1d1012}
+.t-sort{--cc:#b48cff;--cb1:#2a1f44;--cb2:#141020}
+.t-capacite{--cc:#e3b341;--cb1:#3a3018;--cb2:#1b170c}
+.c3top{display:flex;justify-content:space-between;align-items:center;width:100%}
+.c3eco{font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.15)}
+.e-action{color:#7bd88f}.e-bonus{color:#f2d16b}.e-reac{color:#6cb6ff}.e-passif{color:#9a9ca3}
+.c3fav{color:#f2d16b;font-size:14px}
+.c3ico{font-size:30px;line-height:1.2;margin-top:2px;filter:drop-shadow(0 0 6px var(--cc))}
+.c3nom{font-family:Georgia,serif;font-weight:800;font-size:14px;line-height:1.15}
+.sm .c3nom{font-size:12.5px}
+.c3sub{font-size:11px;color:#cfcac0;line-height:1.25}
+.c3cost{font-size:10.5px;color:var(--cc);margin-top:auto}
+.card3.played{opacity:.45;filter:grayscale(.6)}
+.card3.empty{opacity:.5}
+.c3pl{position:absolute;top:44%;left:50%;transform:translate(-50%,-50%) rotate(-14deg);border:2px solid #e5645c;color:#e5645c;font-weight:800;padding:2px 8px;border-radius:6px;background:rgba(0,0,0,.6);font-size:13px}
+.cardm .box{background:transparent;border:none;padding:0}
+.bigcard{border-radius:18px;padding:16px;border:3px solid var(--cc);background:linear-gradient(160deg,var(--cb1),var(--cb2));box-shadow:0 10px 40px rgba(0,0,0,.7),0 0 24px -6px var(--cc);animation:cardflip .45s ease}
+.bcdesc{font-size:13px;line-height:1.5;margin-top:12px;max-height:38vh;overflow:auto;background:rgba(0,0,0,.25);border-radius:10px;padding:10px;color:#e6e2d8}
+.cardm .acts{background:var(--panel);border-radius:14px;padding:10px;margin-top:10px;flex-wrap:wrap}
+@keyframes cardflip{0%{transform:perspective(800px) rotateY(90deg) scale(.8);opacity:0}100%{transform:perspective(800px) rotateY(0) scale(1);opacity:1}}
+.bigcard .c3ico{text-align:center}
