@@ -370,7 +370,7 @@ app.addEventListener("change",e=>{
 app.addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;const c=cur();const d=b.dataset;
   if(d.open){state.cur=d.open;state.view="sheet";state.tab="id";render();window.scrollTo(0,0);return}
-  if(d.htab){if(d.htab==="combat"&&state.home!=="combat")swordsAnim(false);state.view="home";state.home=d.htab;render();window.scrollTo(0,0);return}
+  if(d.htab){if(d.htab!==state.home||state.view!=="home"){if(d.htab==="combat")swordsAnim(false);else tabAnim(d.htab)}state.view="home";state.home=d.htab;render();window.scrollTo(0,0);return}
   if(d.tab){state.tab=d.tab;render();window.scrollTo(0,0);return}
   if(d.pf){state.persoFilter=d.pf;rerenderPane();return}
   if(d.bt&&!d.act){state.bibType=d.bt;state.bibNiv="";rerenderPane();return}
@@ -645,6 +645,32 @@ function applyPreset(c){
   if(!c.sorts.some(s=>/Contact glacial/i.test(s.nom)))c.sorts.push({niv:0,nom:"Contact glacial",prep:true,conc:false,note:"Attaque de sort : 3d8 nécrotique au niveau 11. La cible ne regagne pas de PV jusqu'à ton prochain tour."});
   if(!num(c.pacte.max)){c.pacte={niv:4,max:2,used:0}}
   c.presetV=SEIKO_V;
+}
+
+// Animations d'ouverture des onglets
+function tabAnim(kind){
+  try{if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return}catch(e){}
+  const d=document.createElement("div");d.className="tanim ta-"+kind;let dur=1700,html="";
+  const rnd=(a,b)=>a+Math.random()*(b-a);
+  if(kind==="persos"){
+    const pages=Array.from({length:6},(_,i)=>'<div class="bk-leaf bk-page" style="--i:'+i+';z-index:'+(20-i)+'"><i></i><i></i><i></i><i></i><i></i></div>').join("");
+    html='<div class="bk"><div class="bk-leaf bk-back" style="z-index:1"></div>'+pages+'<div class="bk-leaf bk-front" style="z-index:30"><span>⚔️</span></div></div>';dur=1900;
+  }else if(kind==="mj"){
+    const drops=Array.from({length:10},(_,i)=>{const a=i/10*Math.PI*2;return '<circle class="drop" r="'+rnd(3,6).toFixed(1)+'" style="--x:'+(Math.cos(a)*rnd(70,110)).toFixed(0)+'px;--y:'+(Math.sin(a)*rnd(70,110)).toFixed(0)+'px"/>'}).join("");
+    html='<svg viewBox="-150 -110 300 220"><defs><clipPath id="eyeclip"><path class="lid" d="M-110 0 Q0 -78 110 0 Q0 78 -110 0Z"/></clipPath><radialGradient id="iris"><stop offset="0" stop-color="#0d0f14"/><stop offset=".28" stop-color="#0d0f14"/><stop offset=".32" stop-color="#7bd88f"/><stop offset=".75" stop-color="#2f8f5a"/><stop offset="1" stop-color="#123d27"/></radialGradient><radialGradient id="bub"><stop offset=".7" stop-color="#bfe8ff" stop-opacity="0"/><stop offset="1" stop-color="#bfe8ff" stop-opacity=".55"/></radialGradient></defs>'+
+      '<g class="eye"><circle r="104" fill="url(#bub)" class="bubble"/><g clip-path="url(#eyeclip)"><rect x="-120" y="-80" width="240" height="160" fill="#f3efe6"/><g class="iris"><circle r="38" fill="url(#iris)"/><circle cx="-12" cy="-12" r="8" fill="#fff" opacity=".85"/></g></g>'+
+      '<path class="lidline" d="M-110 0 Q0 -78 110 0 Q0 78 -110 0Z" fill="none" stroke="#1a1c22" stroke-width="5"/></g><circle class="popring" r="60" fill="none" stroke="#bfe8ff" stroke-width="4"/><g class="drops" fill="#bfe8ff">'+drops+'</g></svg>';dur=1650;
+  }else if(kind==="biblio"){
+    const emb=Array.from({length:16},()=>'<span class="ember" style="--x:'+rnd(-120,120).toFixed(0)+'px;--y:'+rnd(-220,-90).toFixed(0)+'px;--d:'+rnd(.9,1.3).toFixed(2)+'s;left:'+rnd(25,75).toFixed(0)+'%;top:'+rnd(35,65).toFixed(0)+'%"></span>').join("");
+    html='<div class="scroll"><div class="roll top"></div><div class="paper"><div class="runes">ᚠ ᚱ ᚨ ᚷ ᛗ ᛟ<br>✶ ᛞ ᚹ ᛃ ✶<br>ᛉ ᛊ ᛏ ᛒ ᛖ</div><div class="burn"></div></div><div class="roll bot"></div><div class="fireball"></div>'+emb+'</div>';dur=1900;
+  }else if(kind==="commun"){
+    const coins=Array.from({length:18},(_,i)=>'<span class="coin" style="--x:'+rnd(-150,150).toFixed(0)+'px;--h:'+rnd(-260,-140).toFixed(0)+'px;--r:'+rnd(-540,540).toFixed(0)+'deg;animation-delay:'+(0.35+i*0.025).toFixed(2)+'s"></span>').join("");
+    html='<div class="pouch"><svg viewBox="-80 -90 160 170"><defs><radialGradient id="leather" cx=".4" cy=".35"><stop offset="0" stop-color="#b07a45"/><stop offset="1" stop-color="#5e3a1c"/></radialGradient></defs>'+
+      '<path d="M-58 20 C-70 70 70 70 58 20 C52 -10 26 -30 18 -38 L-18 -38 C-26 -30 -52 -10 -58 20Z" fill="url(#leather)" stroke="#3b2310" stroke-width="3"/>'+
+      '<path d="M-22 -40 C-30 -60 -12 -70 0 -52 C12 -70 30 -60 22 -40Z" fill="#8a5a2f" stroke="#3b2310" stroke-width="3"/><rect x="-26" y="-44" width="52" height="9" rx="4" fill="#c9a24a" stroke="#6b5420" stroke-width="2"/>'+
+      '<text x="0" y="38" text-anchor="middle" font-size="34" font-weight="800" fill="#f2d16b" stroke="#6b5420" stroke-width="1.5">PO</text></svg>'+coins+'</div>';dur=1900;
+  }else return;
+  d.innerHTML=html;document.body.appendChild(d);setTimeout(()=>d.remove(),dur);
 }
 
 // Animation des épées croisées
