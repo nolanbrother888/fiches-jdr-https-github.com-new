@@ -747,6 +747,76 @@ function srdModal(b){
   m.querySelectorAll("[data-add]").forEach(x=>x.onclick=()=>{const c=S.persos.get(x.dataset.add);if(!c)return;const w=m.querySelector("#watk");const atk=addSortToPerso(c,b,w&&w.checked);toast(b.nom+" ajouté à "+c.nom+(atk?" (et aux attaques)":""));m.remove()});
 }
 
+// ---------- Illustrations des cartes (scènes vectorielles, silhouette du perso) ----------
+const ELC={foudre:["#7fd4ff","#0a1426","#2f6fae"],tonnerre:["#c9b8ff","#120f26","#5a4fa8"],feu:["#ffb347","#2a0b04","#e0621a"],froid:["#cff4ff","#0b2230","#4fb8d8"],
+  "nécrotique":["#b48cff","#0c0814","#4b2d73"],radiant:["#fff1b0","#3a2a08","#e8c35a"],poison:["#c4ff8a","#0e1a08","#4f8a2a"],acide:["#c4ff8a","#0e1a08","#4f8a2a"],
+  psychique:["#ffb3f5","#1e0b22","#a04fa8"],force:["#ffb3f5","#1e0b22","#a04fa8"],tranchant:["#e6eef8","#15181e","#5d6876"],perforant:["#e6eef8","#15181e","#5d6876"],
+  contondant:["#e6eef8","#15181e","#5d6876"],passif:["#f2d16b","#1a150a","#8a7340"],capa:["#a8ffe8","#08201b","#2f8f7a"],arcane:["#d9c8ff","#140f26","#6b4fb8"]};
+let ARTN=0;
+// Silhouette du héros. style "samurai" (Seiko) ou "hood" (cape et capuche)
+function hero(pose,style,col,opa){
+  const S=style==="samurai";const f='fill="#07080b" stroke="'+col+'" stroke-width="1.2" stroke-linejoin="round"';const o=opa?' opacity="'+opa+'"':'';
+  const head=S?'<circle cx="70" cy="40" r="7" '+f+'/><ellipse cx="65.5" cy="31.5" rx="3.2" ry="4.2" '+f+'/>':'<path d="M61 46 C59 34 66 28 72 30 C79 32 80 42 77 47 Z" '+f+'/>';
+  const robe=S?'<path d="M64 48 C50 60 44 78 36 94 L56 88 L66 74 Z" '+f+'/>':'<path d="M63 47 C48 66 40 90 34 112 L60 104 L68 74 Z" '+f+'/>';
+  if(pose==="slash")return '<g'+o+'>'+robe+'<path d="M68 72 L56 96 L44 122 L51 124 L63 100 L75 77 Z" '+f+'/><path d="M78 72 L96 95 L94 124 L101 124 L103 93 L85 69 Z" '+f+'/>'+
+    '<path d="M64 47 L79 46 L86 71 L66 75 Z" '+f+'/><path d="M66 50 L52 61 L56 64 L69 56 Z" '+f+'/><path d="M76 48 L100 40 L102 46 L79 55 Z" '+f+'/>'+head+
+    (S?'<path d="M60 70 L38 79" stroke="#07080b" stroke-width="3.5"/><path d="M60 70 L38 79" stroke="'+col+'" stroke-width=".8" opacity=".6"/>':'')+'</g>';
+  if(pose==="cast")return '<g'+o+'>'+robe+'<path d="M68 72 L60 98 L56 124 L63 124 L68 100 L75 77 Z" '+f+'/><path d="M78 72 L90 96 L92 124 L99 124 L97 94 L85 70 Z" '+f+'/>'+
+    '<path d="M64 47 L79 46 L84 71 L66 75 Z" '+f+'/><path d="M66 50 L54 64 L58 66 L69 56 Z" '+f+'/><path d="M77 48 L102 50 L103 56 L78 56 Z" '+f+'/><path d="M102 47 L109 45 L111 50 L109 56 L103 57 Z" '+f+'/>'+head+
+    (S?'<path d="M60 70 L36 80" stroke="#07080b" stroke-width="3.5"/><path d="M62 72 L40 84" stroke="#07080b" stroke-width="3.5"/>':'')+'</g>';
+  // garde
+  return '<g'+o+'>'+robe+'<path d="M67 73 L64 98 L62 124 L69 124 L71 100 L74 77 Z" '+f+'/><path d="M77 73 L82 98 L84 124 L91 124 L88 96 L83 72 Z" '+f+'/>'+
+    '<path d="M64 47 L79 46 L83 72 L66 75 Z" '+f+'/><path d="M66 50 L60 70 L64 71 L69 54 Z" '+f+'/><path d="M78 50 L84 66 L80 68 L75 54 Z" '+f+'/>'+head+
+    (S?'<path d="M82 66 Q86 40 84 12" stroke="#07080b" stroke-width="3.5" fill="none"/><path d="M82 66 Q86 40 84 12" stroke="'+col+'" stroke-width="1" fill="none"/>':'<path d="M83 70 L86 14" stroke="#07080b" stroke-width="3.5"/><circle cx="86" cy="13" r="4" fill="'+col+'"/>')+'</g>';
+}
+const enemy=(col,x)=>'<g transform="translate('+(x||0)+',0)"><path d="M160 124 L164 96 L158 78 C156 66 166 58 172 62 C180 66 178 78 174 84 L178 98 L176 124 L171 124 L170 102 L166 102 L166 124 Z" fill="#0b0c10" stroke="'+col+'" stroke-width=".8" opacity=".95"/><circle cx="170" cy="66" r="1.4" fill="'+col+'"/><circle cx="174" cy="66" r="1.4" fill="'+col+'"/></g>';
+const zig=(x0,y0,x1,y1,n,a,seed)=>{let r=seed||7,d="M"+x0+" "+y0;const rnd=()=>{r=(r*9301+49297)%233280;return r/233280};for(let i=1;i<n;i++){const t=i/n,x=x0+(x1-x0)*t,y=y0+(y1-y0)*t,dx=-(y1-y0),dy=x1-x0,L=Math.hypot(dx,dy)||1,o=(rnd()*2-1)*a;d+=" L"+(x+dx/L*o).toFixed(1)+" "+(y+dy/L*o).toFixed(1)}return d+" L"+x1+" "+y1};
+function sceneOf(k){const n=nrm(k.nom);
+  const has=(...w)=>w.some(x=>n.includes(x));
+  if(has("kuroi")&&k.type!=="capacite")return "kuroi";if(has("ruine")&&!has("tempete"))return "ruine";if(has("tempete"))return "tempete";
+  if(has("echo","liberation"))return "echo";if(has("fracassement"))return "fracas";if(has("eclair"))return "eclair";if(has("vague tonnante"))return "vague";
+  if(has("contact glacial"))return "glacial";if(has("assassin"))return "assassin";if(has("fantasmagorique","illusion"))return "fantasme";if(has("elementaire de foudre","ecrasement"))return "elem";
+  if(has("detection"))return "detect";if(has("nourriture"))return "food";if(has("hantise"))return "hantise";if(has("arret du temps","kuroi ventus"))return "temps";
+  if(has("fougue"))return "fougue";if(has("vol ","don elementaire"))return "vol";if(has("bouteille","receptacle"))return "lampe";if(has("colere","genie"))return "genie";
+  if(has("boule de feu","feu"))return "feu";if(k.type==="attaque")return "kuroi";if(k.type==="sort")return k.elem==="arcane"?"aura":"burst";return k.eco==="passif"?"garde":"aura"}
+function sceneSVG(k){
+  const c=S.persos.get(state._deckC)||{};const style=c.nom==="Seiko"||(c.classes||[]).some(x=>/guerrier|samoura|echo/i.test(x.nom+" "+x.sous))?"samurai":"hood";
+  const sc=sceneOf(k);const E=ELC[k.elem]||ELC.arcane;const id="a"+(++ARTN);let col=E[0],fx="",pose="cast",back="";
+  const glow='filter="url(#g'+id+')"';
+  switch(sc){
+    case "kuroi":col=ELC.foudre[0];pose="slash";fx='<path d="M101 44 Q126 22 154 5" stroke="#d6f4ff" stroke-width="3.2" fill="none" '+glow+'/><path d="'+zig(103,42,152,7,9,3,3)+'" stroke="#7fd4ff" stroke-width="1.4" fill="none" '+glow+'/>'+
+      '<path d="M120 10 C170 20 182 70 160 112" stroke="#bff0ff" stroke-width="5" fill="none" opacity=".55" stroke-linecap="round" '+glow+'/>'+enemy(col,6);back=ELC.foudre;break;
+    case "ruine":col=ELC["nécrotique"][0];pose="slash";fx='<path d="M101 44 Q126 22 154 5" stroke="#e4d4ff" stroke-width="3.2" fill="none" '+glow+'/><path d="M118 12 C168 22 180 72 158 114" stroke="#9b6bff" stroke-width="6" fill="none" opacity=".55" stroke-linecap="round" '+glow+'/>'+
+      [0,1,2,3,4].map(i=>'<circle cx="'+(150+i*7)+'" cy="'+(40+i*14)+'" r="'+(2+i%2)+'" fill="#5fd38a" opacity=".7" '+glow+'/>').join("")+enemy(col,6);back=ELC["nécrotique"];break;
+    case "echo":col=ELC.foudre[0];pose="slash";back=ELC.arcane;fx='<g transform="translate(46,-4)" opacity=".38">'+hero("slash",style,"#d9c8ff")+'<path d="M101 44 Q126 22 154 5" stroke="#d9c8ff" stroke-width="3" fill="none"/></g><path d="M101 44 Q126 22 150 7" stroke="#d6f4ff" stroke-width="3" fill="none" '+glow+'/>';break;
+    case "tempete":col=ELC["nécrotique"][0];back=ELC["nécrotique"];fx=[0,1,2,3].map(i=>'<ellipse cx="160" cy="'+(70+i*4)+'" rx="'+(30-i*6)+'" ry="'+(42-i*9)+'" fill="none" stroke="'+(i%2?"#5fd38a":"#9b6bff")+'" stroke-width="'+(2.5-i*.4)+'" transform="rotate('+(i*25)+' 160 72)" '+glow+'/>').join("")+'<path d="M110 52 C130 44 140 58 150 62" stroke="#b48cff" stroke-width="2" fill="none" '+glow+'/>'+enemy(col,-2);break;
+    case "eclair":col=ELC.foudre[0];back=ELC.foudre;fx='<path d="'+zig(110,52,198,40,12,7,11)+'" stroke="#fff" stroke-width="3" fill="none" '+glow+'/><path d="'+zig(110,52,198,44,10,10,5)+'" stroke="#7fd4ff" stroke-width="1.6" fill="none" '+glow+'/>';break;
+    case "fracas":col=ELC.tonnerre[0];back=ELC.tonnerre;fx=[14,24,34,44].map((r,i)=>'<circle cx="160" cy="80" r="'+r+'" fill="none" stroke="#e0d6ff" stroke-width="'+(3-i*.6)+'" opacity="'+(1-i*.2)+'" '+glow+'/>').join("")+'<path d="M160 80 L150 60 M160 80 L178 66 M160 80 L170 100 M160 80 L144 92" stroke="#fff" stroke-width="1.4" '+glow+'/>'+enemy(col,-4);break;
+    case "vague":col=ELC.tonnerre[0];back=ELC.tonnerre;fx=[0,1,2].map(i=>'<rect x="'+(100+i*14)+'" y="'+(30-i*8)+'" width="'+(30+i*18)+'" height="'+(80+i*16)+'" rx="4" fill="none" stroke="#c9b8ff" stroke-width="'+(3-i*.7)+'" opacity="'+(1-i*.25)+'" '+glow+'/>').join("")+enemy(col,14);break;
+    case "glacial":col=ELC["nécrotique"][0];back=ELC.froid;fx='<path d="M150 112 L150 82 M150 82 L142 64 M150 82 L148 60 M150 82 L156 61 M150 82 L162 66 M150 82 L168 78" stroke="#cff4ff" stroke-width="3" stroke-linecap="round" '+glow+'/><path d="M110 52 C126 50 136 62 146 74" stroke="#cff4ff" stroke-width="1.5" fill="none" stroke-dasharray="3 3" '+glow+'/>'+enemy("#cff4ff",10);break;
+    case "assassin":col=ELC.psychique[0];back=ELC.psychique;fx='<path d="M170 20 C150 30 150 70 158 120 L190 120 C196 70 192 30 170 20Z" fill="#ffb3f5" opacity=".22" '+glow+'/><circle cx="165" cy="40" r="2.5" fill="#fff"/><circle cx="175" cy="40" r="2.5" fill="#fff"/>'+enemy(col,-8);break;
+    case "fantasme":col=ELC.psychique[0];back=ELC.psychique;fx=[0,1,2].map(i=>'<path d="M'+(150+i*6)+' 60 C'+(130+i*8)+' 40 '+(190-i*4)+' 30 '+(170-i*3)+' '+(56-i*4)+'" stroke="#ffb3f5" stroke-width="1.6" fill="none" '+glow+'/>').join("")+enemy(col,0);break;
+    case "elem":col=ELC.foudre[0];back=ELC.foudre;fx='<path d="M150 124 L156 94 L148 80 C146 62 158 52 166 56 C176 60 176 74 170 82 L178 96 L174 124 Z" fill="#7fd4ff" opacity=".28" '+glow+'/><path d="'+zig(150,120,160,58,8,5,2)+'M'+zig(172,120,164,60,8,5,9).slice(1)+'" stroke="#e6f8ff" stroke-width="1.4" fill="none" '+glow+'/>';break;
+    case "detect":col=ELC.radiant[0];back=ELC.radiant;pose="garde";fx='<ellipse cx="72" cy="78" rx="44" ry="56" fill="none" stroke="#fff1b0" stroke-width="1.5" stroke-dasharray="4 4" '+glow+'/><path d="M136 60 Q156 44 176 60 Q156 76 136 60Z" fill="none" stroke="#fff1b0" stroke-width="2" '+glow+'/><circle cx="156" cy="60" r="5" fill="#fff1b0"/>';break;
+    case "food":col=ELC.radiant[0];back=ELC.capa;fx='<ellipse cx="150" cy="96" rx="22" ry="11" fill="#c08a4a" stroke="#fff1b0" stroke-width="1.2" '+glow+'/><path d="M172 64 L188 64 L184 100 L176 100 Z" fill="#6cb6ff" opacity=".7" stroke="#cff4ff" '+glow+'/>';break;
+    case "hantise":col=ELC["nécrotique"][0];back=ELC["nécrotique"];fx=[0,1,2].map(i=>'<path d="M'+(140+i*16)+' 110 C'+(130+i*16)+' 80 '+(160+i*16)+' 70 '+(146+i*16)+' 40" stroke="#b48cff" stroke-width="2" fill="none" opacity=".7" '+glow+'/>').join("");break;
+    case "temps":col=ELC.foudre[0];back=ELC.arcane;pose="garde";fx='<circle cx="72" cy="70" r="52" fill="none" stroke="#d9c8ff" stroke-width="2" '+glow+'/>'+Array.from({length:12},(_,i)=>{const a=i/12*Math.PI*2;return '<path d="M'+(72+Math.cos(a)*46).toFixed(1)+' '+(70+Math.sin(a)*46).toFixed(1)+' L'+(72+Math.cos(a)*52).toFixed(1)+' '+(70+Math.sin(a)*52).toFixed(1)+'" stroke="#d9c8ff" stroke-width="2"/>'}).join("")+'<path d="M72 70 L72 34 M72 70 L96 80" stroke="#fff" stroke-width="2.5" '+glow+'/>'+enemy("#d9c8ff",4).replace('opacity=".95"','opacity=".4"');break;
+    case "fougue":col=ELC.feu[0];back=ELC.feu;pose="slash";fx=[0,1,2,3,4].map(i=>'<path d="M'+(10+i*4)+' '+(50+i*12)+' L'+(46+i*2)+' '+(50+i*12)+'" stroke="#ffb347" stroke-width="2" opacity=".7" '+glow+'/>').join("")+'<path d="M101 44 Q126 22 154 5" stroke="#ffe0b0" stroke-width="3" fill="none" '+glow+'/>';break;
+    case "vol":col=ELC.foudre[0];back=ELC.foudre;pose="garde";fx='<path d="M64 52 C30 30 18 40 8 26 C28 58 40 64 62 62Z M80 52 C114 30 126 40 136 26 C116 58 104 64 82 62Z" fill="#7fd4ff" opacity=".35" '+glow+'/><path d="'+zig(56,128,88,128,8,3,4)+'" stroke="#7fd4ff" stroke-width="1.5" fill="none" '+glow+'/>';break;
+    case "lampe":col=ELC.capa[0];back=ELC.capa;pose="garde";fx='<path d="M136 104 C136 92 172 92 172 104 L180 104 C186 96 194 100 188 108 L176 112 C168 118 140 118 136 112Z" fill="#c9a24a" stroke="#fff1b0" stroke-width="1.2" '+glow+'/><path d="M156 92 C150 70 170 60 160 30" stroke="#a8ffe8" stroke-width="3" fill="none" opacity=".7" '+glow+'/>';break;
+    case "genie":col=ELC.foudre[0];back=ELC.foudre;pose="garde";fx='<path d="M150 112 C140 90 170 80 156 60 C150 46 162 30 176 34 C190 38 190 56 178 62 C170 70 186 92 168 112Z" fill="#7fd4ff" opacity=".3" '+glow+'/><circle cx="170" cy="46" r="2.5" fill="#fff"/><circle cx="180" cy="46" r="2.5" fill="#fff"/><path d="'+zig(160,30,150,4,5,4,6)+'" stroke="#fff" stroke-width="1.5" fill="none" '+glow+'/>';break;
+    case "feu":col=ELC.feu[0];back=ELC.feu;fx='<circle cx="160" cy="76" r="30" fill="#ff7a1a" opacity=".5" '+glow+'/><circle cx="160" cy="76" r="18" fill="#ffd34d" '+glow+'/><path d="M110 52 C130 50 140 62 146 68" stroke="#ffb347" stroke-width="3" fill="none" '+glow+'/>';break;
+    case "burst":back=E;fx='<circle cx="160" cy="76" r="26" fill="'+E[0]+'" opacity=".35" '+glow+'/><circle cx="160" cy="76" r="12" fill="'+E[0]+'" '+glow+'/><path d="M110 52 C130 50 140 62 148 70" stroke="'+E[0]+'" stroke-width="2.5" fill="none" '+glow+'/>'+enemy(E[0],8);break;
+    case "garde":pose="garde";back=ELC.passif;col=ELC.passif[0];fx='<path d="M150 40 L176 48 L176 76 C176 96 162 108 150 114 C138 108 124 96 124 76 L124 48Z" fill="none" stroke="#f2d16b" stroke-width="2.5" '+glow+'/>';break;
+    default:pose="garde";back=E;fx='<ellipse cx="72" cy="80" rx="40" ry="54" fill="none" stroke="'+E[0]+'" stroke-width="2" '+glow+'/>';
+  }
+  back=back||E;
+  return '<svg class="scene" viewBox="0 0 200 140" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="b'+id+'" cx=".55" cy=".45" r=".8"><stop offset="0" stop-color="'+back[2]+'"/><stop offset="1" stop-color="'+back[1]+'"/></radialGradient>'+
+    '<filter id="g'+id+'" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>'+
+    '<rect width="200" height="140" fill="url(#b'+id+')"/><path d="M0 128 L200 124 L200 140 L0 140Z" fill="#000" opacity=".55"/><path d="M0 104 L40 84 L70 96 L110 74 L150 92 L200 70 L200 126 L0 130Z" fill="#000" opacity=".22"/>'+
+    '<g transform="translate(16,0)">'+hero(pose,style,col)+fx+'</g></svg>';
+}
+
 // ---------- Deck de cartes (attaques, sorts, capacités) ----------
 state.played={};state.deckF="tout";
 const ECOL={action:"Action",bonus:"Bonus",reac:"Réaction",passif:"Passif",libre:"Libre"};
@@ -778,12 +848,7 @@ function deckCards(c){
 }
 const ECOI={action:"⚔",bonus:"✦",reac:"↺",passif:"◈",libre:"•"};
 const TYPEL={attaque:"Attaque",sort:"Sort",capacite:"Capacité"};
-function artHtml(k){
-  const bolts=k.elem==="foudre"?'<svg class="artfx" viewBox="0 0 100 70" preserveAspectRatio="none"><path d="M20 0 L30 22 L24 24 L38 52 L30 30 L36 28 Z M70 0 L64 18 L72 20 L58 48 L66 26 L60 24 Z" fill="#bff0ff" opacity=".55"/></svg>':
-    k.elem==="feu"?'<svg class="artfx" viewBox="0 0 100 70" preserveAspectRatio="none"><path d="M30 70 C10 50 30 35 28 18 C40 30 42 40 50 22 C56 40 70 30 66 12 C84 34 88 52 70 70 Z" fill="#ff7a1a" opacity=".45"/></svg>':
-    k.elem==="nécrotique"?'<svg class="artfx" viewBox="0 0 100 70" preserveAspectRatio="none"><circle cx="50" cy="34" r="22" fill="none" stroke="#9b6bff" stroke-width="1.5" opacity=".5"/><circle cx="50" cy="34" r="30" fill="none" stroke="#5fd38a" stroke-width=".8" stroke-dasharray="3 4" opacity=".45"/></svg>':
-    '<svg class="artfx" viewBox="0 0 100 70" preserveAspectRatio="none"><path d="M0 70 L30 40 L45 52 L70 25 L100 55 L100 70 Z" fill="#000" opacity=".35"/></svg>';
-  return '<div class="art el-'+nrm(k.elem).replace(/[^a-z]/g,"")+'">'+bolts+'<div class="artico">'+k.icon+'</div></div>'}
+function artHtml(k){return '<div class="art el-'+nrm(k.elem).replace(/[^a-z]/g,"")+'">'+sceneSVG(k)+'<div class="artico mini">'+k.icon+'</div></div>'}
 function cardHtml(k,small){const fav=(state._favs||[]).includes(k.key);const pl=state.played[k.key];
   return '<button class="card4 t-'+k.type+(small?" sm":"")+(pl?" played":"")+(k.empty?" empty":"")+'" data-act="cardopen" data-key="'+esc(k.key)+'">'+
     artHtml(k)+'<div class="ribbon"><div class="medal">'+esc(k.medal)+'</div><div class="ecoic e-'+k.eco+'" title="'+ECOL[k.eco]+'">'+ECOI[k.eco]+'</div></div>'+
