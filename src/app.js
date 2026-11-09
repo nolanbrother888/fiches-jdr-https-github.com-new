@@ -179,15 +179,15 @@ function homePane(){
         (c.inspiration?'<div class="small" style="margin-top:4px">⭐ Inspiration : '+c.inspiration+'</div>':'')+
         '</div>'}).join("");}
 
-  case "biblio":{const t=state.bibType;const Q=state.bibQ.toLowerCase();
-    const list=[...S.biblio.values()].filter(b=>b.type===t&&(!Q||(b.nom+" "+(b.desc||"")+" "+(b.classes||"")).toLowerCase().includes(Q))&&(t!=="sort"||state.bibNiv===""||String(num(b.niv))===state.bibNiv))
-      .sort((a,b)=>t==="sort"?(num(a.niv)-num(b.niv)||String(a.nom).localeCompare(b.nom)):String(a.nom).localeCompare(b.nom));
+  case "biblio":{const t=state.bibType;loadSRD();
+    const all=bibList(t,state.bibQ,state.bibNiv,state.bibCls?[state.bibCls]:null);const list=all.slice(0,80);
     return '<div class="seg"><button data-bt="sort" class="'+(t==="sort"?"on":"")+'">✨ Sorts</button><button data-bt="objet" class="'+(t==="objet"?"on":"")+'">🗡️ Objets</button></div>'+
-      '<div class="row" style="margin-bottom:10px"><input id="bibq" placeholder="Rechercher…" value="'+esc(state.bibQ)+'" style="flex:1">'+(t==="sort"?'<select id="bibniv" style="width:110px"><option value="">Tous niv.</option>'+[0,1,2,3,4,5,6,7,8,9].map(n=>'<option value="'+n+'" '+(state.bibNiv===String(n)?"selected":"")+'>'+(n?"Niv "+n:"Tours")+'</option>').join("")+'</select>':'')+'</div>'+
-      (list.length?list.map(b=>'<button class="bib" data-bib="'+b.id+'"><div class="row"><b style="flex:1">'+esc(b.nom||"Sans nom")+'</b>'+(t==="sort"?'<span class="tag">'+(num(b.niv)?"Niv "+num(b.niv):"Tour")+'</span>'+(b.conc?'<span class="tag">C</span>':'')+(b.rituel?'<span class="tag">R</span>':''):'<span class="tag">'+esc(b.rarete||"")+'</span>'+(b.harmo?'<span class="tag">Harmo.</span>':''))+'</div>'+
-        '<div class="small mute">'+esc(t==="sort"?[b.ecole,b.temps,b.portee,b.duree].filter(Boolean).join(" · "):(b.typeObj||""))+'</div>'+(b.desc?'<div class="small desc">'+esc(b.desc)+'</div>':'')+'</button>').join("")
-       :'<div class="empty"><div class="big1">'+(t==="sort"?"✨":"🗡️")+'</div><p>'+(S.biblio.size?"Rien ne correspond.":"La bibliothèque est vide. Ajoutez vos sorts et objets une fois, puis piochez-les dans les fiches.")+'</p></div>')+
-      (readOnly?'':'<button class="btn pri" data-act="newbib" style="width:100%;margin-top:12px;padding:12px">+ Ajouter '+(t==="sort"?"un sort":"un objet")+'</button>');}
+      '<div class="row" style="margin-bottom:8px"><input id="bibq" placeholder="Rechercher…" value="'+esc(state.bibQ)+'" style="flex:1">'+(t==="sort"?'<select id="bibniv" style="width:100px"><option value="">Tous niv.</option>'+[0,1,2,3,4,5,6,7,8,9].map(n=>'<option value="'+n+'" '+(state.bibNiv===String(n)?"selected":"")+'>'+(n?"Niv "+n:"Tours")+'</option>').join("")+'</select>':'')+'</div>'+
+      (t==="sort"?'<select id="bibcls" style="margin-bottom:10px"><option value="">Toutes les classes</option>'+CLASSES_SORTS.map(k=>'<option'+(state.bibCls===k?" selected":"")+'>'+k+'</option>').join("")+'</select><div class="small mute" style="margin-bottom:8px">'+all.length+' sort(s)'+(SRD.length?' · '+SRD.length+' sorts officiels du SRD + ceux du groupe':' · chargement des sorts officiels…')+'</div>':'')+
+      (list.length?list.map(b=>'<button class="bib" data-bib="'+b.id+'"><div class="row"><b style="flex:1">'+esc(b.nom||"Sans nom")+'</b>'+(t==="sort"?'<span class="tag">'+(num(b.niv)?"Niv "+num(b.niv):"Tour")+'</span>'+(b.conc?'<span class="tag">C</span>':'')+(b.rituel?'<span class="tag">R</span>':'')+(b.srd?'':'<span class="tag" style="color:var(--acc)">Groupe</span>'):'<span class="tag">'+esc(b.rarete||"")+'</span>'+(b.harmo?'<span class="tag">Harmo.</span>':''))+'</div>'+
+        '<div class="small mute">'+esc(t==="sort"?[b.ecole,b.temps,b.portee,b.classes].filter(Boolean).join(" · "):(b.typeObj||""))+'</div>'+(b.dmg?'<div class="small" style="color:var(--warn)">'+esc((b.dmg.perso?b.dmg.perso[1]:b.dmg.slots&&b.dmg.slots[Object.keys(b.dmg.slots)[0]])+" "+b.dmg.type)+'</div>':'')+'</button>').join("")+(all.length>list.length?'<div class="small mute" style="text-align:center;margin:8px">'+(all.length-list.length)+' autres : affine la recherche.</div>':'')
+       :'<div class="empty"><div class="big1">'+(t==="sort"?"✨":"🗡️")+'</div><p>Rien ne correspond.</p></div>')+
+      (readOnly?'':'<button class="btn pri" data-act="newbib" style="width:100%;margin-top:12px;padding:12px">+ Ajouter '+(t==="sort"?"un sort maison":"un objet")+'</button>');}
 
   case "commun":{const m=G.commun.monnaie||{};const its=[...S.commun.values()].sort((a,b)=>String(a.nom).localeCompare(b.nom));const ps=persos().filter(c=>!c.retire);
     return '<div class="card"><h3>Trésor du groupe</h3><div class="grid g3">'+[["pp","Platine (PP)"],["po","Or (PO)"],["pe","Électrum (PE)"],["pa","Argent (PA)"],["pc","Cuivre (PC)"]].map(([k,n])=>GF(n,"groupe|commun|monnaie."+k,num(m[k]),"number",'data-t="n"')).join("")+'</div>'+
@@ -349,6 +349,7 @@ app.addEventListener("input",e=>{
   const el=e.target;
   if(el.id==="bibq"){state.bibQ=el.value;clearTimeout(rerenderPane.q);rerenderPane.q=setTimeout(()=>{rerenderPane();const i=document.getElementById("bibq");if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}},250);return}
   if(el.id==="bibniv"){state.bibNiv=el.value;rerenderPane();return}
+  if(el.id==="bibcls"){state.bibCls=el.value;rerenderPane();return}
   if(readOnly)return;
   if(el.dataset.cinit||el.dataset.cpv||el.dataset.cpvmax){const id=el.dataset.cinit||el.dataset.cpv||el.dataset.cpvmax;const f=el.dataset.cinit?"init":el.dataset.cpv?"pv":"pvmax";const l=(G.combat.lignes||{})[id];if(!l)return;
     const v=el.value===""&&f==="init"?"":num(el.value);l[f]=v;clearTimeout(cbTimers[id+f]);cbTimers[id+f]=setTimeout(()=>cbUpdate({["lignes."+id+"."+f]:v}),600);return}
@@ -373,7 +374,7 @@ app.addEventListener("click",e=>{
   if(d.tab){state.tab=d.tab;render();window.scrollTo(0,0);return}
   if(d.pf){state.persoFilter=d.pf;rerenderPane();return}
   if(d.bt&&!d.act){state.bibType=d.bt;state.bibNiv="";rerenderPane();return}
-  if(d.bib){return bibModal(S.biblio.get(d.bib))}
+  if(d.bib){const b=getBib(d.bib);return b&&b.srd?srdModal(b):bibModal(b)}
   if(d.act)return act(d.act,c,d);
   if(readOnly)return;
   if(d.dispo){const s=S.sessions.get(d.dispo);if(!s)return;s.dispo=s.dispo||{};const nv=DISPO[(DISPO.indexOf(s.dispo[d.p]||"")+1)%DISPO.length];s.dispo[d.p]=nv;upd("sessions",s.id,"dispo",d.p,nv);rerenderPane();return}
@@ -400,6 +401,7 @@ function act(a,c,d){
   if(a==="logout"){signOut(window.__auth).then(()=>location.reload());return}
   if(a==="seed"){act.seeding||(act.seeding=1,importSeed());return}
   if(a==="eco"||a==="ecoreset"||a==="sexp"||a==="cbperso"){combatAct(a,d);return}
+  if(a==="tlreset"){state.turnLog=[];rerenderPane();return}
   if(a==="ptog"){const k="p_"+d.l;state.eco[k]=!state.eco[k];rerenderPane();return}
   if(a==="togpast"){state.showPast=!state.showPast;rerenderPane();return}
   if(readOnly)return;
@@ -453,15 +455,18 @@ function bibModal(b){
   const dl=m.querySelector("[data-del]");if(dl)dl.onclick=()=>{m.remove();confirmBox("Supprimer « "+o.nom+" » de la bibliothèque ?",()=>{del("biblio",o.id);rerenderPane()})};
 }
 function pickBib(c,t){
-  const list=()=>[...S.biblio.values()].filter(b=>b.type===t).sort((a,b)=>num(a.niv)-num(b.niv)||String(a.nom).localeCompare(b.nom));
-  const m=modal('<h2>📚 '+(t==="sort"?"Ajouter un sort":"Ajouter un objet")+'</h2><input id="pq" placeholder="Rechercher…" style="margin-bottom:8px"><div id="pl"></div><div class="acts"><button class="btn" data-x>Fermer</button></div>');
-  const draw=()=>{const Q=m.querySelector("#pq").value.toLowerCase();const l=list().filter(b=>!Q||b.nom.toLowerCase().includes(Q));
-    m.querySelector("#pl").innerHTML=l.length?l.map(b=>'<button class="bib" data-pick="'+b.id+'"><b>'+esc(b.nom)+'</b> <span class="tag">'+(t==="sort"?(num(b.niv)?"Niv "+num(b.niv):"Tour"):esc(b.rarete||""))+'</span><div class="small mute">'+esc((b.desc||"").slice(0,90))+'</div></button>').join(""):'<p class="mute small">Rien dans la bibliothèque. Ajoute des '+(t==="sort"?"sorts":"objets")+' depuis l\'onglet Biblio de l\'accueil.</p>'};
+  loadSRD();const mc=myClasses(c);let only=t==="sort"&&mc.length>0;
+  const m=modal('<h2>📚 '+(t==="sort"?"Ajouter un sort":"Ajouter un objet")+'</h2><input id="pq" placeholder="Rechercher…" style="margin-bottom:8px">'+
+    (t==="sort"?(mc.length?'<label class="row small" style="margin-bottom:6px"><input type="checkbox" class="tog" id="ponly" checked> Seulement les sorts de '+esc(mc.join(", "))+'</label>':'')+'<label class="row small" style="margin-bottom:8px"><input type="checkbox" class="tog" id="patk" checked> Créer l\'action d\'attaque si le sort fait des dégâts</label>':'')+
+    '<div id="pl"></div><div class="acts"><button class="btn" data-x>Fermer</button></div>');
+  const draw=()=>{const l=bibList(t,m.querySelector("#pq").value,"",only?mc:null).slice(0,60);
+    m.querySelector("#pl").innerHTML=l.length?l.map(b=>'<button class="bib" data-pick="'+b.id+'"><b>'+esc(b.nom)+'</b> <span class="tag">'+(t==="sort"?(num(b.niv)?"Niv "+num(b.niv):"Tour"):esc(b.rarete||""))+'</span>'+(b.dmg?' <span class="tag" style="color:var(--warn)">'+esc(b.dmg.type)+'</span>':'')+'<div class="small mute">'+esc(t==="sort"?[b.ecole,b.portee,b.classes].filter(Boolean).join(" · "):(b.desc||"").slice(0,90))+'</div></button>').join(""):'<p class="mute small">Rien ne correspond.</p>'};
   draw();m.querySelector("#pq").oninput=draw;m.querySelector("[data-x]").onclick=()=>m.remove();
-  m.querySelector("#pl").onclick=e=>{const bt=e.target.closest("[data-pick]");if(!bt)return;const b=S.biblio.get(bt.dataset.pick);if(!b)return;
-    if(t==="sort")c.sorts.push({niv:num(b.niv),nom:b.nom,prep:false,conc:!!b.conc,note:[b.portee,b.duree,b.desc].filter(Boolean).join(" · ").slice(0,300)});
-    else c.items.push({cat:"Sac",nom:b.nom,qty:1,note:(b.desc||"").slice(0,300)});
-    schedule(c);toast(b.nom+" ajouté");rerenderPane()};
+  const po=m.querySelector("#ponly");if(po)po.onchange=()=>{only=po.checked;draw()};
+  m.querySelector("#pl").onclick=e=>{const bt=e.target.closest("[data-pick]");if(!bt)return;const b=getBib(bt.dataset.pick);if(!b)return;
+    if(t==="sort"){const pa=m.querySelector("#patk");const atk=addSortToPerso(c,b,pa&&pa.checked);toast(b.nom+" ajouté"+(atk?" (et aux attaques)":""))}
+    else{c.items.push({cat:"Sac",nom:b.nom,qty:1,note:(b.desc||"").slice(0,300)});schedule(c);toast(b.nom+" ajouté")}
+    rerenderPane()};
 }
 function loadAvatar(file){
   const c=cur();const r=new FileReader();
@@ -523,6 +528,7 @@ function atkCalc(c){
   const tp=(c.passifs||[]).filter(p=>p.parTour&&num(p.val));
   const st=c.attaques.filter(isStruct);
   return (tp.length?'<div class="chips" style="margin-bottom:8px">'+tp.map(p=>{const used=state.eco["p_"+p.label];return '<button class="chip '+(used?"used":"on")+'" data-act="ptog" data-l="'+esc(p.label)+'">'+(used?"✓ ":"")+esc(p.label)+' +'+num(p.val)+(used?" (utilisé)":" dispo")+'</button>'}).join("")+'</div>':'')+
+  turnBox()+(state.turnLog.length?'<button class="btn sm" data-act="tlreset" style="margin:-4px 0 8px">↺ Remettre le total du tour à zéro</button>':'')+
   (st.length?'<button class="btn pri bigatk" data-act="atkopen">⚔️ Attaquer</button>':'<div class="small mute">Configure tes actions d\'attaque dans l\'onglet Combat de ta fiche.</div>')+
   (presetFor(c)?'<button class="btn" data-act="atkpreset" style="width:100%;margin-top:8px">⚔️ '+(c.presetV?"Mettre à jour":"Préremplir")+' mes actions ('+esc(c.nom)+')</button>':'')+
   c.attaques.filter(a=>!isStruct(a)).map(a=>'<div class="atk"><b>'+esc(a.nom||"Attaque")+'</b><span>'+esc(a.bonus||"")+'</span><span class="mute">'+esc(a.degats||"")+'</span></div>').join("");
@@ -534,13 +540,13 @@ function attackModal(c,step,i){
   const L=c.attaques.map((a,j)=>[a,j]).filter(([a])=>isStruct(a));
   if(step!=="dice"){
     const grp={arme:[],sort:[],autre:[]};L.forEach(([a,j])=>grp[atkKind(a)].push([a,j]));
-    box.innerHTML='<h2>Quelle action ?</h2>'+Object.entries(grp).filter(([,v])=>v.length).map(([k,v])=>'<div class="catt">'+({arme:"Armes",sort:"Sorts",autre:"Capacités et invocations"})[k]+'</div>'+v.map(([a,j])=>{
+    box.innerHTML='<h2>Quelle action ?</h2>'+turnBox()+Object.entries(grp).filter(([,v])=>v.length).map(([k,v])=>'<div class="catt">'+({arme:"Armes",sort:"Sorts",autre:"Capacités et invocations"})[k]+'</div>'+v.map(([a,j])=>{
       const r=a.cout&&c.ressources.find(x=>x.nom===a.cout);
       return '<button class="bib" data-pick="'+j+'"><div class="row"><b style="flex:1">'+esc(a.nom)+'</b>'+(a.main?'<span class="tag">'+MAINS[a.main]+'</span>':'')+(a.carac&&atkRoll(a)?'<span class="tag">'+sg(atkHit(c,a))+'</span>':'')+'</div><div class="small mute">'+esc((a.des||[]).map(d=>d.n+" "+(d.type||"")).join(" + "))+(r?' · coût : '+esc(r.nom)+' ('+num(r.act)+' restant)':'')+'</div></button>'}).join("")).join("")+
       '<div class="acts"><button class="btn" data-x>Fermer</button></div>';
     box.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>attackModal(c,"dice",+b.dataset.pick));
   }else{
-    const a=c.attaques[i];const inp=state.atkIn[i]=state.atkIn[i]||{};
+    const a=c.attaques[i];const inp=state.atkIn[i]={};
     const ps=(a.sansPassifs?[]:(c.passifs||[])).filter(p=>passApplies(p,a)&&num(p.val));
     box.innerHTML='<h2>'+esc(a.nom)+'</h2>'+(a.carac&&atkRoll(a)?'<div class="small">Jet d\'attaque : <b>1d20 '+sg(atkHit(c,a))+'</b></div>':'')+(a.degats?'<div class="small mute">'+esc(a.degats)+'</div>':'')+
       '<div class="catt">Résultat de tes dés</div><div class="dice">'+(a.des||[]).map((d,j)=>'<label class="dl"><span>'+esc(d.n||"dé")+' '+esc(d.type||"")+'</span><input type="number" inputmode="numeric" placeholder="total" data-j="'+j+'" value="'+(inp[j]??"")+'"></label>').join("")+'</div>'+
@@ -550,16 +556,23 @@ function attackModal(c,step,i){
     box.querySelector("[data-back]").onclick=()=>attackModal(c,"list");
     box.querySelectorAll("[data-j]").forEach(e=>e.oninput=()=>{inp[e.dataset.j]=e.value});
     box.querySelector("#acrit").onchange=e=>{inp.crit=e.target.checked};
+    let entry=null;
     box.querySelector("[data-go]").onclick=()=>{
       const on=new Set([...box.querySelectorAll("[data-pk]")].filter(e=>e.checked).map(e=>+e.dataset.pk));
-      box.querySelector("#ares").innerHTML=computeAtk(c,i,ps.filter((p,k)=>on.has(k)));
-      box.querySelector("[data-go]").textContent="Recalculer";
+      const r=computeAtk(c,i,ps.filter((p,k)=>on.has(k)),!entry);
+      if(!entry){entry={nom:a.nom,total:r.total,types:r.types};state.turnLog.push(entry)}else{entry.total=r.total;entry.types=r.types}
+      const other=a.main?c.attaques.findIndex(x=>isStruct(x)&&x.main&&x.main!==a.main&&atkKind(x)==="arme"):-1;
+      box.querySelector("#ares").innerHTML=r.html+turnBox()+'<div class="row" style="margin-top:10px;flex-wrap:wrap">'+(other>=0?'<button class="btn pri" data-chain="'+other+'" style="flex:1">⚔️ Enchaîner : '+esc(c.attaques[other].nom)+'</button>':'')+'<button class="btn" data-more style="flex:1">+ Autre attaque</button></div>';
+      const ch=box.querySelector("[data-chain]");if(ch)ch.onclick=()=>{state.atkIn[+ch.dataset.chain]={};attackModal(c,"dice",+ch.dataset.chain)};
+      box.querySelector("[data-more]").onclick=()=>attackModal(c,"list");
+      box.querySelector("[data-go]").textContent="Recalculer";rerenderPane();
     };
+
     const f=box.querySelector("[data-j]");if(f)setTimeout(()=>f.focus(),50);
   }
   const x=box.querySelector("[data-x]");if(x)x.onclick=()=>m.remove();
 }
-function computeAtk(c,i,ps){
+function computeAtk(c,i,ps,spend){
   const a=c.attaques[i];const inp=state.atkIn[i]||{};const lines=[];const byType={};const notes=[];
   const mainType=(a.des&&a.des[0]&&a.des[0].type)||"";
   const add=(label,v,type)=>{if(!v)return;lines.push([label,v,type||""]);const t=type||"(arme)";byType[t]=(byType[t]||0)+v};
@@ -570,14 +583,17 @@ function computeAtk(c,i,ps){
   (a.pct||[]).forEach(p=>{const t=p.type||mainType;const base=byType[t]||0;const b=Math.floor(base*num(p.val)/100);if(b){lines.push([p.label+" +"+num(p.val)+" %",b,t]);byType[t]=base+b}});
   (a.sansPassifs?[]:(c.passifs||[])).forEach(p=>{if(p.note&&passApplies(p,a)&&(!p.siType||byType[p.siType]))notes.push(p.note)});
   if(inp.crit)(c.passifs||[]).forEach(p=>{if(p.noteCrit&&passApplies(p,a))notes.push(p.noteCrit)});
-  let coutTxt="";if(a.cout){const r=c.ressources.find(x=>x.nom===a.cout);if(r){if(num(r.act)>0){r.act=num(r.act)-1;coutTxt=a.cout+" : "+r.act+" restant"}else coutTxt="⚠️ Plus de "+a.cout+" !";schedule(c)}}
+  let coutTxt="";if(a.cout){const r=c.ressources.find(x=>x.nom===a.cout);if(r){if(!spend)coutTxt=a.cout+" : "+num(r.act)+" restant";else if(num(r.act)>0){r.act=num(r.act)-1;coutTxt=a.cout+" : "+r.act+" restant";schedule(c)}else coutTxt="⚠️ Plus de "+a.cout+" !"}}
   const total=Object.values(byType).reduce((s,v)=>s+v,0);
-  setTimeout(()=>rerenderPane(),0);
-  return '<div class="atkres">'+lines.map(([l,v,t])=>'<div class="rl"><span>'+esc(l)+'</span><b>'+sg(v)+'</b><span class="mute">'+esc(t)+'</span></div>').join("")+
+  return {total,types:byType,html:'<div class="atkres">'+lines.map(([l,v,t])=>'<div class="rl"><span>'+esc(l)+'</span><b>'+sg(v)+'</b><span class="mute">'+esc(t)+'</span></div>').join("")+
     '<div class="rt">Total : <b>'+total+'</b> dégâts</div><div class="small mute">'+Object.entries(byType).map(([t,v])=>v+" "+t).join(" · ")+'</div>'+
     (coutTxt?'<div class="small" style="margin-top:6px;color:var(--warn)">'+esc(coutTxt)+'</div>':'')+
-    notes.map(n=>'<div class="small rem">📌 '+esc(n)+'</div>').join("")+'</div>';
+    notes.map(n=>'<div class="small rem">📌 '+esc(n)+'</div>').join("")+'</div>'};
 }
+state.turnLog=[];
+const turnTotal=()=>state.turnLog.reduce((s,e)=>s+e.total,0);
+function turnBox(){if(!state.turnLog.length)return "";const t={};state.turnLog.forEach(e=>Object.entries(e.types).forEach(([k,v])=>t[k]=(t[k]||0)+v));
+  return '<div class="turnbox"><div class="row"><span style="flex:1">Dégâts ce tour</span><b>'+turnTotal()+'</b></div><div class="small">'+state.turnLog.map(e=>esc(e.nom)+" "+e.total).join(" + ")+'</div><div class="small mute">'+Object.entries(t).map(([k,v])=>v+" "+k).join(" · ")+'</div></div>'}
 // Préréglages connus
 state.atkIn={};
 const SEIKO_V=2;
@@ -634,12 +650,73 @@ function applyPreset(c){
 // Animation des épées croisées
 function swordsAnim(big){
   try{if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return}catch(e){}
-  const sw='<g class="sw"><rect x="-4" y="-150" width="8" height="140" rx="2" fill="url(#bl)"/><polygon points="-4,-150 4,-150 0,-168" fill="#e9eef5"/><rect x="-26" y="-12" width="52" height="9" rx="4" fill="#c9a24a"/><rect x="-4" y="-3" width="8" height="34" rx="3" fill="#5b3a22"/><circle cx="0" cy="36" r="7" fill="#c9a24a"/></g>';
-  const d=document.createElement("div");d.className="swords"+(big?" big":"");
-  d.innerHTML='<svg viewBox="-150 -150 300 300"><defs><linearGradient id="bl" x1="0" x2="1"><stop offset="0" stop-color="#9aa6b5"/><stop offset=".5" stop-color="#f4f7fb"/><stop offset="1" stop-color="#8793a3"/></linearGradient></defs>'+
-    '<g class="swl"><g transform="translate(0,70)">'+sw+'</g></g><g class="swr"><g transform="translate(0,70)">'+sw+'</g></g><g class="spark"><circle r="22" fill="#fff6c8"/><path d="M0-48L8-10 46-14 12 4 30 40 0 14-30 40-12 4-46-14-8-10Z" fill="#ffd34d"/></g></svg>'+(big?'<div class="swt">Au combat !</div>':'');
-  document.body.appendChild(d);setTimeout(()=>d.remove(),big?1700:1250);
+  const bolt=(x0,y0,x1,y1,n,amp)=>{let d="M"+x0.toFixed(1)+" "+y0.toFixed(1);for(let i=1;i<n;i++){const t=i/n,x=x0+(x1-x0)*t,y=y0+(y1-y0)*t,dx=-(y1-y0),dy=(x1-x0),L=Math.hypot(dx,dy)||1,o=(Math.random()*2-1)*amp;d+=" L"+(x+dx/L*o).toFixed(1)+" "+(y+dy/L*o).toFixed(1)}return d+" L"+x1.toFixed(1)+" "+y1.toFixed(1)};
+  const kat=id=>'<g class="kat">'+
+    '<path d="M-8 -6 C-10 -70 -5 -140 9 -200 L15 -196 C9 -140 8 -70 8 -6 Z" fill="url(#bk)" stroke="#7fa6d6" stroke-width="1.4" filter="url(#rim)"/>'+
+    '<path d="M5 -8 C6 -70 7 -140 13 -194" fill="none" stroke="#cfe9ff" stroke-width="1.6" opacity=".8" class="hamon"/>'+
+    '<path class="ev" id="'+id+'" fill="none" stroke="#bff0ff" stroke-width="2.2" filter="url(#gl)"/>'+
+    '<rect x="-9" y="-10" width="18" height="7" rx="1.5" fill="#c9a24a"/>'+
+    '<ellipse cx="0" cy="-1" rx="22" ry="6" fill="#15161b" stroke="#c9a24a" stroke-width="2"/>'+
+    '<rect x="-7" y="4" width="14" height="60" rx="4" fill="#0b0b0e" stroke="#4a5266" stroke-width="1"/><rect x="-7" y="4" width="14" height="60" rx="4" fill="url(#ito)"/>'+
+    '<rect x="-8" y="62" width="16" height="7" rx="2" fill="#c9a24a"/></g>';
+  const d=document.createElement("div");d.className="swords"+(big?" swbig":"");
+  d.innerHTML='<svg viewBox="-160 -170 320 320"><defs>'+
+    '<linearGradient id="bk" x1="0" x2="1"><stop offset="0" stop-color="#060709"/><stop offset=".5" stop-color="#2a2f3c"/><stop offset=".62" stop-color="#11141b"/><stop offset="1" stop-color="#040506"/></linearGradient>'+
+    '<pattern id="ito" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 0L8 8M8 0L0 8" stroke="#3b4150" stroke-width="2"/></pattern>'+
+    '<filter id="rim" x="-50%" y="-20%" width="200%" height="140%"><feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#3aa8ff" flood-opacity=".9"/></filter><filter id="gl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'+
+    '<radialGradient id="fl"><stop offset="0" stop-color="#ffffff"/><stop offset=".35" stop-color="#bff0ff"/><stop offset="1" stop-color="#3aa8ff" stop-opacity="0"/></radialGradient></defs>'+
+    '<g class="swl"><g transform="translate(0,100)">'+kat("evl")+'</g></g><g class="swr"><g transform="translate(0,100) scale(-1,1)">'+kat("evr")+'</g></g>'+
+    '<g class="spark"><circle r="46" fill="url(#fl)"/><g class="bolts" stroke="#dff7ff" stroke-width="2.5" fill="none" filter="url(#gl)"></g></g></svg>'+(big?'<div class="swt">Au combat !</div>':'');
+  document.body.appendChild(d);
+  const evl=d.querySelector("#evl"),evr=d.querySelector("#evr"),bg=d.querySelector(".bolts");
+  const tick=()=>{evl.setAttribute("d",bolt(2,-12,12,-192,14,4));evr.setAttribute("d",bolt(2,-12,12,-192,14,4));
+    bg.innerHTML=Array.from({length:7},(_,i)=>{const a=i/7*Math.PI*2+Math.random()*.6,r=60+Math.random()*50;return '<path d="'+bolt(0,0,Math.cos(a)*r,Math.sin(a)*r,6,8)+'"/>'}).join("")};
+  tick();const iv=setInterval(tick,70);
+  if(big)setTimeout(()=>d.classList.add("shake"),450);
+  setTimeout(()=>{clearInterval(iv);d.remove()},big?1800:1350);
   try{navigator.vibrate&&navigator.vibrate(big?[40,60,40]:30)}catch(e){}
+}
+
+
+// ---------- Sorts officiels (SRD 5.1 en français) ----------
+let SRD=[];
+function loadSRD(){if(SRD.length)return;fetch("sorts-srd.json").then(r=>r.json()).then(d=>{SRD=d;softRender()}).catch(()=>{})}
+const getBib=id=>id&&id.startsWith("srd-")?SRD.find(s=>s.id===id):S.biblio.get(id);
+const CLASSES_SORTS=["Barde","Clerc","Druide","Ensorceleur","Magicien","Occultiste","Paladin","Rôdeur"];
+const myClasses=c=>c.classes.map(x=>x.nom).filter(n=>CLASSES_SORTS.includes(n));
+function bibList(t,Q,niv,cls){
+  Q=(Q||"").toLowerCase();
+  return [...(t==="sort"?SRD:[]),...S.biblio.values()].filter(b=>b.type===t&&(!Q||(b.nom+" "+(b.classes||"")+" "+(b.ecole||"")).toLowerCase().includes(Q))&&(t!=="sort"||niv===""||niv==null||String(num(b.niv))===String(niv))&&(!cls||!cls.length||cls.some(k=>(b.classes||"").includes(k))))
+    .sort((a,b)=>t==="sort"?(num(a.niv)-num(b.niv)||String(a.nom).localeCompare(b.nom)):String(a.nom).localeCompare(b.nom));
+}
+// Dés de dégâts d'un sort pour un personnage (tour de magie selon le niveau du perso, sinon niveau de base)
+function sortDice(c,b,niv){
+  const d=b.dmg;if(!d)return null;
+  if(d.perso){const L=level(c);const k=Object.keys(d.perso).map(Number).filter(x=>x<=L).sort((x,y)=>y-x)[0];return d.perso[k||1]}
+  if(d.slots){const n=niv||num(b.niv);return d.slots[n]||d.slots[Object.keys(d.slots)[0]]}
+  return null;
+}
+function sortToAttack(c,b){
+  const n=(num(c.pacte.max)&&num(c.pacte.niv)>num(b.niv)&&num(b.niv)>0)?num(c.pacte.niv):num(b.niv);
+  const dice=sortDice(c,b,n);if(!dice)return null;
+  const dd=8+prof(c)+mod(c.car[c.sortCar]);
+  return {nom:b.nom+(num(b.niv)&&n!==num(b.niv)?" (niv "+n+")":""),kind:"sort",main:"",carac:b.attaque?c.sortCar:"",maitrise:true,modDegats:false,jetAttaque:!!b.attaque,bonusToucher:0,
+    des:[{n:dice,type:b.dmg.type||""}],fixe:[],pct:[],degats:(b.jds?"JdS "+b.jds+" DD "+dd+". ":"")+(b.portee?b.portee+". ":"")+(b.dmg.perso?"Dés selon ton niveau.":"")};
+}
+function addSortToPerso(c,b,withAtk){
+  c.sorts.push({niv:num(b.niv),nom:b.nom,prep:false,conc:!!b.conc,note:[b.temps,b.portee,b.duree,b.comp].filter(Boolean).join(" · ")+(b.desc?"\n"+b.desc:"")});
+  let atk=false;if(withAtk&&b.dmg&&!c.attaques.some(a=>a.nom&&a.nom.startsWith(b.nom))){const a=sortToAttack(c,b);if(a){c.attaques.push(a);atk=true}}
+  schedule(c);return atk;
+}
+function srdModal(b){
+  const mine=persos().filter(c=>c.ownerId===myId);
+  const m=modal('<h2>'+esc(b.nom)+'</h2><div class="small"><b>'+(num(b.niv)?"Niveau "+num(b.niv):"Tour de magie")+'</b> · '+esc(b.ecole)+(b.rituel?" · rituel":"")+'</div>'+
+    '<div class="grid g2 small" style="margin:10px 0"><div><span class="mute">Incantation</span><br>'+esc(b.temps)+'</div><div><span class="mute">Portée</span><br>'+esc(b.portee)+'</div><div><span class="mute">Composantes</span><br>'+esc(b.comp)+'</div><div><span class="mute">Durée</span><br>'+esc(b.duree)+(b.conc?" (concentration)":"")+'</div></div>'+
+    '<div class="small mute">Classes : '+esc(b.classes||"-")+'</div><div class="srddesc">'+esc(b.desc||"").replace(/\n/g,"<br>")+'</div>'+
+    (mine.length&&!readOnly?'<div class="catt">Ajouter à ma fiche</div>'+(b.dmg?'<label class="row small" style="margin-bottom:6px"><input type="checkbox" class="tog" id="watk" checked> Créer aussi l\'action d\'attaque</label>':'')+mine.map(c=>'<button class="btn" data-add="'+c.id+'" style="width:100%;margin-bottom:6px">+ '+esc(c.nom)+'</button>').join(""):'')+
+    '<div class="small mute" style="margin-top:8px">Source : SRD 5.1 (Wizards of the Coast), licence CC BY 4.0.</div><div class="acts"><button class="btn" data-x>Fermer</button></div>');
+  m.querySelector("[data-x]").onclick=()=>m.remove();
+  m.querySelectorAll("[data-add]").forEach(x=>x.onclick=()=>{const c=S.persos.get(x.dataset.add);if(!c)return;const w=m.querySelector("#watk");const atk=addSortToPerso(c,b,w&&w.checked);toast(b.nom+" ajouté à "+c.nom+(atk?" (et aux attaques)":""));m.remove()});
 }
 
 // ---------- Combat ----------
@@ -690,7 +767,7 @@ function combatPane(){
       (readOnly?'':'<div class="row" style="margin-top:10px"><button class="btn" data-act="cbaddpnj" style="flex:1">+ Monstre / PNJ</button><button class="btn pri" data-act="cbnext" style="flex:1">Tour suivant ▶</button></div>')+'</div>';
     // Remise à zéro des actions quand c'est mon tour
     const tl=(cb.lignes||{})[cb.tour];
-    if(cb.tour!==lastTour){if(tl&&tl.persoId===state.cbPerso)state.eco={};lastTour=cb.tour}
+    if(cb.tour!==lastTour){if(tl&&tl.persoId===state.cbPerso){state.eco={};state.turnLog=[]}lastTour=cb.tour}
   }
   if(!mine.length)h+='<div class="card"><p class="small mute" style="margin:0">Ouvre ta fiche et touche « C\'est mon perso » pour avoir ton panneau de combat ici.</p></div>';
   else{const c=S.persos.get(state.cbPerso);state.cur=c.id;
@@ -720,6 +797,7 @@ function combatSheet(c){
     (c.sorts.length?'<div class="catt">Sorts</div>'+sortsHtml:'')+
     '<div class="catt">États</div><div class="chips">'+ETATS.map(e=>'<button class="chip '+(c.etats.includes(e)?"on":"")+'" data-etat="'+e+'">'+e+'</button>').join("")+'</div>'+
     (c.dons.length?'<div class="catt">Dons et capacités</div>'+c.dons.map(d=>'<details class="don"><summary>'+esc(d.nom)+'</summary><div class="small">'+esc(d.desc||"")+'</div></details>').join(""):'')+
+    '<details class="don rules"><summary>📜 Règles de la table</summary><div class="small"><b>Intervention</b> : quand une attaque (projectile, mêlée ou sort) cible un joueur, un autre joueur juste à côté peut, par sa réaction, utiliser la moitié de son déplacement encore disponible pour s\'interposer et l\'intercepter. Le jet à réussir et les conséquences sont décidés par le MJ.<br><br><b>Lancer intense</b> : le MJ peut demander un jet intense. Il devient critique : réussite ou échec critique selon le résultat. Aucun modificateur ne s\'ajoute.<br><br><b>À 0 PV</b> : jet contre la mort DD 10, +1 par tour. 20 = 3 succès, 1 = 2 échecs, subir des dégâts = 1 échec. Tu peux ajouter des dés de vie au jet. Un allié peut donner un succès avec Médecine DD 10.</div></details>'+
     '<button class="btn" data-act="short" style="width:100%;margin-top:14px">☕ Repos court</button></div>';
 }
 function castSpell(c,i){
@@ -750,7 +828,7 @@ function combatAct(a,d){
   if(a==="cbroll"){const l=cb.lignes[d.line];const p=l&&S.persos.get(l.persoId);if(!p)return true;const r=1+Math.floor(Math.random()*20),v=r+mod(p.car.dex)+num(p.initBonus);l.init=v;cbUpdate({["lignes."+d.line+".init"]:v});rerenderPane();toast("🎲 "+r+" "+sg(mod(p.car.dex)+num(p.initBonus))+" = "+v);return true}
   if(a==="cbperso"){state.cbPerso=d.id;state.eco={};rerenderPane();return true}
   if(a==="eco"){state.eco[d.e]=!state.eco[d.e];rerenderPane();return true}
-  if(a==="ecoreset"){state.eco={};rerenderPane();return true}
+  if(a==="ecoreset"){state.eco={};state.turnLog=[];rerenderPane();return true}
   if(a==="sexp"){state.sopen[d.i]=!state.sopen[d.i];rerenderPane();return true}
   return false;
 }
@@ -782,7 +860,7 @@ function joinScreen(u){
   document.getElementById("jgo").onclick=async()=>{const nom=document.getElementById("jn").value.trim(),code=document.getElementById("jc").value.trim();if(!nom||!code)return err("Remplis les deux champs.");
     try{await setDoc(doc(fdb,"users",u.uid),{nom,code,email:u.email||""});me={nom};start()}catch(e){err(errMsg(e))}};
 }
-function start(){if(started)return;started=true;remote={db:fdb};lsLoad();render();subscribe()}
+function start(){if(started)return;started=true;remote={db:fdb};lsLoad();render();subscribe();setTimeout(loadSRD,1500)}
 onAuthStateChanged(auth,async u=>{
   if(!u){started=false;myId=null;return loginScreen("")}
   myId=u.uid;
