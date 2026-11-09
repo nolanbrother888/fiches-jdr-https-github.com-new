@@ -343,3 +343,6 @@ details.rules{margin-top:12px}
 .cview-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
 .cview{max-height:70vh;overflow:auto;border-radius:10px;background:#000;-webkit-overflow-scrolling:touch}
 .cview img{width:100%;display:block;max-width:none}
+.msrc{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;text-decoration:none;color:inherit;border:1px solid var(--line,#333);margin-bottom:8px;background:rgba(255,255,255,.02)}
+.msrc b{display:block;font-size:15px}.msrc small{display:block;color:var(--mute);font-size:12.5px;line-height:1.35;margin-top:2px}
+.msi{font-size:22px;width:28px;text-align:center;flex:none}.msa{margin-left:auto;color:var(--mute);flex:none}

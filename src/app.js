@@ -658,13 +658,21 @@ function applyPreset(c){
 // ===== Cartes du groupe =====
 const CARTES=new Map();
 const DDD_MAP="https://www.donjondudragon.fr/map";
+const MAP_SRC=[
+  ["Dyson Logos","Plus de 700 cartes dessinées à la main : villages, ports, cryptes, temples, égouts, tours. Gratuites, même en usage commercial, en créditant « Cartography by Dyson Logos ».","https://dysonlogos.blog/maps/commercial-maps/","✒️"],
+  ["Raznag, le Donjon Sans Fin","Créateur francophone : des niveaux de donjon en couleur, plusieurs variantes, prix libre. Usage personnel.","https://raznag.itch.io/the-dungeon-that-never-ends-level-6-to-10","🇫🇷"],
+  ["2-Minute Tabletop","Cartes de combat illustrées (forêt, port, désert, glace…) avec une collection gratuite. Usage personnel.","https://shop.2minutetabletop.com/blogs/news/free-battle-maps-assets-by-2-minute-tabletop","🎨"],
+  ["Czepeku","Les cartes de combat les plus connues de Patreon, très détaillées. Un pack d'introduction gratuit en s'inscrivant à leur lettre.","https://czepeku.com/","🏰"],
+  ["Carte interactive de Faerûn","Carte de Faerûn faite par un fan, zoomable, gratuite (prix libre).","https://fullen.itch.io/interactive-map-of-faerun","🌍"],
+  ["Donjon du Dragon","La carte de la communauté francophone Donjon du Dragon.","https://www.donjondudragon.fr/map","🐉"]];
 function cartesPane(){
   const ks=[...CARTES.values()].sort((a,b)=>(b.ts||0)-(a.ts||0));
   return '<div class="card"><h3>🗺️ Cartes</h3><div class="hint" style="margin:-4px 0 10px">Les cartes du groupe : monde, villes, donjons… Ajoute une photo ou une image, tout le monde la voit.</div>'+
-    '<a class="btn" href="'+DDD_MAP+'" target="_blank" rel="noopener" style="display:block;text-align:center;margin-bottom:8px;text-decoration:none;color:inherit;box-sizing:border-box">🌍 Ouvrir la carte de Donjon du Dragon</a>'+
     (readOnly?'':'<button class="btn pri" data-act="carteadd" style="width:100%">➕ Ajouter une carte</button>')+'</div>'+
     (ks.length?'<div class="cgrid">'+ks.map(k=>'<button class="cthumb" data-act="carteview" data-id="'+esc(k.id)+'"><img src="'+esc(k.img||k.url||"")+'" alt="" loading="lazy"><span>'+esc(k.nom||"Carte")+'</span></button>').join("")+'</div>'
-      :'<div class="card hint" style="text-align:center">Aucune carte pour l\'instant.</div>');
+      :'<div class="card hint" style="text-align:center">Aucune carte pour l\'instant.</div>')+
+    '<div class="card"><h3>🧭 Cartes de passionnés</h3><div class="hint" style="margin:-4px 0 10px">Choisis une carte sur ces sites, enregistre l\'image ou fais une capture, puis ajoute-la avec « Ajouter une carte ». Pense à créditer l\'auteur dans le nom.</div>'+
+    MAP_SRC.map(s=>'<a class="msrc" href="'+s[2]+'" target="_blank" rel="noopener"><span class="msi">'+s[3]+'</span><span><b>'+esc(s[0])+'</b><small>'+esc(s[1])+'</small></span><span class="msa">↗</span></a>').join("")+'</div>';
 }
 function shrinkImg(file){return new Promise((ok,ko)=>{const fr=new FileReader();fr.onerror=()=>ko(new Error("Lecture impossible"));fr.onload=()=>{const im=new Image();im.onerror=()=>ko(new Error("Image illisible"));im.onload=()=>{let max=2000,q=.82,out="";for(let t=0;t<8;t++){const r=Math.min(1,max/Math.max(im.width,im.height));const cv=document.createElement("canvas");cv.width=Math.round(im.width*r);cv.height=Math.round(im.height*r);cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);out=cv.toDataURL("image/jpeg",q);if(out.length<900000)return ok(out);if(q>.6)q-=.1;else max=Math.round(max*.8)}ok(out)};im.src=fr.result};fr.readAsDataURL(file)})}
 function carteAddModal(){
