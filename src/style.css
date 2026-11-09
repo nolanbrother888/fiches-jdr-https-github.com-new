@@ -348,7 +348,6 @@ details.rules{margin-top:12px}
 .msi{font-size:22px;width:28px;text-align:center;flex:none}.msa{margin-left:auto;color:var(--mute);flex:none}
 /* ===== Cartes vivantes ===== */
 .aw{position:absolute;left:0;top:0;width:100%;height:100%;animation:kb 13s ease-in-out infinite alternate;animation-delay:var(--sd,0s)}
-@supports (width:1cqw){.art.hasimg{container-type:size}.aw{width:max(100cqw,133.34cqh);height:max(100cqh,75cqw);left:calc((100cqw - max(100cqw,133.34cqh))*.6);top:calc((100cqh - max(100cqh,75cqw))*.35)}}
 .aw .artimg{object-position:50% 50%}
 @keyframes kb{0%{transform:scale(1.02) translate(0,0)}100%{transform:scale(1.13) translate(-2%,-1.5%)}}
 .artimg.ghost{mix-blend-mode:screen;opacity:0;filter:hue-rotate(35deg) saturate(1.7) brightness(1.2);animation:ghost 3.4s ease-in-out infinite}
@@ -401,8 +400,8 @@ details.rules{margin-top:12px}
 .card4.bigc.tilting{transition:transform .07s linear;box-shadow:0 18px 50px rgba(0,0,0,.8),0 0 34px -6px var(--glowc,#7fb4ff)}
 .card4.bigc::after{display:none}
 .bigc .art{touch-action:none}
-.bigc .aw .artimg:not(.ghost){transform:translate(var(--px,0px),var(--py,0px)) scale(1.05);transition:transform .12s linear}
-.bigc .cfx{transform:translate(calc(var(--px,0px)*-1.3),calc(var(--py,0px)*-1.3));transition:transform .12s linear}
+.bigc .aw .artimg:not(.ghost),.bigc .aw .cfx{transform:translate(var(--px,0px),var(--py,0px)) scale(1.05);transition:transform .12s linear}
+.bigc .art>.cfx{transform:translate(calc(var(--px,0px)*-1.3),calc(var(--py,0px)*-1.3));transition:transform .12s linear}
 .glare{position:absolute;inset:0;z-index:4;pointer-events:none;border-radius:10px;background:radial-gradient(circle at var(--gx,50%) var(--gy,30%),rgba(255,255,255,.3),rgba(255,255,255,0) 46%),linear-gradient(115deg,transparent 28%,rgba(127,212,255,.13) 44%,rgba(180,140,255,.13) 56%,transparent 72%);mix-blend-mode:screen;opacity:0;transition:opacity .35s}
 .bigc.tilting .glare{opacity:1}
 /* carte jouée : plan de coupe */

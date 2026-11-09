@@ -703,29 +703,32 @@ const fxBolt=(p,i,seed)=>{const d=zig(p[0],p[1],p[2],p[3],p[4]||9,p[5]||7,seed+i
 const fxPart=(x,y,r,dx,dy,t,d,w)=>'<circle class="fp'+(w?" w":"")+'" cx="'+x.toFixed(0)+'" cy="'+y.toFixed(0)+'" r="'+r.toFixed(1)+'" style="--dx:'+dx.toFixed(0)+'px;--dy:'+dy.toFixed(0)+'px;--t:'+t.toFixed(2)+'s;--d:-'+d.toFixed(2)+'s"/>';
 const fxRing=(x,y,r,t,d)=>'<circle class="fr" cx="'+x+'" cy="'+y+'" r="'+r+'" style="--t:'+t+'s;--d:-'+d+'s"/>';
 const fxGlint=(d,t,dl)=>'<path class="fs fsg" pathLength="1" d="'+d+'" style="--t:'+t+'s;--d:-'+dl+'s"/><path class="fs" pathLength="1" d="'+d+'" style="--t:'+t+'s;--d:-'+dl+'s"/>';
-const fxEye=(x,y,g)=>'<circle class="fe" cx="'+x+'" cy="'+y+'" r="3.8" fill="url(#'+g+')"/>';
+const fxEye=(x,y,g)=>'<circle class="fe" cx="'+x+'" cy="'+y+'" r="2.7" fill="url(#'+g+')"/>';
 function fxKind(k){const e=nrm(k.elem).replace(/[^a-z]/g,"");
   return {foudre:"bolt",tonnerre:"ring",feu:"ember",froid:"snow",necrotique:"wisp",psychique:"ripple",force:"ripple",radiant:"ray",arcane:"rune",tranchant:"blade",perforant:"blade",contondant:"blade",passif:"ward",capa:"mote",poison:"wisp",acide:"wisp"}[e]||"mote"}
 function cardFx(k,im){
-  const H=im?150:140,kind=im?im.fx:fxKind(k),seed=fxHash(k.key||k.nom||"x"),R=fxRnd(seed),gid="cg"+(++ARTN);let s="",col=im&&im.col;
+  const H=im?150:140,kind=im?im.fx:(sceneOf(k)==="temps"?"temps":fxKind(k)),seed=fxHash(k.key||k.nom||"x"),R=fxRnd(seed),gid="cg"+(++ARTN);let s="",col=im&&im.col;
   const parts=(n,f)=>{let o="";for(let i=0;i<n;i++)o+=f(i);return o};
   switch(kind){
     // --- Illustrations de Seiko : effets calés sur l'image ---
     case "kuroi":
       s='<rect class="ffl" width="200" height="'+H+'" style="--t:3.3s"/>'+[[126,102,192,26,10,8],[126,102,58,146,8,7],[126,102,199,92,8,6],[44,58,4,8,7,6],[126,102,150,60,5,5]].map((p,i)=>fxBolt(p,i,seed)).join("")+
         fxGlint("M18 44 L162 146",3.8,0)+fxGlint("M126 102 L200 52",3.8,1.6)+'<circle class="fc" cx="126" cy="102" r="20" fill="url(#'+gid+')"/>'+
-        parts(14,i=>{const a=R()*6.28,d=24+R()*50;return fxPart(126,102,.7+R()*1.1,Math.cos(a)*d,Math.sin(a)*d,.9+R()*1.3,R()*2,i%3===0)})+fxEye(95,38,gid+"a")+fxEye(110,33,gid+"a");break;
+        parts(14,i=>{const a=R()*6.28,d=24+R()*50;return fxPart(126,102,.7+R()*1.1,Math.cos(a)*d,Math.sin(a)*d,.9+R()*1.3,R()*2,i%3===0)});break;
     case "fracas":
       s=[0,1,2].map(i=>fxRing(44,120,70+i*4,2.7,i*.9)).join("")+'<circle class="fc" cx="44" cy="120" r="34" fill="url(#'+gid+')"/>'+
         [[98,92,50,118,7,6],[70,70,40,112,6,5],[44,120,10,96,5,5]].map((p,i)=>fxBolt(p,i,seed)).join("")+
-        parts(18,i=>{const a=-2.6+R()*3.2,d=40+R()*90;return '<path class="fp sh" d="M0 0l'+(3+R()*5).toFixed(1)+' -2l'+(1+R()*3).toFixed(1)+' '+(4+R()*4).toFixed(1)+'z" transform="translate('+(40+R()*30).toFixed(0)+','+(105+R()*25).toFixed(0)+')" style="--dx:'+(Math.cos(a)*d).toFixed(0)+'px;--dy:'+(Math.sin(a)*d).toFixed(0)+'px;--t:'+(1.8+R()*2).toFixed(2)+'s;--d:-'+(R()*3).toFixed(2)+'s"/>'})+fxEye(137,30,gid+"a")+fxEye(153,29,gid+"a");break;
+        parts(18,i=>{const a=-2.6+R()*3.2,d=40+R()*90;return '<path class="fp sh" d="M0 0l'+(3+R()*5).toFixed(1)+' -2l'+(1+R()*3).toFixed(1)+' '+(4+R()*4).toFixed(1)+'z" transform="translate('+(40+R()*30).toFixed(0)+','+(105+R()*25).toFixed(0)+')" style="--dx:'+(Math.cos(a)*d).toFixed(0)+'px;--dy:'+(Math.sin(a)*d).toFixed(0)+'px;--t:'+(1.8+R()*2).toFixed(2)+'s;--d:-'+(R()*3).toFixed(2)+'s"/>'});break;
     case "echo":
       s=fxGlint("M44 100 L134 151",3.4,0)+parts(5,i=>'<path class="fw thin" d="M'+(24+i*38)+' '+(150-R()*20).toFixed(0)+'q-9 -18 0 -36t0 -36" style="--t:'+(3+R()*2).toFixed(2)+'s;--d:-'+(R()*4).toFixed(2)+'s"/>')+
-        parts(12,i=>fxPart(R()*200,60+R()*90,.8+R()*1.4,-10+R()*20,-30-R()*40,2+R()*2.5,R()*4,i%4===0))+fxEye(69,71,gid)+fxEye(79,70,gid)+fxEye(136,27,gid+"a")+fxEye(149,26,gid+"a");break;
+        parts(12,i=>fxPart(R()*200,60+R()*90,.8+R()*1.4,-10+R()*20,-30-R()*40,2+R()*2.5,R()*4,i%4===0));break;
     case "elem":
       s='<rect class="ffl" width="200" height="'+H+'" style="--t:2.9s"/><circle class="fc" cx="98" cy="70" r="26" fill="url(#'+gid+')"/><circle class="fc" cx="98" cy="24" r="12" fill="url(#'+gid+')"/>'+
         [[98,74,82,149,9,7],[98,74,118,149,9,7],[58,112,36,60,6,6],[138,112,164,60,6,6],[98,74,60,104,5,5],[98,74,136,104,5,5]].map((p,i)=>fxBolt(p,i,seed)).join("")+
         parts(14,i=>fxPart(70+R()*56,90+R()*55,.7+R()*1.2,-14+R()*28,-30-R()*50,1.2+R()*1.8,R()*3,i%3===0));break;
+    // --- Arrêt du temps : le regard s'allume, tout se fige ---
+    case "temps":
+      s='<g class="frr"><circle cx="88" cy="70" r="59"/></g>'+parts(14,i=>fxPart(R()*200,R()*H,.8+R()*1.2,0,0,1.6+R()*2.4,R()*4,i%2===0))+fxEye(84.3,39.6,gid+"a")+fxEye(89.6,39.6,gid+"a");col="#d9c8ff";break;
     // --- Effets génériques par élément ---
     case "bolt":
       s='<rect class="ffl" width="200" height="'+H+'" style="--t:3.6s"/>'+[[150+R()*40,0,120+R()*50,H*.55,8,8],[10+R()*40,H*.2,70+R()*30,H*.8,7,7],[190,H*.5,140+R()*20,H,6,6]].map((p,i)=>fxBolt(p.map((v,j)=>j<4?Math.round(v):v),i,seed)).join("")+
@@ -741,7 +744,7 @@ function cardFx(k,im){
     case "ward":s=fxRing(100,H/2,62,4,0)+fxRing(100,H/2,62,4,2)+parts(8,i=>fxPart(R()*200,H*.5+R()*H*.5,.8+R(),-6+R()*12,-36-R()*26,2.4+R()*2,R()*4));break;
     default:s=parts(12,i=>fxPart(R()*200,H*.5+R()*H*.5,.8+R()*1.2,-10+R()*20,-40-R()*36,2+R()*2.2,R()*4,i%3===0));
   }
-  return '<svg class="cfx fx-'+kind+'" viewBox="0 0 200 '+H+'" preserveAspectRatio="'+(im?"none":"xMidYMid slice")+'" aria-hidden="true"'+(col?' style="color:'+col+'"':'')+'><defs><radialGradient id="'+gid+'"><stop offset="0" stop-color="currentColor"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></radialGradient><radialGradient id="'+gid+'a"><stop offset="0" stop-color="#fff3c4"/><stop offset=".35" stop-color="#ffc94a"/><stop offset="1" stop-color="#ffb020" stop-opacity="0"/></radialGradient></defs>'+s+'</svg>';
+  return '<svg class="cfx fx-'+kind+'" viewBox="0 0 200 '+H+'" preserveAspectRatio="xMidYMid slice" aria-hidden="true"'+(col?' style="color:'+col+'"':'')+'><defs><radialGradient id="'+gid+'"><stop offset="0" stop-color="currentColor"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></radialGradient><radialGradient id="'+gid+'a"><stop offset="0" stop-color="#fff3c4"/><stop offset=".35" stop-color="#ffc94a"/><stop offset="1" stop-color="#ffb020" stop-opacity="0"/></radialGradient></defs>'+s+'</svg>';
 }
 const noMotion=()=>{try{return !!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)}catch(e){return false}};
 // Carte en grand : inclinaison 3D (doigt, souris ou mouvement du téléphone) avec reflet
