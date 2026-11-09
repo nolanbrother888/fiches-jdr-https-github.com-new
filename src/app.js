@@ -349,8 +349,6 @@ app.addEventListener("input",e=>{
   const el=e.target;
   if(el.id==="bibq"){state.bibQ=el.value;clearTimeout(rerenderPane.q);rerenderPane.q=setTimeout(()=>{rerenderPane();const i=document.getElementById("bibq");if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}},250);return}
   if(el.id==="bibniv"){state.bibNiv=el.value;rerenderPane();return}
-  if(el.dataset.atkin!==undefined){const i=el.dataset.atkin;(state.atkIn[i]=state.atkIn[i]||{})[el.dataset.j]=el.value;return}
-  if(el.dataset.atkcrit!==undefined){(state.atkIn[el.dataset.atkcrit]=state.atkIn[el.dataset.atkcrit]||{}).crit=el.checked;return}
   if(readOnly)return;
   if(el.dataset.cinit||el.dataset.cpv||el.dataset.cpvmax){const id=el.dataset.cinit||el.dataset.cpv||el.dataset.cpvmax;const f=el.dataset.cinit?"init":el.dataset.cpv?"pv":"pvmax";const l=(G.combat.lignes||{})[id];if(!l)return;
     const v=el.value===""&&f==="init"?"":num(el.value);l[f]=v;clearTimeout(cbTimers[id+f]);cbTimers[id+f]=setTimeout(()=>cbUpdate({["lignes."+id+"."+f]:v}),600);return}
@@ -393,7 +391,7 @@ app.addEventListener("click",e=>{
   if(d.rm){const ks=d.rm.split(".");const i=num(ks.pop());const arr=getP(c,ks.join("."));
     if(ks[0]==="classes"&&arr.length<=1){toast("Il faut au moins une classe");return}
     arr.splice(i,1);schedule(c);rerenderPane();return}
-  if(d.push){const T={classes:{nom:"",sous:"",niv:1},attaques:{nom:"",bonus:"",degats:""},ressources:{nom:"",act:0,max:0,reset:"Repos long"},sorts:{niv:1,nom:"",prep:false,conc:false,note:""},dons:{nom:"",desc:""},monnaieCustom:{nom:"",val:0},des:{n:"1d6",type:""},fixe:{label:"",val:1,type:""},pct:{label:"",val:10,type:""},passifs:{label:"",val:0,type:"",parTour:false}};
+  if(d.push){const T={classes:{nom:"",sous:"",niv:1},attaques:{nom:"",bonus:"",degats:""},ressources:{nom:"",act:0,max:0,reset:"Repos long"},sorts:{niv:1,nom:"",prep:false,conc:false,note:""},dons:{nom:"",desc:""},monnaieCustom:{nom:"",val:0},des:{n:"1d6",type:""},fixe:{label:"",val:1,type:""},pct:{label:"",val:10,type:""},passifs:{label:"",val:0,type:"",applique:"arme",parTour:false,siType:"",note:""}};
     let arr=getP(c,d.push);if(!Array.isArray(arr)){setP(c,d.push,[]);arr=getP(c,d.push)}arr.push(clone(T[d.push.split(".").pop()]));schedule(c);rerenderPane();return}
 });
 function act(a,c,d){
@@ -403,7 +401,6 @@ function act(a,c,d){
   if(a==="seed"){act.seeding||(act.seeding=1,importSeed());return}
   if(a==="eco"||a==="ecoreset"||a==="sexp"||a==="cbperso"){combatAct(a,d);return}
   if(a==="ptog"){const k="p_"+d.l;state.eco[k]=!state.eco[k];rerenderPane();return}
-  if(a==="atkgo"&&c){computeAtk(c,+d.i);rerenderPane();return}
   if(a==="togpast"){state.showPast=!state.showPast;rerenderPane();return}
   if(readOnly)return;
   if(combatAct(a,d))return;
@@ -419,9 +416,10 @@ function act(a,c,d){
   if(a==="mine"){if(c.ownerId&&c.ownerId!==myId)return;c.ownerId=myId||"";schedule(c);render();toast("C'est maintenant ton perso");return}
   if(!canEdit(c))return;
   if(a==="cast"){castSpell(c,+d.i);return}
-  if(a==="atknew"){c.attaques.push({nom:"",main:"",carac:"dex",maitrise:true,modDegats:true,bonusToucher:0,des:[{n:"1d8",type:"tranchant"}],fixe:[],pct:[],degats:""});schedule(c);rerenderPane();return}
+  if(a==="atkopen"){attackModal(c,"list");return}
+  if(a==="atknew"){c.attaques.push({nom:"",kind:"arme",main:"",carac:"dex",maitrise:true,modDegats:true,jetAttaque:true,bonusToucher:0,des:[{n:"1d8",type:"tranchant"}],fixe:[],pct:[],degats:""});schedule(c);rerenderPane();return}
   if(a==="atkstruct"){const x=c.attaques[+d.i];Object.assign(x,{main:"",carac:"dex",maitrise:true,modDegats:true,bonusToucher:0,des:[{n:"1d8",type:""}],fixe:[],pct:[]});schedule(c);rerenderPane();return}
-  if(a==="atkpreset"){applyPreset(c);schedule(c);rerenderPane();toast("Armes préremplies : vérifie les dés de Kuroi Ventus");return}
+  if(a==="atkpreset"){applyPreset(c);schedule(c);rerenderPane();toast("Actions de combat à jour : vérifie les dés de Kuroi Ventus");return}
   if(a==="slotcalc"){const r=calcSlots(c);return confirmBox("Mettre tes emplacements selon les règles D&D ? "+slotText(r)+".",()=>{applySlots(c);state.showCalc=false;schedule(c);rerenderPane();toast("Emplacements mis à jour")},"Appliquer")}
   if(a==="release"){c.ownerId="";schedule(c);render();toast("Fiche libérée");return}
   if(a==="pickbib")return pickBib(c,d.bt);
@@ -483,73 +481,156 @@ function ioModal(){
     m.remove();render();toast(n+" fiche(s) importée(s)")}catch(e){toast("Texte invalide")}};
 }
 
-// ---------- Attaques : calcul automatique des dégâts ----------
+// ---------- Attaques : choix d'une action, dés réels, passifs automatiques ----------
 const TYPES=["tranchant","perforant","contondant","nécrotique","radiant","feu","froid","foudre","tonnerre","poison","acide","force","psychique","vitalité"];
 const MAINS={D:"Main droite",G:"Main gauche","":""};
+const KINDS={arme:"Attaque d'arme",sort:"Sort",autre:"Autre (capacité, invocation…)"};
+const APPL={arme:"Attaques d'arme",attaque:"Tout jet d'attaque (arme ou sort)",tout:"Toutes les actions"};
+const atkKind=a=>a.kind||"arme";
+const atkRoll=a=>a.jetAttaque!==undefined?a.jetAttaque:atkKind(a)==="arme";
 const atkHit=(c,a)=>(a.carac?mod(c.car[a.carac]):0)+(a.maitrise!==false&&a.carac?prof(c):0)+num(a.bonusToucher);
 const isStruct=a=>Array.isArray(a.des);
 function typeSel(path,val){return '<select data-k="'+path+'" class="tsel"><option value=""'+(val?"":" selected")+'>(type)</option>'+TYPES.map(t=>'<option'+(t===val?" selected":"")+'>'+t+'</option>').join("")+(val&&!TYPES.includes(val)?'<option selected>'+esc(val)+'</option>':'')+'</select>'}
+const sel=(path,val,opts,extra)=>'<select data-k="'+path+'" '+(extra||"")+'>'+Object.entries(opts).map(([k,l])=>'<option value="'+k+'"'+(k===(val||"")?" selected":"")+'>'+l+'</option>').join("")+'</select>';
 // Éditeur dans la fiche (onglet Combat)
 function atkEditor(c){
-  return '<div class="card"><h3>Attaques</h3><div class="hint" style="margin:-4px 0 8px">Décris chaque arme une fois : l\'onglet ⚔️ Combat calculera tes dégâts à partir de tes vrais jets de dés.</div>'+
+  const ress={"":"Aucun coût"};c.ressources.forEach(r=>{if(r.nom)ress[r.nom]=r.nom});
+  return '<div class="card"><h3>Actions d\'attaque</h3><div class="hint" style="margin:-4px 0 8px">Décris chaque attaque une fois. Dans l\'onglet ⚔️ Combat, le bouton « Attaquer » te les propose et calcule les dégâts à partir de tes vrais dés.</div>'+
   c.attaques.map((a,i)=>{const P="attaques."+i;
     if(!isStruct(a))return '<div class="atkcard"><div class="row"><input placeholder="Arme / attaque" data-k="'+P+'.nom" value="'+esc(a.nom)+'"><button class="del" data-rm="'+P+'">✕</button></div><div class="grid g2" style="margin-top:6px"><input placeholder="Bonus" data-k="'+P+'.bonus" value="'+esc(a.bonus)+'"><input placeholder="Dégâts" data-k="'+P+'.degats" value="'+esc(a.degats)+'"></div><button class="btn sm" data-act="atkstruct" data-i="'+i+'" style="margin-top:8px">⚙️ Activer le calcul automatique</button></div>';
-    return '<div class="atkcard"><div class="row"><input placeholder="Arme / attaque" data-k="'+P+'.nom" value="'+esc(a.nom)+'"><button class="del" data-rm="'+P+'">✕</button></div>'+
-    '<div class="grid g3" style="margin-top:8px"><div><label class="f">Main</label><select data-k="'+P+'.main"><option value="">-</option><option value="D"'+(a.main==="D"?" selected":"")+'>Droite</option><option value="G"'+(a.main==="G"?" selected":"")+'>Gauche</option></select></div>'+
+    return '<details class="atkcard"><summary><b>'+esc(a.nom||"Nouvelle attaque")+'</b> <span class="small mute">'+esc(KINDS[atkKind(a)])+'</span></summary><div class="row" style="margin-top:8px"><input placeholder="Nom" data-k="'+P+'.nom" value="'+esc(a.nom)+'"><button class="del" data-rm="'+P+'">✕</button></div>'+
+    '<div class="grid g2" style="margin-top:8px"><div><label class="f">Type d\'action</label>'+sel(P+".kind",atkKind(a),KINDS,"data-rr")+'</div><div><label class="f">Main</label>'+sel(P+".main",a.main,{"":"-",D:"Droite",G:"Gauche"})+'</div>'+
     '<div><label class="f">Caractéristique</label><select data-k="'+P+'.carac" data-rr><option value="">Aucune</option>'+ABS.map(([k,n])=>'<option value="'+k+'"'+(a.carac===k?" selected":"")+'>'+n+'</option>').join("")+'</select></div>'+
-    '<div><label class="f">Bonus toucher</label><input type="number" data-k="'+P+'.bonusToucher" data-t="n" value="'+num(a.bonusToucher)+'"></div></div>'+
-    '<div class="row small" style="margin-top:6px;gap:14px;flex-wrap:wrap"><label class="row"><input type="checkbox" class="tog" data-k="'+P+'.maitrise" '+(a.maitrise!==false?"checked":"")+'> Maîtrise au toucher</label><label class="row"><input type="checkbox" class="tog" data-k="'+P+'.modDegats" '+(a.modDegats!==false?"checked":"")+'> Ajouter la carac. aux dégâts</label><label class="row"><input type="checkbox" class="tog" data-k="'+P+'.sansPassifs" '+(a.sansPassifs?"checked":"")+'> Sans bonus passifs</label></div>'+
-    '<div class="small" style="margin-top:6px">Toucher : <b>'+sg(atkHit(c,a))+'</b></div>'+
+    '<div><label class="f">Bonus au toucher</label><input type="number" data-k="'+P+'.bonusToucher" data-t="n" value="'+num(a.bonusToucher)+'"></div>'+
+    '<div style="grid-column:1/3"><label class="f">Coût par utilisation</label>'+sel(P+".cout",a.cout,ress)+'</div></div>'+
+    '<div class="row small" style="margin-top:8px;gap:12px;flex-wrap:wrap"><label class="row"><input type="checkbox" class="tog" data-k="'+P+'.jetAttaque" '+(atkRoll(a)?"checked":"")+'> Jet d\'attaque</label><label class="row"><input type="checkbox" class="tog" data-k="'+P+'.maitrise" '+(a.maitrise!==false?"checked":"")+'> Maîtrise</label><label class="row"><input type="checkbox" class="tog" data-k="'+P+'.modDegats" '+(a.modDegats!==false?"checked":"")+'> Carac. aux dégâts</label><label class="row"><input type="checkbox" class="tog" data-k="'+P+'.sansPassifs" '+(a.sansPassifs?"checked":"")+'> Sans bonus passifs</label></div>'+
+    (a.carac&&atkRoll(a)?'<div class="small" style="margin-top:6px">Toucher : <b>'+sg(atkHit(c,a))+'</b></div>':'')+
     '<label class="f" style="margin-top:10px">Dés de dégâts</label>'+(a.des||[]).map((d,j)=>'<div class="row" style="margin-bottom:6px"><input style="width:80px" placeholder="1d8" data-k="'+P+'.des.'+j+'.n" value="'+esc(d.n)+'">'+typeSel(P+'.des.'+j+'.type',d.type)+'<button class="del" data-rm="'+P+'.des.'+j+'">✕</button></div>').join("")+'<button class="btn sm" data-push="'+P+'.des">+ Dé</button>'+
-    '<label class="f" style="margin-top:10px">Bonus fixes de cette arme</label>'+(a.fixe||[]).map((d,j)=>'<div class="row" style="margin-bottom:6px"><input placeholder="Nom" data-k="'+P+'.fixe.'+j+'.label" value="'+esc(d.label)+'"><input style="width:60px" type="number" data-k="'+P+'.fixe.'+j+'.val" data-t="n" value="'+num(d.val)+'">'+typeSel(P+'.fixe.'+j+'.type',d.type)+'<button class="del" data-rm="'+P+'.fixe.'+j+'">✕</button></div>').join("")+'<button class="btn sm" data-push="'+P+'.fixe">+ Bonus fixe</button>'+
-    '<label class="f" style="margin-top:10px">Bonus en % de cette arme</label>'+(a.pct||[]).map((d,j)=>'<div class="row" style="margin-bottom:6px"><input placeholder="Nom" data-k="'+P+'.pct.'+j+'.label" value="'+esc(d.label)+'"><input style="width:60px" type="number" data-k="'+P+'.pct.'+j+'.val" data-t="n" value="'+num(d.val)+'"><span>%</span>'+typeSel(P+'.pct.'+j+'.type',d.type)+'<button class="del" data-rm="'+P+'.pct.'+j+'">✕</button></div>').join("")+'<button class="btn sm" data-push="'+P+'.pct">+ Bonus en %</button>'+
-    '<input placeholder="Note (portée, effet…)" data-k="'+P+'.degats" value="'+esc(a.degats)+'" style="margin-top:10px"></div>'}).join("")+
-  '<button class="btn add" data-act="atknew">+ Attaque</button>'+
-  '<h3 style="margin-top:16px">Bonus passifs sur toutes tes attaques d\'arme</h3><div class="hint" style="margin:-4px 0 8px">Ex : Courroux du génie (+ maîtrise, 1 fois par tour), un objet qui donne +1 dégât…</div>'+
-  (c.passifs||[]).map((p,j)=>'<div class="atkcard"><div class="row"><input placeholder="Nom" data-k="passifs.'+j+'.label" value="'+esc(p.label)+'"><input style="width:60px" type="number" data-k="passifs.'+j+'.val" data-t="n" value="'+num(p.val)+'"><button class="del" data-rm="passifs.'+j+'">✕</button></div><div class="row" style="margin-top:6px">'+typeSel('passifs.'+j+'.type',p.type)+'<label class="row small"><input type="checkbox" class="tog" data-k="passifs.'+j+'.parTour" '+(p.parTour?"checked":"")+'> 1 fois par tour</label></div></div>').join("")+
-  '<button class="btn add" data-push="passifs">+ Bonus passif</button>'+
-  (presetFor(c)?'<button class="btn pri" data-act="atkpreset" style="width:100%;margin-top:10px">⚔️ Préremplir avec tes armes ('+esc(c.nom)+')</button>':'')+'</div>';
+    '<label class="f" style="margin-top:10px">Bonus fixes</label>'+(a.fixe||[]).map((d,j)=>'<div class="row" style="margin-bottom:6px"><input placeholder="Nom" data-k="'+P+'.fixe.'+j+'.label" value="'+esc(d.label)+'"><input style="width:60px" type="number" data-k="'+P+'.fixe.'+j+'.val" data-t="n" value="'+num(d.val)+'">'+typeSel(P+'.fixe.'+j+'.type',d.type)+'<button class="del" data-rm="'+P+'.fixe.'+j+'">✕</button></div>').join("")+'<button class="btn sm" data-push="'+P+'.fixe">+ Bonus fixe</button>'+
+    '<label class="f" style="margin-top:10px">Bonus en %</label>'+(a.pct||[]).map((d,j)=>'<div class="row" style="margin-bottom:6px"><input placeholder="Nom" data-k="'+P+'.pct.'+j+'.label" value="'+esc(d.label)+'"><input style="width:60px" type="number" data-k="'+P+'.pct.'+j+'.val" data-t="n" value="'+num(d.val)+'"><span>%</span>'+typeSel(P+'.pct.'+j+'.type',d.type)+'<button class="del" data-rm="'+P+'.pct.'+j+'">✕</button></div>').join("")+'<button class="btn sm" data-push="'+P+'.pct">+ Bonus en %</button>'+
+    '<label class="f" style="margin-top:10px">Note / rappel</label><input placeholder="Portée, effet, jet de sauvegarde…" data-k="'+P+'.degats" value="'+esc(a.degats)+'"></details>'}).join("")+
+  '<button class="btn add" data-act="atknew">+ Action d\'attaque</button>'+
+  '<h3 style="margin-top:16px">Passifs ajoutés automatiquement</h3><div class="hint" style="margin:-4px 0 8px">Ex : Colère du génie (+ maîtrise en foudre, 1 fois par tour), un objet qui donne +1 dégât, ou un simple rappel (Pourfendeur).</div>'+
+  (c.passifs||[]).map((p,j)=>{const P="passifs."+j;return '<div class="atkcard"><div class="row"><input placeholder="Nom" data-k="'+P+'.label" value="'+esc(p.label)+'"><input style="width:60px" type="number" data-k="'+P+'.val" data-t="n" value="'+num(p.val)+'" title="Dégâts en plus (0 = simple rappel)"><button class="del" data-rm="'+P+'">✕</button></div>'+
+    '<div class="grid g2" style="margin-top:6px"><div><label class="f">S\'applique à</label>'+sel(P+".applique",p.applique||"arme",APPL)+'</div><div><label class="f">Type de dégâts</label>'+typeSel(P+'.type',p.type)+'</div>'+
+    '<div><label class="f">Seulement si dégâts</label>'+typeSel(P+'.siType',p.siType)+'</div><div style="display:flex;align-items:flex-end"><label class="row small"><input type="checkbox" class="tog" data-k="'+P+'.parTour" '+(p.parTour?"checked":"")+'> 1 fois par tour</label></div></div>'+
+    '<input placeholder="Rappel affiché après l\'attaque (facultatif)" data-k="'+P+'.note" value="'+esc(p.note)+'" style="margin-top:6px"></div>'}).join("")+
+  '<button class="btn add" data-push="passifs">+ Passif</button>'+
+  (presetFor(c)?'<button class="btn pri" data-act="atkpreset" style="width:100%;margin-top:10px">⚔️ '+(c.presetV?"Mettre à jour":"Préremplir")+' les actions de '+esc(c.nom)+'</button>':'')+'</div>';
 }
-// Calculateur dans l'onglet Combat
-state.atkIn={};state.atkRes={};
+// Bouton « Attaquer » dans l'onglet Combat
 function atkCalc(c){
-  if(!c.attaques.length)return '<div class="small mute">Ajoute tes attaques dans l\'onglet Combat de ta fiche.</div>'+(presetFor(c)?'<button class="btn pri" data-act="atkpreset" style="width:100%;margin-top:8px">⚔️ Préremplir avec tes armes</button>':'');
-  const tp=(c.passifs||[]).filter(p=>p.parTour);
+  const tp=(c.passifs||[]).filter(p=>p.parTour&&num(p.val));
+  const st=c.attaques.filter(isStruct);
   return (tp.length?'<div class="chips" style="margin-bottom:8px">'+tp.map(p=>{const used=state.eco["p_"+p.label];return '<button class="chip '+(used?"used":"on")+'" data-act="ptog" data-l="'+esc(p.label)+'">'+(used?"✓ ":"")+esc(p.label)+' +'+num(p.val)+(used?" (utilisé)":" dispo")+'</button>'}).join("")+'</div>':'')+
-  c.attaques.map((a,i)=>{
-    if(!isStruct(a))return '<div class="atk"><b>'+esc(a.nom||"Attaque")+'</b><span>'+esc(a.bonus||"")+'</span><span class="mute">'+esc(a.degats||"")+'</span></div>';
-    const inp=state.atkIn[i]||{};const res=state.atkRes[i];
-    return '<div class="atkc"><div class="row"><b style="flex:1">'+esc(a.nom||"Attaque")+'</b>'+(a.main?'<span class="tag">'+MAINS[a.main]+'</span>':'')+(a.carac?'<span class="tag">'+sg(atkHit(c,a))+' toucher</span>':'')+'</div>'+
-    (a.degats?'<div class="small mute">'+esc(a.degats)+'</div>':'')+
-    '<div class="dice">'+(a.des||[]).map((d,j)=>'<label class="dl"><span>'+esc(d.n||"dé")+' '+esc(d.type||"")+'</span><input type="number" inputmode="numeric" placeholder="jet" data-atkin="'+i+'" data-j="'+j+'" value="'+(inp[j]??"")+'"></label>').join("")+'</div>'+
-    '<div class="row" style="margin-top:6px"><label class="row small" style="flex:1"><input type="checkbox" class="tog" data-atkcrit="'+i+'" '+(inp.crit?"checked":"")+'> Critique (lance 2× les dés)</label><button class="btn sm pri" data-act="atkgo" data-i="'+i+'">Calculer</button></div>'+
-    (res?'<div class="atkres">'+res+'</div>':'')+'</div>'}).join("");
+  (st.length?'<button class="btn pri bigatk" data-act="atkopen">⚔️ Attaquer</button>':'<div class="small mute">Configure tes actions d\'attaque dans l\'onglet Combat de ta fiche.</div>')+
+  (presetFor(c)?'<button class="btn" data-act="atkpreset" style="width:100%;margin-top:8px">⚔️ '+(c.presetV?"Mettre à jour":"Préremplir")+' mes actions ('+esc(c.nom)+')</button>':'')+
+  c.attaques.filter(a=>!isStruct(a)).map(a=>'<div class="atk"><b>'+esc(a.nom||"Attaque")+'</b><span>'+esc(a.bonus||"")+'</span><span class="mute">'+esc(a.degats||"")+'</span></div>').join("");
 }
-function computeAtk(c,i){
-  const a=c.attaques[i];const inp=state.atkIn[i]||{};const lines=[];const byType={};
-  const add=(label,v,type)=>{if(!v)return;lines.push([label,v,type||""]);const t=type||"(arme)";byType[t]=(byType[t]||0)+v};
-  (a.des||[]).forEach((d,j)=>add("Jet "+(d.n||"")+(inp.crit?" (critique)":""),num(inp[j]),d.type||(a.des[0]&&a.des[0].type)));
+function passApplies(p,a){const ap=p.applique||"arme";return ap==="tout"||(ap==="arme"&&atkKind(a)==="arme")||(ap==="attaque"&&atkRoll(a))}
+function attackModal(c,step,i){
+  const m=document.querySelector(".modal.atkm")||(()=>{const x=modal("");x.classList.add("atkm");return x})();
+  const box=m.querySelector(".box");
+  const L=c.attaques.map((a,j)=>[a,j]).filter(([a])=>isStruct(a));
+  if(step!=="dice"){
+    const grp={arme:[],sort:[],autre:[]};L.forEach(([a,j])=>grp[atkKind(a)].push([a,j]));
+    box.innerHTML='<h2>Quelle action ?</h2>'+Object.entries(grp).filter(([,v])=>v.length).map(([k,v])=>'<div class="catt">'+({arme:"Armes",sort:"Sorts",autre:"Capacités et invocations"})[k]+'</div>'+v.map(([a,j])=>{
+      const r=a.cout&&c.ressources.find(x=>x.nom===a.cout);
+      return '<button class="bib" data-pick="'+j+'"><div class="row"><b style="flex:1">'+esc(a.nom)+'</b>'+(a.main?'<span class="tag">'+MAINS[a.main]+'</span>':'')+(a.carac&&atkRoll(a)?'<span class="tag">'+sg(atkHit(c,a))+'</span>':'')+'</div><div class="small mute">'+esc((a.des||[]).map(d=>d.n+" "+(d.type||"")).join(" + "))+(r?' · coût : '+esc(r.nom)+' ('+num(r.act)+' restant)':'')+'</div></button>'}).join("")).join("")+
+      '<div class="acts"><button class="btn" data-x>Fermer</button></div>';
+    box.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>attackModal(c,"dice",+b.dataset.pick));
+  }else{
+    const a=c.attaques[i];const inp=state.atkIn[i]=state.atkIn[i]||{};
+    const ps=(a.sansPassifs?[]:(c.passifs||[])).filter(p=>passApplies(p,a)&&num(p.val));
+    box.innerHTML='<h2>'+esc(a.nom)+'</h2>'+(a.carac&&atkRoll(a)?'<div class="small">Jet d\'attaque : <b>1d20 '+sg(atkHit(c,a))+'</b></div>':'')+(a.degats?'<div class="small mute">'+esc(a.degats)+'</div>':'')+
+      '<div class="catt">Résultat de tes dés</div><div class="dice">'+(a.des||[]).map((d,j)=>'<label class="dl"><span>'+esc(d.n||"dé")+' '+esc(d.type||"")+'</span><input type="number" inputmode="numeric" placeholder="total" data-j="'+j+'" value="'+(inp[j]??"")+'"></label>').join("")+'</div>'+
+      '<label class="row small" style="margin-top:8px"><input type="checkbox" class="tog" id="acrit" '+(inp.crit?"checked":"")+'> Coup critique (tu lances 2× les dés)</label>'+
+      (ps.length?'<div class="catt">Bonus ajoutés</div>'+ps.map((p,k)=>{const used=p.parTour&&state.eco["p_"+p.label];return '<label class="row small" style="margin:4px 0"><input type="checkbox" class="tog" data-pk="'+k+'" '+(used?"":"checked")+'> '+esc(p.label)+' +'+num(p.val)+(p.type?' '+esc(p.type):'')+(p.parTour?(used?' <span class="mute">(déjà utilisé ce tour)</span>':' <span class="mute">(1×/tour)</span>'):'')+'</label>'}).join(""):'')+
+      '<div id="ares"></div><div class="acts"><button class="btn" data-back>‹ Actions</button><button class="btn pri" data-go>Calculer</button></div>';
+    box.querySelector("[data-back]").onclick=()=>attackModal(c,"list");
+    box.querySelectorAll("[data-j]").forEach(e=>e.oninput=()=>{inp[e.dataset.j]=e.value});
+    box.querySelector("#acrit").onchange=e=>{inp.crit=e.target.checked};
+    box.querySelector("[data-go]").onclick=()=>{
+      const on=new Set([...box.querySelectorAll("[data-pk]")].filter(e=>e.checked).map(e=>+e.dataset.pk));
+      box.querySelector("#ares").innerHTML=computeAtk(c,i,ps.filter((p,k)=>on.has(k)));
+      box.querySelector("[data-go]").textContent="Recalculer";
+    };
+    const f=box.querySelector("[data-j]");if(f)setTimeout(()=>f.focus(),50);
+  }
+  const x=box.querySelector("[data-x]");if(x)x.onclick=()=>m.remove();
+}
+function computeAtk(c,i,ps){
+  const a=c.attaques[i];const inp=state.atkIn[i]||{};const lines=[];const byType={};const notes=[];
   const mainType=(a.des&&a.des[0]&&a.des[0].type)||"";
+  const add=(label,v,type)=>{if(!v)return;lines.push([label,v,type||""]);const t=type||"(arme)";byType[t]=(byType[t]||0)+v};
+  (a.des||[]).forEach((d,j)=>add("Dés "+(d.n||"")+(inp.crit?" (critique)":""),num(inp[j]),d.type||mainType));
   if(a.carac&&a.modDegats!==false)add(ABN[a.carac],mod(c.car[a.carac]),mainType);
   (a.fixe||[]).forEach(f=>add(f.label||"Bonus",num(f.val),f.type||mainType));
-  if(!a.sansPassifs)(c.passifs||[]).forEach(p=>{if(p.parTour){if(state.eco["p_"+p.label])return;state.eco["p_"+p.label]=true}add(p.label+(p.parTour?" (1×/tour)":""),num(p.val),p.type||mainType)});
-  const pl=[];(a.pct||[]).forEach(p=>{const base=byType[p.type||mainType]||0;const b=Math.floor(base*num(p.val)/100);if(b){pl.push([p.label+" +"+num(p.val)+" % "+(p.type||""),b,p.type||mainType]);byType[p.type||mainType]=base+b}});
+  ps.forEach(p=>{if(p.siType&&!byType[p.siType])return;add(p.label,num(p.val),p.type||mainType);if(p.parTour)state.eco["p_"+p.label]=true});
+  (a.pct||[]).forEach(p=>{const t=p.type||mainType;const base=byType[t]||0;const b=Math.floor(base*num(p.val)/100);if(b){lines.push([p.label+" +"+num(p.val)+" %",b,t]);byType[t]=base+b}});
+  (a.sansPassifs?[]:(c.passifs||[])).forEach(p=>{if(p.note&&passApplies(p,a)&&(!p.siType||byType[p.siType]))notes.push(p.note)});
+  if(inp.crit)(c.passifs||[]).forEach(p=>{if(p.noteCrit&&passApplies(p,a))notes.push(p.noteCrit)});
+  let coutTxt="";if(a.cout){const r=c.ressources.find(x=>x.nom===a.cout);if(r){if(num(r.act)>0){r.act=num(r.act)-1;coutTxt=a.cout+" : "+r.act+" restant"}else coutTxt="⚠️ Plus de "+a.cout+" !";schedule(c)}}
   const total=Object.values(byType).reduce((s,v)=>s+v,0);
-  state.atkRes[i]=lines.concat(pl).map(([l,v,t])=>'<div class="rl"><span>'+esc(l)+'</span><b>'+sg(v)+'</b><span class="mute">'+esc(t)+'</span></div>').join("")+
-    '<div class="rt">Total : <b>'+total+'</b> dégâts</div><div class="small mute">'+Object.entries(byType).map(([t,v])=>v+" "+t).join(" · ")+'</div>';
+  setTimeout(()=>rerenderPane(),0);
+  return '<div class="atkres">'+lines.map(([l,v,t])=>'<div class="rl"><span>'+esc(l)+'</span><b>'+sg(v)+'</b><span class="mute">'+esc(t)+'</span></div>').join("")+
+    '<div class="rt">Total : <b>'+total+'</b> dégâts</div><div class="small mute">'+Object.entries(byType).map(([t,v])=>v+" "+t).join(" · ")+'</div>'+
+    (coutTxt?'<div class="small" style="margin-top:6px;color:var(--warn)">'+esc(coutTxt)+'</div>':'')+
+    notes.map(n=>'<div class="small rem">📌 '+esc(n)+'</div>').join("")+'</div>';
 }
 // Préréglages connus
-function presetFor(c){return c.nom==="Seiko"&&!c.attaques.some(isStruct)?"seiko":""}
+state.atkIn={};
+const SEIKO_V=2;
+function presetFor(c){return c.nom==="Seiko"&&num(c.presetV)<SEIKO_V?"seiko":""}
 function applyPreset(c){
   if(presetFor(c)!=="seiko")return;
-  const keep=c.attaques.filter(a=>!/^Ruine|^Lance|^Kuroi/i.test(a.nom||""));
+  const W={kind:"arme",carac:"dex",maitrise:true,modDegats:true,bonusToucher:0,jetAttaque:true,fixe:[],pct:[]};
+  const S2=(nom,des,note,extra)=>Object.assign({nom,kind:"sort",carac:"",maitrise:false,modDegats:false,bonusToucher:0,jetAttaque:false,fixe:[],pct:[],des,degats:note},extra||{});
   c.attaques=[
-    {nom:"Kuroi Ventus de Berilium",main:"D",carac:"dex",maitrise:true,modDegats:true,bonusToucher:0,des:[{n:"1d8",type:"tranchant"}],fixe:[],pct:[],degats:"Dés à vérifier"},
-    {nom:"Ruine",main:"G",carac:"dex",maitrise:true,modDegats:true,bonusToucher:0,des:[{n:"1d8",type:"tranchant"},{n:"1d8",type:"nécrotique"}],fixe:[],pct:[{label:"Ruine",val:10,type:"nécrotique"}],degats:"Avaleuse de vie : +1d8 nécrotique"},
-    {nom:"Tempête nécrotique (Ruine, 1 charge)",main:"",carac:"",maitrise:false,modDegats:false,sansPassifs:true,bonusToucher:0,des:[{n:"4d6",type:"nécrotique"}],fixe:[],pct:[{label:"Ruine",val:10,type:"nécrotique"}],degats:"1 action, une cible à 9 m"}
-  ].concat(keep.filter(a=>!/Tempête/i.test(a.nom||"")));
-  c.passifs=[{label:"Courroux du génie",val:prof(c),type:"",parTour:true},{label:"Totem de force Brutus",val:1,type:"",parTour:false}];
+    Object.assign({},W,{nom:"Kuroi Ventus",main:"D",des:[{n:"1d8",type:"tranchant"}],degats:"Katana ancestral. Dés à vérifier."}),
+    Object.assign({},W,{nom:"Ruine",main:"G",des:[{n:"1d8",type:"tranchant"},{n:"1d8",type:"nécrotique"}],pct:[{label:"Ruine",val:10,type:"nécrotique"}],degats:"Avaleuse de vie +1d8 nécrotique. Ambidextre : bonus de Dex ajouté en main gauche."}),
+    Object.assign({},W,{nom:"Écho : Libération incarnée",main:"",des:[{n:"1d8",type:"tranchant"}],cout:"Libération incarnée",degats:"Attaque de mêlée en plus de ton Écho quand tu fais l'action Attaquer. Copie l'arme équipée à l'invocation."}),
+    Object.assign({},W,{nom:"Tempête nécrotique (Ruine)",kind:"autre",carac:"",jetAttaque:false,maitrise:false,modDegats:false,sansPassifs:true,des:[{n:"4d6",type:"nécrotique"}],pct:[{label:"Ruine",val:10,type:"nécrotique"}],cout:"Charges de Ruine",degats:"1 action, une cible en vue jusqu'à 9 m."}),
+    S2("Contact glacial",[{n:"3d8",type:"nécrotique"}],"Tour de magie, attaque de sort au contact (36 m en 2014). La cible ne peut pas regagner de PV jusqu'à ton prochain tour. Version maison : à vérifier.",{jetAttaque:true,carac:"cha",maitrise:true}),
+    S2("Vague tonnante (pacte niv 4)",[{n:"5d8",type:"tonnerre"}],"Cube de 4,5 m. JdS Con : repoussé de 3 m, moitié des dégâts si réussi."),
+    S2("Fracassement (pacte niv 4)",[{n:"5d8",type:"tonnerre"}],"Sphère de 3 m à 18 m. JdS Con, moitié si réussi."),
+    S2("Éclair (pacte niv 4)",[{n:"9d6",type:"foudre"}],"Ligne de 30 m sur 1,5 m. JdS Dex, moitié si réussi."),
+    {nom:"Élémentaire de foudre : Écrasement",kind:"autre",carac:"",maitrise:false,modDegats:false,bonusToucher:0,jetAttaque:false,sansPassifs:true,des:[{n:"1d10",type:"foudre"}],fixe:[{label:"4 + niveau du sort (4)",val:8,type:"foudre"}],pct:[],degats:"Attaque de l'élémentaire (2 attaques par tour avec un emplacement de niveau 4)."}
+  ];
+  c.passifs=[
+    {label:"Colère du génie",val:prof(c),type:"foudre",applique:"attaque",parTour:true,siType:"",note:""},
+    {label:"Totem de force Brutus",val:1,type:"",applique:"arme",parTour:false,siType:"",note:""},
+    {label:"Pourfendeur",val:0,type:"",applique:"arme",parTour:false,siType:"tranchant",note:"Pourfendeur : la cible perd 3 m de vitesse jusqu'au début de ton prochain tour.",noteCrit:"Pourfendeur (critique) : la cible a le désavantage à ses attaques jusqu'à ton prochain tour."}
+  ];
+  const R=(nom,max,reset)=>{const o=c.ressources.find(r=>r.nom===nom);if(o){o.max=max;o.reset=reset}else c.ressources.push({nom,act:max,max,reset})};
+  c.ressources=c.ressources.filter(r=>!/Charges de la Lance/.test(r.nom));
+  const old=c.ressources.find(r=>/^Charges de Ruine/.test(r.nom));if(old)old.nom="Charges de Ruine";
+  R("Charges de Ruine",5,"Autre");R("Libération incarnée",Math.max(1,mod(c.car.con)),"Repos long");R("Fougue (action en plus)",1,"Repos court");
+  R("Kuroi Ventus : arrêt du temps",Math.max(1,mod(c.car.sag)),"Repos long");R("Vol élémentaire (9 m, 10 min)",prof(c),"Repos long");R("Répit en bouteille",1,"Repos long");R("Charges de la Lance (si équipée)",4,"Autre");
+  const D=(nom,desc)=>{if(!c.dons.some(d=>d.nom===nom))c.dons.push({nom,desc})};
+  D("Combattant accompli","Immunisé contre la peur et le charme.");
+  D("Attaques précises","Tu peux relancer une fois un dé de toucher qui fait 2 ou 3.");
+  D("Senryaku ka","Tu choisis ton tour de passage en combat.");
+  D("Ambidextre","Avec une arme dans chaque main, tu ajoutes ton bonus de dégâts à l'attaque en main gauche.");
+  D("Duelliste","Une arme de mêlée dans une main et rien dans l'autre : +2 aux dégâts avec cette arme.");
+  D("Kuroi Ventus (katana ancestral)","Action bonus ou réaction : tu arrêtes le temps pour tout ce qui est à 72 m. Tu gagnes 2 tours (1 minute hors combat). Une action hostile envers une créature rompt l'effet. Utilisations : bonus de mental (min. 1) par repos long.");
+  D("Fougue","Une fois par repos court, une action en plus de ton action normale pendant ton tour.");
+  D("Manifestation d'Écho","Action bonus : un Écho apparaît à 4 m (CA 14 + maîtrise = "+(14+prof(c))+", 1 PV, immunisé aux conditions). Il se déplace de 9 m sur ton ordre et disparaît au-delà de 9 m. Action bonus + 3 vitesses : échange de place. Tu peux attaquer depuis l'Écho, et il peut faire tes attaques d'opportunité. Il copie l'arme équipée à l'invocation.");
+  D("Libération incarnée","Quand tu fais l'action Attaquer, une attaque de mêlée en plus avec ton Écho. Utilisations : bonus de Constitution par repos long.");
+  D("Patron : Génie de la Foudre","Sorts de génie : Détection du mal et du bien, Vague tonnante (1) ; Force fantasmagorique, Fracassement (2) ; Création de nourriture et d'eau, Éclair (3) ; Assassin imaginaire, Convocation d'Élémentaire de Foudre (4) ; Création, Foulée dimensionnelle (5) ; Souhait (9).");
+  D("Colère du génie","Une fois par tour, quand tu touches avec une attaque de mêlée, à distance ou de sort : + bonus de maîtrise ("+prof(c)+") dégâts de foudre.");
+  D("Réceptacle du génie","Focaliseur. CA = DD de tes sorts, PV = niveau d'occultiste + maîtrise ("+(8+prof(c))+"). Immunisé poison et psychique. Répit en bouteille (action) : tu entres dans le réceptacle (cylindre de 6 m), jusqu'à 2 × maîtrise heures, sortie par action bonus. 1 fois par repos long.");
+  D("Don élémentaire (niv 6)","Résistance aux dégâts de foudre. Action bonus : vol de 9 m pendant 10 minutes, bonus de maîtrise fois par repos long.");
+  const ren=c.sorts.find(s=>/Invocation élémentaire de foudre/i.test(s.nom));
+  const elemNote="Concentration jusqu'à 1 h, portée 27 m. Élémentaire : armure physique 0, armure magique 1 par niveau de sort, 50 PV (+10 par niveau au-dessus de 4), vitesse 12 m, vol plané 12 m. For 18, Dex 15, Con 17. Résiste au tonnerre, immunisé foudre et poison. Attaques = niveau du sort ÷ 2 ; Écrasement : 1d10 + 4 + niveau du sort en foudre. Il a sa propre initiative.";
+  if(ren){ren.nom="Convocation d'Élémentaire de Foudre";ren.note=elemNote;ren.conc=true}
+  else if(!c.sorts.some(s=>/Élémentaire de Foudre/i.test(s.nom)))c.sorts.push({niv:4,nom:"Convocation d'Élémentaire de Foudre",prep:true,conc:true,note:elemNote});
+  if(!c.sorts.some(s=>/Fracassement/i.test(s.nom)))c.sorts.push({niv:2,nom:"Fracassement",prep:true,conc:false,note:"Sphère de 3 m à 18 m. JdS Con : 3d8 tonnerre, moitié si réussi. +1d8 par niveau au-dessus du 2e."});
+  if(!c.sorts.some(s=>/Contact glacial/i.test(s.nom)))c.sorts.push({niv:0,nom:"Contact glacial",prep:true,conc:false,note:"Attaque de sort : 3d8 nécrotique au niveau 11. La cible ne regagne pas de PV jusqu'à ton prochain tour."});
+  if(!num(c.pacte.max)){c.pacte={niv:4,max:2,used:0}}
+  c.presetV=SEIKO_V;
 }
+
 // Animation des épées croisées
 function swordsAnim(big){
   try{if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return}catch(e){}
