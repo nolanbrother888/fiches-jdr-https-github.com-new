@@ -703,7 +703,9 @@ const fxBolt=(p,i,seed)=>{const d=zig(p[0],p[1],p[2],p[3],p[4]||9,p[5]||7,seed+i
 const fxPart=(x,y,r,dx,dy,t,d,w)=>'<circle class="fp'+(w?" w":"")+'" cx="'+x.toFixed(0)+'" cy="'+y.toFixed(0)+'" r="'+r.toFixed(1)+'" style="--dx:'+dx.toFixed(0)+'px;--dy:'+dy.toFixed(0)+'px;--t:'+t.toFixed(2)+'s;--d:-'+d.toFixed(2)+'s"/>';
 const fxRing=(x,y,r,t,d)=>'<circle class="fr" cx="'+x+'" cy="'+y+'" r="'+r+'" style="--t:'+t+'s;--d:-'+d+'s"/>';
 const fxGlint=(d,t,dl)=>'<path class="fs fsg" pathLength="1" d="'+d+'" style="--t:'+t+'s;--d:-'+dl+'s"/><path class="fs" pathLength="1" d="'+d+'" style="--t:'+t+'s;--d:-'+dl+'s"/>';
-const fxEye=(x,y,g)=>'<circle class="fe" cx="'+x+'" cy="'+y+'" r="2.7" fill="url(#'+g+')"/>';
+const fxEye=(x,y,g,r,cls,dl)=>'<circle class="fe'+(cls?" "+cls:"")+'" cx="'+x+'" cy="'+y+'" r="'+(r||2.7)+'" fill="url(#'+g+')"'+(dl?' style="animation-delay:-'+dl+'s"':'')+'/>';
+const fxFog=(x,y,rx,ry,dx,t,d,g)=>'<ellipse class="fg" cx="'+x.toFixed(0)+'" cy="'+y.toFixed(0)+'" rx="'+rx.toFixed(0)+'" ry="'+ry.toFixed(0)+'" fill="url(#'+g+')" style="--dx:'+dx.toFixed(0)+'px;--t:'+t.toFixed(1)+'s;--d:-'+d.toFixed(1)+'s"/>';
+const fxTw=(x,y,z,t,d)=>'<path class="ftw" d="M0 -4L1 -1L4 0L1 1L0 4L-1 1L-4 0L-1 -1Z" transform="translate('+x.toFixed(0)+','+y.toFixed(0)+') scale('+z.toFixed(2)+')" style="--t:'+t.toFixed(2)+'s;--d:-'+d.toFixed(2)+'s"/>';
 function fxKind(k){const e=nrm(k.elem).replace(/[^a-z]/g,"");
   return {foudre:"bolt",tonnerre:"ring",feu:"ember",froid:"snow",necrotique:"wisp",psychique:"ripple",force:"ripple",radiant:"ray",arcane:"rune",tranchant:"blade",perforant:"blade",contondant:"blade",passif:"ward",capa:"mote",poison:"wisp",acide:"wisp"}[e]||"mote"}
 function cardFx(k,im){
@@ -731,6 +733,24 @@ function cardFx(k,im){
         parts(16,i=>fxPart(84+R()*48,30+R()*50,.8+R()*1.4,-18+R()*36,-34-R()*46,1.3+R()*1.8,R()*3,i%4===0))+
         parts(10,i=>fxPart(16+R()*60,118+R()*30,.9+R()*1.5,-30+R()*26,-26-R()*40,1.6+R()*2,R()*3.5))+
         parts(8,i=>fxPart(100+R()*40,96+R()*50,.8+R()*1.2,-8+R()*16,-30-R()*30,1.2+R()*1.6,R()*3,i%3===0));break;
+    case "moquerie":
+      s=[0,1,2].map(i=>fxRing(100,102,78,3.3,i*1.1)).join("")+parts(8,i=>{const a=-2.9+R()*2.7,d=46+R()*40;return '<text class="fp ha" x="'+(78+R()*44).toFixed(0)+'" y="'+(92+R()*18).toFixed(0)+'" font-size="'+(7+R()*7).toFixed(0)+'" style="--dx:'+(Math.cos(a)*d).toFixed(0)+'px;--dy:'+(Math.sin(a)*d).toFixed(0)+'px;--t:'+(1.9+R()*1.6).toFixed(2)+'s;--d:-'+(R()*3.4).toFixed(2)+'s">HA</text>'})+
+        fxEye(77,43.6,gid+"r",3)+fxEye(124.3,43.5,gid+"r",3,"",1.1);break;
+    case "hantise":
+      s=parts(4,i=>fxFog(10+R()*120,40+R()*90,38+R()*22,12+R()*8,50+R()*50,7+R()*4,R()*9,gid))+parts(16,i=>fxPart(R()*200,-6+R()*110,.5+R()*.9,-26-R()*20,46+R()*50,2.6+R()*2.6,R()*5,true))+
+        fxEye(127.5,63.4,gid,4.2)+fxEye(140.9,63.2,gid,3.8,"",.4);break;
+    case "assassin":
+      s=parts(5,i=>fxFog(R()*200,70+R()*70,40+R()*24,13+R()*8,-40+R()*90,8+R()*4,R()*10,gid))+parts(3,i=>'<path class="fw thin" d="M'+(40+i*58+R()*14).toFixed(0)+' '+(150-R()*24).toFixed(0)+'q-9 -18 0 -36t0 -36" style="--t:'+(3.4+R()*2).toFixed(2)+'s;--d:-'+(R()*4).toFixed(2)+'s"/>')+
+        parts(8,i=>fxPart(R()*200,40+R()*100,.5+R()*.9,-14+R()*28,-24-R()*26,2.4+R()*2.4,R()*4,true))+fxEye(88,77,gid+"r",3,"bl")+fxEye(102,77,gid+"r",3,"bl");break;
+    case "festin":
+      s='<ellipse class="fr" cx="53" cy="113" rx="46" ry="11" style="--t:3.2s;--d:0s"/><ellipse class="fr" cx="53" cy="113" rx="46" ry="11" style="--t:3.2s;--d:-1.6s"/>'+
+        parts(5,i=>'<path class="fw thin" d="M'+(128+i*11+R()*5).toFixed(0)+' '+(92-R()*14).toFixed(0)+'q-6 -12 0 -24t0 -24" style="--t:'+(2.8+R()*1.8).toFixed(2)+'s;--d:-'+(R()*4).toFixed(2)+'s"/>')+
+        parts(10,i=>fxPart(24+R()*58,62+R()*36,.5+R()*.9,-8+R()*16,18+R()*22,1.8+R()*2,R()*4,true))+
+        parts(6,i=>fxTw(26+R()*56,58+R()*44,.5+R()*.6,1.8+R()*1.6,R()*3))+parts(7,i=>fxTw(112+R()*76,16+R()*118,.45+R()*.6,2+R()*1.8,R()*3.5));break;
+    case "illusion":
+      s='<circle class="fc" cx="114" cy="38.5" r="22" fill="url(#'+gid+')"/>'+[0,1].map(i=>fxRing(114,38.5,64,4.2,i*2.1)).join("")+
+        fxEye(114,38.5,gid,7)+fxEye(123.2,130.5,gid,8,"",.7)+fxEye(129.5,108.3,gid,5.5,"",1.5)+fxEye(145.4,146.6,gid,6,"",2.2)+
+        parts(14,i=>fxPart(20+R()*120,30+R()*110,.6+R()*1.1,-30+R()*20,-20-R()*36,2+R()*2.4,R()*4.4,i%4===0));break;
     // --- Arrêt du temps : le regard s'allume, tout se fige ---
     case "temps":
       s='<g class="frr"><circle cx="88" cy="70" r="59"/></g>'+parts(14,i=>fxPart(R()*200,R()*H,.8+R()*1.2,0,0,1.6+R()*2.4,R()*4,i%2===0))+fxEye(84.3,39.6,gid+"a")+fxEye(89.6,39.6,gid+"a");col="#d9c8ff";break;
@@ -749,7 +769,7 @@ function cardFx(k,im){
     case "ward":s=fxRing(100,H/2,62,4,0)+fxRing(100,H/2,62,4,2)+parts(8,i=>fxPart(R()*200,H*.5+R()*H*.5,.8+R(),-6+R()*12,-36-R()*26,2.4+R()*2,R()*4));break;
     default:s=parts(12,i=>fxPart(R()*200,H*.5+R()*H*.5,.8+R()*1.2,-10+R()*20,-40-R()*36,2+R()*2.2,R()*4,i%3===0));
   }
-  return '<svg class="cfx fx-'+kind+'" viewBox="0 0 200 '+H+'" preserveAspectRatio="xMidYMid slice" aria-hidden="true"'+(col?' style="color:'+col+'"':'')+'><defs><radialGradient id="'+gid+'"><stop offset="0" stop-color="currentColor"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></radialGradient><radialGradient id="'+gid+'a"><stop offset="0" stop-color="#fff3c4"/><stop offset=".35" stop-color="#ffc94a"/><stop offset="1" stop-color="#ffb020" stop-opacity="0"/></radialGradient></defs>'+s+'</svg>';
+  return '<svg class="cfx fx-'+kind+'" viewBox="0 0 200 '+H+'" preserveAspectRatio="xMidYMid slice" aria-hidden="true"'+(col?' style="color:'+col+'"':'')+'><defs><radialGradient id="'+gid+'"><stop offset="0" stop-color="currentColor"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></radialGradient><radialGradient id="'+gid+'r"><stop offset="0" stop-color="#ffd0c0"/><stop offset=".3" stop-color="#ff3a2a"/><stop offset="1" stop-color="#ff2010" stop-opacity="0"/></radialGradient><radialGradient id="'+gid+'a"><stop offset="0" stop-color="#fff3c4"/><stop offset=".35" stop-color="#ffc94a"/><stop offset="1" stop-color="#ffb020" stop-opacity="0"/></radialGradient></defs>'+s+'</svg>';
 }
 const noMotion=()=>{try{return !!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)}catch(e){return false}};
 // Carte en grand : inclinaison 3D (doigt, souris ou mouvement du téléphone) avec reflet
@@ -1037,10 +1057,16 @@ const CARD_IMGS=[
   {p:"seiko",n:"convocation d'elementaire",src:"img/seiko/elementaire.jpg",fx:"elem",col:"#9ff5ff",face:"50% 25%"},
   {p:"seiko",n:"elementaire de foudre",src:"img/seiko/elementaire.jpg",fx:"elem",col:"#9ff5ff",face:"50% 25%"},
   // sans « p » : l'image vaut pour tous les persos qui ont ce sort
-  {n:"flammes",src:"img/sorts/flammes.jpg",fx:"flammes",col:"#ffa23a",face:"50% 40%"}];
+  {n:"flammes",src:"img/sorts/flammes.jpg",fx:"flammes",col:"#ffa23a",face:"50% 40%"},
+  {n:"moquerie cruelle",src:"img/seiko/moquerie.jpg",fx:"moquerie",col:"#8a3fd0",face:"50% 45%"},
+  {p:"seiko",n:"hantise",src:"img/seiko/hantise.jpg",fx:"hantise",col:"#ffffff",face:"68% 40%",ghost:"m"},
+  {p:"seiko",n:"assassin imaginaire",src:"img/seiko/assassin.jpg",fx:"assassin",col:"#e4ebf5",face:"48% 50%",ghost:"m"},
+  {p:"seiko",n:"creation de nourriture",src:"img/seiko/festin.jpg",fx:"festin",col:"#bfe6ff",face:"50% 55%"},
+  {p:"seiko",n:"force fantasmagorique",src:"img/seiko/illusion.jpg",fx:"illusion",col:"#ff4a3a",face:"57% 28%",ghost:1},
+  {p:"seiko",n:"illusion fantasmagorique",src:"img/seiko/illusion.jpg",fx:"illusion",col:"#ff4a3a",face:"57% 28%",ghost:1}];
 function cardImg(k){const c=S.persos.get(state._deckC)||{};const pn=nrm(c.nom),kn=nrm(k.nom);return CARD_IMGS.find(f=>(!f.p||f.p===pn)&&kn.startsWith(f.n)&&(!f.t||f.t===k.type))||null}
 function artHtml(k){const im=cardImg(k);return '<div class="art el-'+nrm(k.elem).replace(/[^a-z]/g,"")+(im?' hasimg':'')+'">'+
-  (im?'<div class="aw"><img class="artimg" src="'+im.src+'" alt="" loading="lazy">'+(im.ghost?'<img class="artimg ghost" src="'+im.src+'" alt="" loading="lazy">':'')+cardFx(k,im)+'</div>':sceneSVG(k)+cardFx(k,null))+'<div class="artico mini">'+k.icon+'</div></div>'}
+  (im?'<div class="aw aw-'+im.fx+'"><img class="artimg" src="'+im.src+'" alt="" loading="lazy">'+(im.ghost?'<img class="artimg ghost'+(im.ghost==="m"?" gm":"")+'" src="'+im.src+'" alt="" loading="lazy">':'')+cardFx(k,im)+'</div>':sceneSVG(k)+cardFx(k,null))+'<div class="artico mini">'+k.icon+'</div></div>'}
 function cardHtml(k,small,n){const fav=(state._favs||[]).includes(k.key);const pl=state.played[k.key];
   return '<button class="card4 t-'+k.type+(small?" sm":"")+(pl?" played":"")+(k.empty?" empty":"")+'" style="--n:'+(n||0)+';--sd:-'+(((n||0)*1.37)%7).toFixed(2)+'s" data-act="cardopen" data-key="'+esc(k.key)+'">'+
     artHtml(k)+'<div class="ribbon"><div class="medal">'+esc(k.medal)+'</div><div class="ecoic e-'+k.eco+'" title="'+ECOL[k.eco]+'">'+ECOI[k.eco]+'</div></div>'+

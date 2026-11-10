@@ -497,3 +497,16 @@ details.rules{margin-top:12px}
 .deck .card4,.hand .card4{content-visibility:auto}
 body:has(.cast,.tanim,.modal) #app .card4 *,body:has(.cast,.tanim,.modal) #app .card4::after{animation-play-state:paused}
 .frr.fast{animation-duration:7s}.frr.fast circle{stroke-width:1.6;opacity:.8}
+/* nouvelles illustrations : brume, rires, scintillements */
+.fg{opacity:0;animation:fg var(--t,7s) linear var(--d,0s) infinite}
+@keyframes fg{0%{opacity:0;transform:translateX(0)}30%{opacity:.3}70%{opacity:.22}100%{opacity:0;transform:translateX(var(--dx,40px))}}
+.ha{font-family:Georgia,serif;font-style:italic;font-weight:900;fill:currentColor;stroke:#fff;stroke-width:.5px;paint-order:stroke}
+.ftw{fill:#fff;opacity:0;transform-box:fill-box;transform-origin:center;animation:ftw var(--t,2.4s) ease-in-out var(--d,0s) infinite}
+@keyframes ftw{0%,100%{opacity:0;scale:.2;rotate:0deg}50%{opacity:1;scale:1;rotate:45deg}}
+.fe.bl{animation:febl 4.6s linear infinite}
+@keyframes febl{0%,76%,100%{opacity:0}80%{opacity:.95}86%{opacity:.25}90%,95%{opacity:.9}}
+.aw-moquerie .artimg{scale:1.05;animation:laugh 3.4s linear infinite}
+@keyframes laugh{0%,62%,100%{translate:0 0}66%{translate:0 -1.6%}70%{translate:0 1.2%}74%{translate:0 -1.6%}78%{translate:0 1.2%}82%{translate:0 -1.4%}86%{translate:0 .8%}90%{translate:0 -.8%}}
+.artimg.ghost.gm{mix-blend-mode:multiply;filter:none;animation-name:ghostm;animation-duration:4.4s}
+@keyframes ghostm{0%,100%{opacity:0;transform:translate(0,0) scale(1)}40%{opacity:.5;transform:translate(2.5%,0) scale(1.02)}70%{opacity:.25;transform:translate(5%,-1%) scale(1.04)}}
+.card4.played .artimg,.card4.empty .artimg{animation:none}
