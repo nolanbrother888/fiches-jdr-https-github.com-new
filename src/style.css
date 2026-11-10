@@ -510,3 +510,5 @@ body:has(.cast,.tanim,.modal) #app .card4 *,body:has(.cast,.tanim,.modal) #app .
 .artimg.ghost.gm{mix-blend-mode:multiply;filter:none;animation-name:ghostm;animation-duration:4.4s}
 @keyframes ghostm{0%,100%{opacity:0;transform:translate(0,0) scale(1)}40%{opacity:.5;transform:translate(2.5%,0) scale(1.02)}70%{opacity:.25;transform:translate(5%,-1%) scale(1.04)}}
 .card4.played .artimg,.card4.empty .artimg{animation:none}
+/* type de dégâts (armure en pourcentage) */
+.dmgt{margin-top:8px}.dmgt select{width:100%}.dmgt .hint{margin-top:4px}

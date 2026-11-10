@@ -11,7 +11,7 @@ const ABS=[["for","Force"],["dex","Dextérité"],["con","Constitution"],["int","
 const ABN=Object.fromEntries(ABS);
 const SKILLS=[["acrobaties","Acrobaties","dex"],["arcanes","Arcanes","int"],["athletisme","Athlétisme","for"],["discretion","Discrétion","dex"],["dressage","Dressage","sag"],["escamotage","Escamotage","dex"],["histoire","Histoire","int"],["intimidation","Intimidation","cha"],["intuition","Intuition","sag"],["investigation","Investigation","int"],["medecine","Médecine","sag"],["nature","Nature","int"],["perception","Perception","sag"],["persuasion","Persuasion","cha"],["religion","Religion","int"],["representation","Représentation","cha"],["survie","Survie","sag"],["tromperie","Tromperie","cha"]];
 const CLASSES=["Artificier","Barbare","Barde","Clerc","Druide","Ensorceleur","Guerrier","Magicien","Moine","Occultiste","Paladin","Rôdeur","Roublard"];
-const ARMORS={"Aucune":10,"Légère":25,"Moyenne":50,"Lourde":75};
+const ARMORS={"Aucune":10,"Légère":25,"Intermédiaire":35,"Moyenne":50,"Lourde":75};
 const RES=[["physique","Physique"],["magique","Magique"],["feu","Feu"],["froid","Froid"],["foudre","Foudre"],["poison","Poison"],["necrotique","Nécrotique"],["radiant","Radiant"],["acide","Acide"],["tonnerre","Tonnerre"],["psychique","Psychique"],["force","Force"]];
 const ETATS=["Agrippé","À terre","Assourdi","Aveuglé","Charmé","Effrayé","Empoisonné","Entravé","Étourdi","Inconscient","Invisible","Neutralisé","Paralysé","Pétrifié","Concentration"];
 const CATS=["Équipé magique","Équipé non magique","Sac","Potions","Bouffe","Objets précieux","Objets pour créations","Objets de quête"];
@@ -251,7 +251,7 @@ function pane(c){
 
   case "combat": {const cap=ARMORS[c.armure]||100;return '<div class="card"><h3>Points de vie</h3><div class="bar" style="height:24px"><i data-d="pvbar"></i><i data-d="tmpbar" style="background:var(--blue);opacity:.7"></i><div class="t" data-d="pvtxt"></div></div>'+
     '<div class="grid g3" style="margin-top:10px">'+F("Actuels","pv.act",c,"number",'data-t="n"')+F("Max","pv.max",c,"number",'data-t="n"')+F("Temporaires","pv.temp",c,"number",'data-t="n"')+'</div>'+
-    '<div class="row" style="margin-top:10px"><input type="number" id="dmg" placeholder="Valeur" style="flex:1"><button class="btn" data-act="dmg" style="color:var(--bad)">Dégâts</button><button class="btn" data-act="heal" style="color:var(--acc)">Soin</button></div></div>'+
+    '<div class="row" style="margin-top:10px"><input type="number" id="dmg" placeholder="Valeur" style="flex:1"><button class="btn" data-act="dmg" style="color:var(--bad)">Dégâts</button><button class="btn" data-act="heal" style="color:var(--acc)">Soin</button></div>'+dmgTypeRow(c)+'</div>'+
     '<div class="card"><div class="big"><div><div class="small mute">CA</div><input type="number" data-k="ca" data-t="n" value="'+c.ca+'"></div><div><div class="small mute">Initiative</div><div class="v" data-d="init"></div></div><div><div class="small mute">Vitesse (m)</div><input type="number" data-k="vitesse" data-t="n" value="'+c.vitesse+'"></div></div>'+
     '<div class="grid g2" style="margin-top:10px">'+F("Bonus d'initiative","initBonus",c,"number",'data-t="n"')+F("Dés de vie","desVie",c,"text",'placeholder="ex : 3d10 + 8d8"')+'</div></div>'+
     '<div class="card"><h3>Jets contre la mort</h3><div class="row" style="justify-content:space-between"><span class="small">Succès</span><div class="pips">'+[1,2,3].map(i=>'<button class="pip '+(c.dsSucc>=i?"on":"")+'" data-pip="dsSucc" data-v="'+i+'"></button>').join("")+'</div>'+
@@ -275,11 +275,11 @@ function pane(c){
     '<div class="card"><h3>Ressources de classe</h3><div class="hint" style="margin:-4px 0 6px">Ex : Inspiration bardique, Second souffle, Ki, Rage, Manifestation d\'écho…</div><div class="list">'+
     c.ressources.map((r,i)=>'<div class="it"><div class="grow"><input placeholder="Nom" data-k="ressources.'+i+'.nom" value="'+esc(r.nom)+'"><div class="row"><div class="counter"><button data-inc="ressources.'+i+'.act" data-v="-1" data-min="0">−</button><input type="number" data-k="ressources.'+i+'.act" data-t="n" value="'+r.act+'"><button data-inc="ressources.'+i+'.act" data-v="1">+</button></div><span class="mute">/</span><input type="number" style="width:56px" data-k="ressources.'+i+'.max" data-t="n" value="'+r.max+'"><select data-k="ressources.'+i+'.reset" style="flex:1"><option '+(r.reset==="Repos court"?"selected":"")+'>Repos court</option><option '+(r.reset==="Repos long"?"selected":"")+'>Repos long</option><option '+(r.reset==="Autre"?"selected":"")+'>Autre</option></select></div></div><button class="del" data-rm="ressources.'+i+'">✕</button></div>').join("")+
     '</div><button class="btn add" data-push="ressources">+ Ressource</button><button class="btn" data-act="short" style="width:100%;margin-top:8px">☕ Repos court</button></div>'+
-    '<div class="card"><h3>Sorts connus / préparés</h3><div class="list">'+
+    '<div class="card"><h3>Sorts connus / préparés</h3>'+sortViewSeg()+(sortView()==="cartes"?sortCards(c):'<div class="list">'+
     [...c.sorts.map((s,i)=>[s,i])].sort((a,b)=>num(a[0].niv)-num(b[0].niv)).map(([s,i])=>'<div class="it"><div class="grow"><div class="row"><input type="number" min="0" max="9" style="width:56px" data-k="sorts.'+i+'.niv" data-t="n" value="'+s.niv+'" title="Niveau (0 = tour de magie)"><input placeholder="Nom du sort" data-k="sorts.'+i+'.nom" value="'+esc(s.nom)+'"></div>'+
       '<div class="row small"><label class="row"><input type="checkbox" class="tog" data-k="sorts.'+i+'.prep" '+(s.prep?"checked":"")+'> Préparé</label><label class="row"><input type="checkbox" class="tog" data-k="sorts.'+i+'.conc" '+(s.conc?"checked":"")+'> Concentration</label></div>'+
       '<input placeholder="Notes (portée, dégâts, durée…)" data-k="sorts.'+i+'.note" value="'+esc(s.note)+'"></div><button class="del" data-rm="sorts.'+i+'">✕</button></div>').join("")+
-    '</div><button class="btn add" data-act="pickbib" data-bt="sort">📚 Depuis la bibliothèque</button><button class="btn add" data-push="sorts">+ Sort à la main</button><div class="hint">Niveau 0 = tour de magie.</div></div>';
+    '</div><button class="btn add" data-act="pickbib" data-bt="sort">📚 Depuis la bibliothèque</button><button class="btn add" data-push="sorts">+ Sort à la main</button><div class="hint">Niveau 0 = tour de magie.</div>')+'</div>';
 
   case "inv": {const mag=c.items.filter(x=>x.cat==="Équipé magique").length;
     return '<div class="card"><h3>Monnaie</h3><div class="grid g3">'+[["pp","Platine (PP)"],["po","Or (PO)"],["pe","Électrum (PE)"],["pa","Argent (PA)"],["pc","Cuivre (PC)"]].map(([k,n])=>F(n,"monnaie."+k,c,"number",'data-t="n"')).join("")+'</div>'+
@@ -342,6 +342,13 @@ function derive(){
 // ---------- Événements ----------
 function rerenderPane(){const y=window.scrollY;if(state.view==="sheet"){const c=cur();const p=document.getElementById("pane");if(!p||!c)return;p.innerHTML=pane(c);derive()}else{const p=document.getElementById("hpane");if(p)p.innerHTML=homePane();if(state.home==="combat")derive()}lockRO();window.scrollTo(0,y)}
 function schedule(c){save("persos",c.id)}
+// Règle maison : l'armure retire un pourcentage des dégâts reçus (35 % d'armure physique = dégâts × 0,65)
+const resPct=(c,t)=>{if(!t||t==="brut")return 0;const v=num((c.res||{})[t]||0);return Math.max(0,Math.min(t==="physique"?(ARMORS[c.armure]||100):100,v))};
+const dmgTypeOf=c=>state.dmgType||(resPct(c,"physique")>0?"physique":"brut");
+const mulTxt=p=>String(Math.round(100-p)/100).replace(".",",");
+function dmgHint(c,t){const p=resPct(c,t);if(t==="brut")return "Dégâts bruts : rien n'est retiré.";const n=(RES.find(r=>r[0]===t)||[0,t])[1].toLowerCase();return p?"Armure "+n+" "+p+" % : les dégâts sont multipliés par "+mulTxt(p)+".":"Aucune armure "+n+" réglée sur la fiche : dégâts entiers."}
+function dmgTypeRow(c){const t=dmgTypeOf(c);const opts=[["brut","Brut (sans armure)"]].concat(RES.filter(([k])=>k==="physique"||k==="magique"||resPct(c,k)>0).map(([k,n])=>[k,n+" ("+resPct(c,k)+" %)"]));
+  return '<div class="dmgt"><select id="dmgtype" aria-label="Type de dégâts">'+opts.map(([k,l])=>'<option value="'+k+'" '+(t===k?"selected":"")+'>'+l+'</option>').join("")+'</select><div class="hint" id="dmghint">'+dmgHint(c,t)+'</div></div>'}
 function applyHP(c,v,heal){
   if(!heal){let r=v;const t=num(c.pv.temp);if(t){const u=Math.min(t,r);c.pv.temp=t-u;r-=u}const b=c.pv.act;c.pv.act=Math.max(0,c.pv.act-r);if(b>0&&c.pv.act===0){c.tombe0++;toast(c.nom+" tombe à 0 PV !")}}
   else{if(c.pv.act===0){c.dsSucc=0;c.dsEch=0}c.pv.act=Math.min(c.pv.max,c.pv.act+v)}
@@ -364,6 +371,7 @@ app.addEventListener("input",e=>{
 });
 app.addEventListener("change",e=>{
   const el=e.target;const c=cur();
+  if(el.id==="dmgtype"){state.dmgType=el.value;const pc=el.closest("[data-cbp]")?S.persos.get(el.closest("[data-cbp]").dataset.cbp):(state.view==="sheet"?c:S.persos.get(state.cbPerso));const h=document.getElementById("dmghint");if(h&&pc)h.textContent=dmgHint(pc,el.value);return}
   if(el.dataset.file==="avatar"&&el.files[0]){loadAvatar(el.files[0]);return}
   if(el.dataset.gk&&el.dataset.rr!==undefined&&el.type!=="checkbox"){rerenderPane();return}
   if(!el.dataset.k||!c)return;
@@ -408,6 +416,7 @@ function act(a,c,d){
   if(a==="eco"||a==="ecoreset"||a==="sexp"||a==="cbperso"){combatAct(a,d);return}
   if(a==="cardopen"&&c){cardModal(c,d.key);return}
   if(a==="deckf"){state.deckF=d.f;rerenderPane();return}
+  if(a==="sortview"){state.sortView=d.v;try{localStorage.setItem("fj_sortview",d.v)}catch(e){}rerenderPane();return}
   if(a==="tlreset"){state.turnLog=[];rerenderPane();return}
   if(a==="ptog"){const k="p_"+d.l;state.eco[k]=!state.eco[k];rerenderPane();return}
   if(a==="togpast"){state.showPast=!state.showPast;rerenderPane();return}
@@ -436,7 +445,9 @@ function act(a,c,d){
   if(a==="retire"){c.retire=!c.retire;schedule(c);rerenderPane();toast(c.retire?"Marqué comme retiré":"De retour dans le groupe");return}
   if(a==="dup"){const n=clone(c);n.id=uid();n.ownerId=myId||"";n.nom=c.nom+" (copie)";S.persos.set(n.id,n);save("persos",n.id,true);state.cur=n.id;render();toast("Copie créée");return}
   if(a==="rmavatar"){c.avatar="";schedule(c);render();return}
-  if(a==="dmg"||a==="heal"){const v=Math.abs(num(document.getElementById("dmg").value));if(!v)return;applyHP(c,v,a==="heal");schedule(c);rerenderPane();return}
+  if(a==="dmg"||a==="heal"){const v=Math.abs(num(document.getElementById("dmg").value));if(!v)return;
+    if(a==="dmg"){const t=dmgTypeOf(c),p=resPct(c,t),fin=Math.floor(v*(100-p)/100);applyHP(c,fin,false);if(p)toast(v+" × "+mulTxt(p)+" = "+fin+" dégâts subis (armure "+p+" %)")}else applyHP(c,v,true);
+    schedule(c);rerenderPane();return}
   if(a==="rest"){longRest(c);schedule(c);rerenderPane();toast("Repos long terminé");return}
   if(a==="short"){c.pacte.used=0;c.ressources.forEach(r=>{if(r.reset==="Repos court")r.act=r.max});schedule(c);rerenderPane();toast("Repos court : pacte et ressources récupérés");return}
   if(a==="additem"){const cat=document.getElementById("newcat").value;c.items.push({cat,nom:"",qty:1,note:""});schedule(c);rerenderPane();return}
@@ -1067,7 +1078,7 @@ const CARD_IMGS=[
 function cardImg(k){const c=S.persos.get(state._deckC)||{};const pn=nrm(c.nom),kn=nrm(k.nom);return CARD_IMGS.find(f=>(!f.p||f.p===pn)&&kn.startsWith(f.n)&&(!f.t||f.t===k.type))||null}
 function artHtml(k){const im=cardImg(k);return '<div class="art el-'+nrm(k.elem).replace(/[^a-z]/g,"")+(im?' hasimg':'')+'">'+
   (im?'<div class="aw aw-'+im.fx+'"><img class="artimg" src="'+im.src+'" alt="" loading="lazy">'+(im.ghost?'<img class="artimg ghost'+(im.ghost==="m"?" gm":"")+'" src="'+im.src+'" alt="" loading="lazy">':'')+cardFx(k,im)+'</div>':sceneSVG(k)+cardFx(k,null))+'<div class="artico mini">'+k.icon+'</div></div>'}
-function cardHtml(k,small,n){const fav=(state._favs||[]).includes(k.key);const pl=state.played[k.key];
+function cardHtml(k,small,n,calm){const fav=(state._favs||[]).includes(k.key);const pl=!calm&&state.played[k.key];
   return '<button class="card4 t-'+k.type+(small?" sm":"")+(pl?" played":"")+(k.empty?" empty":"")+'" style="--n:'+(n||0)+';--sd:-'+(((n||0)*1.37)%7).toFixed(2)+'s" data-act="cardopen" data-key="'+esc(k.key)+'">'+
     artHtml(k)+'<div class="ribbon"><div class="medal">'+esc(k.medal)+'</div><div class="ecoic e-'+k.eco+'" title="'+ECOL[k.eco]+'">'+ECOI[k.eco]+'</div></div>'+
     (fav?'<div class="favst">★</div>':'')+
@@ -1082,6 +1093,18 @@ function deckHtml(c){
   return '<div class="catt">🃏 Ma main (favoris)</div>'+(favs.length?'<div class="hand'+deal+'">'+favs.map((k,i)=>cardHtml(k,false,i)).join("")+'</div>':'<div class="small mute">Touche une carte puis ☆ pour l\'épingler ici : tu la retrouveras tout de suite au round 1.</div>')+
     '<div class="catt">Mon deck</div><div class="seg deckseg">'+[["tout","Tout ("+cards.length+")"],["attaque","⚔️ "+cnt("attaque")],["sort","✨ "+cnt("sort")],["capacite","🌀 "+cnt("capacite")],["dispo","Dispo"]].map(([k,l])=>'<button data-act="deckf" data-f="'+k+'" class="'+(F===k?"on":"")+'">'+l+'</button>').join("")+'</div>'+
     '<div class="deck'+deal+'">'+list.map((k,i)=>cardHtml(k,true,i)).join("")+'</div>';
+}
+// Onglet Sorts : affichage en liste (pour modifier) ou en cartes
+const sortView=()=>{if(!state.sortView){try{state.sortView=localStorage.getItem("fj_sortview")||"cartes"}catch(e){state.sortView="cartes"}}return state.sortView};
+const sortViewSeg=()=>'<div class="seg">'+[["cartes","🃏 Cartes"],["liste","📋 Liste"]].map(([k,l])=>'<button data-act="sortview" data-v="'+k+'" class="'+(sortView()===k?"on":"")+'">'+l+'</button>').join("")+'</div>';
+function sortCards(c){
+  const cards=deckCards(c);state._favs=c.favs||[];state._deck=cards;state._deckC=c.id;
+  const sorts=cards.filter(k=>k.key.startsWith("sort:"));
+  if(!sorts.length)return '<div class="small mute">Aucun sort pour l\'instant. Passe en liste pour en ajouter.</div>';
+  const niv=k=>k.medal==="T"?0:num(k.medal);const levels=[...new Set(sorts.map(niv))].sort((a,b)=>a-b);
+  state._dealt=state._dealt||{};const dk="sv:"+c.id;const deal=state._dealt[dk]?"":" deal";state._dealt[dk]=1;let n=0;
+  return levels.map(L=>'<div class="catt">'+(L?"Niveau "+L:"Tours de magie")+'</div><div class="deck'+deal+'">'+sorts.filter(k=>niv(k)===L).map(k=>cardHtml(k,true,n++,true)).join("")+'</div>').join("")+
+    '<div class="hint" style="margin-top:10px">Touche une carte pour l\'ouvrir, la lancer ou l\'épingler dans ta main. Pour ajouter ou modifier un sort, passe en liste.</div>';
 }
 function cardModal(c,key){
   const k=(state._deck||deckCards(c)).find(x=>x.key===key);if(!k)return;const fav=(c.favs||[]).includes(key);
@@ -1163,7 +1186,7 @@ function combatSheet(c){
     (state.sopen[i]&&s.note?'<div class="small desc2">'+esc(s.note)+'</div>':'')+'</div>').join("")).join("");
   return '<div class="card" style="border-left:5px solid '+c.couleur+'"><div class="row">'+avatar(c,40)+'<div class="grow" style="min-width:0"><b class="lnk2">'+esc(c.nom)+'</b><div class="small mute">'+esc(classLine(c))+'</div></div><button class="btn sm" data-open="'+c.id+'">Fiche</button></div>'+
     '<div class="bar" style="height:26px;margin-top:12px"><i data-d="pvbar"></i><i data-d="tmpbar" style="background:var(--blue);opacity:.7"></i><div class="t" data-d="pvtxt"></div></div>'+
-    '<div class="row" style="margin-top:8px"><input type="number" inputmode="numeric" id="dmg" placeholder="Valeur" style="flex:1"><button class="btn" data-act="dmg" style="color:var(--bad)">Dégâts</button><button class="btn" data-act="heal" style="color:var(--acc)">Soin</button></div>'+
+    '<div class="row" style="margin-top:8px"><input type="number" inputmode="numeric" id="dmg" placeholder="Valeur" style="flex:1"><button class="btn" data-act="dmg" style="color:var(--bad)">Dégâts</button><button class="btn" data-act="heal" style="color:var(--acc)">Soin</button></div>'+dmgTypeRow(c)+''+
     '<div class="row small" style="margin-top:8px;gap:6px"><span class="mute">PV temp.</span><div class="counter"><button data-inc="pv.temp" data-v="-1" data-min="0">−</button><input type="number" data-k="pv.temp" data-t="n" value="'+num(c.pv.temp)+'"><button data-inc="pv.temp" data-v="1">+</button></div></div>'+
     (c.pv.act===0?'<div class="ds"><b>À terre : jets contre la mort</b><div class="row" style="justify-content:space-between;margin-top:6px"><span class="small">Succès</span><div class="pips">'+[1,2,3].map(i=>'<button class="pip '+(c.dsSucc>=i?"on":"")+'" data-pip="dsSucc" data-v="'+i+'"></button>').join("")+'</div><span class="small">Échecs</span><div class="pips">'+[1,2,3].map(i=>'<button class="pip bad '+(c.dsEch>=i?"on":"")+'" data-pip="dsEch" data-v="'+i+'"></button>').join("")+'</div></div></div>':'')+
     '<div class="stats4"><div><small>CA</small><b>'+c.ca+'</b></div><div><small>Init</small><b data-d="init"></b></div><div><small>Perc. pass.</small><b data-d="pp"></b></div><div><small>DD sorts</small><b data-d="dd"></b></div></div>'+
