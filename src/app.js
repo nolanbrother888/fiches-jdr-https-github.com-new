@@ -726,6 +726,11 @@ function cardFx(k,im){
       s='<rect class="ffl" width="200" height="'+H+'" style="--t:2.9s"/><circle class="fc" cx="98" cy="70" r="26" fill="url(#'+gid+')"/><circle class="fc" cx="98" cy="24" r="12" fill="url(#'+gid+')"/>'+
         [[98,74,82,149,9,7],[98,74,118,149,9,7],[58,112,36,60,6,6],[138,112,164,60,6,6],[98,74,60,104,5,5],[98,74,136,104,5,5]].map((p,i)=>fxBolt(p,i,seed)).join("")+
         parts(14,i=>fxPart(70+R()*56,90+R()*55,.7+R()*1.2,-14+R()*28,-30-R()*50,1.2+R()*1.8,R()*3,i%3===0));break;
+    case "flammes":
+      s='<circle class="fc" cx="108" cy="56" r="44" fill="url(#'+gid+')"/><g class="frr fast"><circle cx="108" cy="56" r="27"/><circle cx="108" cy="56" r="19" class="in"/></g>'+[0,1].map(i=>fxRing(108,56,46,3.2,i*1.6)).join("")+
+        parts(16,i=>fxPart(84+R()*48,30+R()*50,.8+R()*1.4,-18+R()*36,-34-R()*46,1.3+R()*1.8,R()*3,i%4===0))+
+        parts(10,i=>fxPart(16+R()*60,118+R()*30,.9+R()*1.5,-30+R()*26,-26-R()*40,1.6+R()*2,R()*3.5))+
+        parts(8,i=>fxPart(100+R()*40,96+R()*50,.8+R()*1.2,-8+R()*16,-30-R()*30,1.2+R()*1.6,R()*3,i%3===0));break;
     // --- Arrêt du temps : le regard s'allume, tout se fige ---
     case "temps":
       s='<g class="frr"><circle cx="88" cy="70" r="59"/></g>'+parts(14,i=>fxPart(R()*200,R()*H,.8+R()*1.2,0,0,1.6+R()*2.4,R()*4,i%2===0))+fxEye(84.3,39.6,gid+"a")+fxEye(89.6,39.6,gid+"a");col="#d9c8ff";break;
@@ -1030,8 +1035,10 @@ const CARD_IMGS=[
   {p:"seiko",n:"echo",src:"img/seiko/echo.jpg",fx:"echo",col:"#b48cff",face:"70% 18%",ghost:1},
   {p:"seiko",n:"manifestation",src:"img/seiko/echo.jpg",fx:"echo",col:"#b48cff",face:"70% 18%",ghost:1},
   {p:"seiko",n:"convocation d'elementaire",src:"img/seiko/elementaire.jpg",fx:"elem",col:"#9ff5ff",face:"50% 25%"},
-  {p:"seiko",n:"elementaire de foudre",src:"img/seiko/elementaire.jpg",fx:"elem",col:"#9ff5ff",face:"50% 25%"}];
-function cardImg(k){const c=S.persos.get(state._deckC)||{};const pn=nrm(c.nom),kn=nrm(k.nom);return CARD_IMGS.find(f=>f.p===pn&&kn.startsWith(f.n)&&(!f.t||f.t===k.type))||null}
+  {p:"seiko",n:"elementaire de foudre",src:"img/seiko/elementaire.jpg",fx:"elem",col:"#9ff5ff",face:"50% 25%"},
+  // sans « p » : l'image vaut pour tous les persos qui ont ce sort
+  {n:"flammes",src:"img/sorts/flammes.jpg",fx:"flammes",col:"#ffa23a",face:"50% 40%"}];
+function cardImg(k){const c=S.persos.get(state._deckC)||{};const pn=nrm(c.nom),kn=nrm(k.nom);return CARD_IMGS.find(f=>(!f.p||f.p===pn)&&kn.startsWith(f.n)&&(!f.t||f.t===k.type))||null}
 function artHtml(k){const im=cardImg(k);return '<div class="art el-'+nrm(k.elem).replace(/[^a-z]/g,"")+(im?' hasimg':'')+'">'+
   (im?'<div class="aw"><img class="artimg" src="'+im.src+'" alt="" loading="lazy">'+(im.ghost?'<img class="artimg ghost" src="'+im.src+'" alt="" loading="lazy">':'')+cardFx(k,im)+'</div>':sceneSVG(k)+cardFx(k,null))+'<div class="artico mini">'+k.icon+'</div></div>'}
 function cardHtml(k,small,n){const fav=(state._favs||[]).includes(k.key);const pl=state.played[k.key];

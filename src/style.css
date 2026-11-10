@@ -496,3 +496,4 @@ details.rules{margin-top:12px}
 /* économie : les cartes hors écran ou masquées par un panneau ne s'animent pas */
 .deck .card4,.hand .card4{content-visibility:auto}
 body:has(.cast,.tanim,.modal) #app .card4 *,body:has(.cast,.tanim,.modal) #app .card4::after{animation-play-state:paused}
+.frr.fast{animation-duration:7s}.frr.fast circle{stroke-width:1.6;opacity:.8}
