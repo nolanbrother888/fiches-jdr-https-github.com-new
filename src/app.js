@@ -741,7 +741,7 @@ function cardFx(k,im){
         fxEye(127.5,63.4,gid,4.2)+fxEye(140.9,63.2,gid,3.8,"",.4);break;
     case "assassin":
       s=parts(5,i=>fxFog(R()*200,70+R()*70,40+R()*24,13+R()*8,-40+R()*90,8+R()*4,R()*10,gid))+parts(3,i=>'<path class="fw thin" d="M'+(40+i*58+R()*14).toFixed(0)+' '+(150-R()*24).toFixed(0)+'q-9 -18 0 -36t0 -36" style="--t:'+(3.4+R()*2).toFixed(2)+'s;--d:-'+(R()*4).toFixed(2)+'s"/>')+
-        parts(8,i=>fxPart(R()*200,40+R()*100,.5+R()*.9,-14+R()*28,-24-R()*26,2.4+R()*2.4,R()*4,true))+fxEye(88,77,gid+"r",3,"bl")+fxEye(102,77,gid+"r",3,"bl");break;
+        parts(8,i=>fxPart(R()*200,40+R()*100,.5+R()*.9,-14+R()*28,-24-R()*26,2.4+R()*2.4,R()*4,true))+fxEye(91,57,gid+"r",3,"bl")+fxEye(106,57,gid+"r",3,"bl");break;
     case "festin":
       s='<ellipse class="fr" cx="53" cy="113" rx="46" ry="11" style="--t:3.2s;--d:0s"/><ellipse class="fr" cx="53" cy="113" rx="46" ry="11" style="--t:3.2s;--d:-1.6s"/>'+
         parts(5,i=>'<path class="fw thin" d="M'+(128+i*11+R()*5).toFixed(0)+' '+(92-R()*14).toFixed(0)+'q-6 -12 0 -24t0 -24" style="--t:'+(2.8+R()*1.8).toFixed(2)+'s;--d:-'+(R()*4).toFixed(2)+'s"/>')+
