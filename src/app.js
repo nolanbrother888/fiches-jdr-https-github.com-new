@@ -181,12 +181,13 @@ function homePane(){
         '</div>'}).join("");}
 
   case "biblio":{const t=state.bibType;loadSRD();
-    const all=bibList(t,state.bibQ,state.bibNiv,state.bibCls?[state.bibCls]:null);const list=all.slice(0,80);
+    const all=bibList(t,state.bibQ,state.bibNiv,state.bibCls?[state.bibCls]:null);const bv=bibView();const list=all.slice(0,bv==="cartes"?48:80);
     return '<div class="seg"><button data-bt="sort" class="'+(t==="sort"?"on":"")+'">✨ Sorts</button><button data-bt="objet" class="'+(t==="objet"?"on":"")+'">🗡️ Objets</button></div>'+
+      '<div class="seg">'+[["cartes","🃏 Cartes"],["liste","📋 Liste"]].map(([k,l])=>'<button data-act="bibview" data-v="'+k+'" class="'+(bv===k?"on":"")+'">'+l+'</button>').join("")+'</div>'+
       '<div class="row" style="margin-bottom:8px"><input id="bibq" placeholder="Rechercher…" value="'+esc(state.bibQ)+'" style="flex:1">'+(t==="sort"?'<select id="bibniv" style="width:100px"><option value="">Tous niv.</option>'+[0,1,2,3,4,5,6,7,8,9].map(n=>'<option value="'+n+'" '+(state.bibNiv===String(n)?"selected":"")+'>'+(n?"Niv "+n:"Tours")+'</option>').join("")+'</select>':'')+'</div>'+
       (t==="sort"?'<select id="bibcls" style="margin-bottom:10px"><option value="">Toutes les classes</option>'+CLASSES_SORTS.map(k=>'<option'+(state.bibCls===k?" selected":"")+'>'+k+'</option>').join("")+'</select><div class="small mute" style="margin-bottom:8px">'+all.length+' sort(s)'+(SRD.length?' · '+SRD.length+' sorts officiels du SRD + ceux du groupe':' · chargement des sorts officiels…')+'</div>':'')+
-      (list.length?list.map(b=>'<button class="bib" data-bib="'+b.id+'"><div class="row"><b style="flex:1">'+esc(b.nom||"Sans nom")+'</b>'+(t==="sort"?'<span class="tag">'+(num(b.niv)?"Niv "+num(b.niv):"Tour")+'</span>'+(b.conc?'<span class="tag">C</span>':'')+(b.rituel?'<span class="tag">R</span>':'')+(b.srd?'':'<span class="tag" style="color:var(--acc)">Groupe</span>'):'<span class="tag">'+esc(b.rarete||"")+'</span>'+(b.harmo?'<span class="tag">Harmo.</span>':''))+'</div>'+
-        '<div class="small mute">'+esc(t==="sort"?[b.ecole,b.temps,b.portee,b.classes].filter(Boolean).join(" · "):(b.typeObj||""))+'</div>'+(b.dmg?'<div class="small" style="color:var(--warn)">'+esc((b.dmg.perso?b.dmg.perso[1]:b.dmg.slots&&b.dmg.slots[Object.keys(b.dmg.slots)[0]])+" "+b.dmg.type)+'</div>':'')+'</button>').join("")+(all.length>list.length?'<div class="small mute" style="text-align:center;margin:8px">'+(all.length-list.length)+' autres : affine la recherche.</div>':'')
+      (list.length?(bv==="cartes"?bibCards(list,t):list.map(b=>'<button class="bib" data-bib="'+b.id+'"><div class="row"><b style="flex:1">'+esc(b.nom||"Sans nom")+'</b>'+(t==="sort"?'<span class="tag">'+(num(b.niv)?"Niv "+num(b.niv):"Tour")+'</span>'+(b.conc?'<span class="tag">C</span>':'')+(b.rituel?'<span class="tag">R</span>':'')+(b.srd?'':'<span class="tag" style="color:var(--acc)">Groupe</span>'):'<span class="tag">'+esc(b.rarete||"")+'</span>'+(b.harmo?'<span class="tag">Harmo.</span>':''))+'</div>'+
+        '<div class="small mute">'+esc(t==="sort"?[b.ecole,b.temps,b.portee,b.classes].filter(Boolean).join(" · "):(b.typeObj||""))+'</div>'+(b.dmg?'<div class="small" style="color:var(--warn)">'+esc((b.dmg.perso?b.dmg.perso[1]:b.dmg.slots&&b.dmg.slots[Object.keys(b.dmg.slots)[0]])+" "+b.dmg.type)+'</div>':'')+'</button>').join(""))+(all.length>list.length?'<div class="small mute" style="text-align:center;margin:8px">'+(all.length-list.length)+' autres : affine la recherche.</div>':'')
        :'<div class="empty"><div class="big1">'+(t==="sort"?"✨":"🗡️")+'</div><p>Rien ne correspond.</p></div>')+
       (readOnly?'':'<button class="btn pri" data-act="newbib" style="width:100%;margin-top:12px;padding:12px">+ Ajouter '+(t==="sort"?"un sort maison":"un objet")+'</button>');}
 
@@ -416,6 +417,7 @@ function act(a,c,d){
   if(a==="eco"||a==="ecoreset"||a==="sexp"||a==="cbperso"){combatAct(a,d);return}
   if(a==="cardopen"&&c){cardModal(c,d.key);return}
   if(a==="deckf"){state.deckF=d.f;rerenderPane();return}
+  if(a==="bibview"){state.bibView=d.v;try{localStorage.setItem("fj_bibview",d.v)}catch(e){}rerenderPane();return}
   if(a==="sortview"){state.sortView=d.v;try{localStorage.setItem("fj_sortview",d.v)}catch(e){}rerenderPane();return}
   if(a==="tlreset"){state.turnLog=[];rerenderPane();return}
   if(a==="ptog"){const k="p_"+d.l;state.eco[k]=!state.eco[k];rerenderPane();return}
@@ -1078,12 +1080,12 @@ const CARD_IMGS=[
 function cardImg(k){const c=S.persos.get(state._deckC)||{};const pn=nrm(c.nom),kn=nrm(k.nom);return CARD_IMGS.find(f=>(!f.p||f.p===pn)&&kn.startsWith(f.n)&&(!f.t||f.t===k.type))||null}
 function artHtml(k){const im=cardImg(k);return '<div class="art el-'+nrm(k.elem).replace(/[^a-z]/g,"")+(im?' hasimg':'')+'">'+
   (im?'<div class="aw aw-'+im.fx+'"><img class="artimg" src="'+im.src+'" alt="" loading="lazy">'+(im.ghost?'<img class="artimg ghost'+(im.ghost==="m"?" gm":"")+'" src="'+im.src+'" alt="" loading="lazy">':'')+cardFx(k,im)+'</div>':sceneSVG(k)+cardFx(k,null))+'<div class="artico mini">'+k.icon+'</div></div>'}
-function cardHtml(k,small,n,calm){const fav=(state._favs||[]).includes(k.key);const pl=!calm&&state.played[k.key];
-  return '<button class="card4 t-'+k.type+(small?" sm":"")+(pl?" played":"")+(k.empty?" empty":"")+'" style="--n:'+(n||0)+';--sd:-'+(((n||0)*1.37)%7).toFixed(2)+'s" data-act="cardopen" data-key="'+esc(k.key)+'">'+
+function cardHtml(k,small,n,calm,attr){const fav=(state._favs||[]).includes(k.key);const pl=!calm&&state.played[k.key];
+  return '<button class="card4 t-'+k.type+(small?" sm":"")+(pl?" played":"")+(k.empty?" empty":"")+'" style="--n:'+(n||0)+';--sd:-'+(((n||0)*1.37)%7).toFixed(2)+'s" '+(attr||'data-act="cardopen" data-key="'+esc(k.key)+'"')+'>'+
     artHtml(k)+'<div class="ribbon"><div class="medal">'+esc(k.medal)+'</div><div class="ecoic e-'+k.eco+'" title="'+ECOL[k.eco]+'">'+ECOI[k.eco]+'</div></div>'+
     (fav?'<div class="favst">★</div>':'')+
     '<div class="parch"><div class="ptitle">'+esc(k.nom)+'</div><div class="psub">'+esc(k.sub||ECOL[k.eco])+'</div></div>'+
-    '<div class="cfoot"><span>'+TYPEL[k.type]+'</span><span>'+ECOL[k.eco]+'</span></div>'+(pl?'<div class="c3pl">Jouée</div>':'')+'</button>'}
+    '<div class="cfoot"><span>'+(k.typeL||TYPEL[k.type])+'</span><span>'+ECOL[k.eco]+'</span></div>'+(pl?'<div class="c3pl">Jouée</div>':'')+'</button>'}
 function deckHtml(c){
   const cards=deckCards(c);state._favs=c.favs||[];state._deck=cards;state._deckC=c.id;
   const favs=cards.filter(k=>state._favs.includes(k.key));
@@ -1094,6 +1096,17 @@ function deckHtml(c){
     '<div class="catt">Mon deck</div><div class="seg deckseg">'+[["tout","Tout ("+cards.length+")"],["attaque","⚔️ "+cnt("attaque")],["sort","✨ "+cnt("sort")],["capacite","🌀 "+cnt("capacite")],["dispo","Dispo"]].map(([k,l])=>'<button data-act="deckf" data-f="'+k+'" class="'+(F===k?"on":"")+'">'+l+'</button>').join("")+'</div>'+
     '<div class="deck'+deal+'">'+list.map((k,i)=>cardHtml(k,true,i)).join("")+'</div>';
 }
+// Biblio : les mêmes entrées en cartes ou en liste
+const bibView=()=>{if(!state.bibView){try{state.bibView=localStorage.getItem("fj_bibview")||"cartes"}catch(e){state.bibView="cartes"}}return state.bibView};
+function bibCards(list,t){
+  const mine=[...S.persos.values()].find(p=>p.ownerId===myId);state._deckC=mine?mine.id:null;state._favs=[];
+  return '<div class="deck bibdeck">'+list.map((b,i)=>{
+    let k;
+    if(t==="sort"){const dt=b.dmg&&b.dmg.type;const dn=b.dmg?(b.dmg.perso?b.dmg.perso[1]:b.dmg.slots&&b.dmg.slots[Object.keys(b.dmg.slots)[0]]):"";
+      k={elem:dt||"arcane",medal:num(b.niv)?String(num(b.niv)):"T",key:"bib:"+b.id,type:"sort",nom:b.nom||"Sans nom",icon:dt?(TYPICON[dt]||"✨"):"✨",eco:ecoOf(b.temps||"","action"),
+        sub:(num(b.niv)?"Niveau "+num(b.niv):"Tour de magie")+(dn?" · "+dn+" "+dt:"")+(b.conc?" · C":"")+(b.srd?"":" · Groupe")}}
+    else k={elem:"passif",medal:(b.rarete||"•").trim().charAt(0).toUpperCase()||"•",key:"bib:"+b.id,type:"capacite",typeL:"Objet",nom:b.nom||"Sans nom",icon:"🗡️",eco:"passif",sub:[b.typeObj,b.rarete,b.harmo?"Harmonisation":""].filter(Boolean).join(" · ")};
+    return cardHtml(k,true,i,true,'data-bib="'+esc(b.id)+'"')}).join("")+'</div>'}
 // Onglet Sorts : affichage en liste (pour modifier) ou en cartes
 const sortView=()=>{if(!state.sortView){try{state.sortView=localStorage.getItem("fj_sortview")||"cartes"}catch(e){state.sortView="cartes"}}return state.sortView};
 const sortViewSeg=()=>'<div class="seg">'+[["cartes","🃏 Cartes"],["liste","📋 Liste"]].map(([k,l])=>'<button data-act="sortview" data-v="'+k+'" class="'+(sortView()===k?"on":"")+'">'+l+'</button>').join("")+'</div>';
