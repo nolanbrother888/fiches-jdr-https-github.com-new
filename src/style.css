@@ -557,3 +557,7 @@ body.bgparch .inil.foe.on{background:#f1cfc4;border-color:#c0392b;box-shadow:0 0
 body.bgparch .inil.on b{color:#2a1608}
 body.bgparch .reacbox{border-color:#c0392b}
 body.bgparch .reacbox h3{color:#8a2418}
+
+.kic{display:inline-block;width:1.35em;height:1.35em;background:url(img/katanas.svg) center/contain no-repeat;vertical-align:-.25em;font-style:normal}
+.tabs button b{display:flex;align-items:center;justify-content:center;height:28px}
+.tabs button b .kic{display:block;width:24px;height:24px}

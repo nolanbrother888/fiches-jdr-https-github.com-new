@@ -18,8 +18,8 @@ const CATS=["Équipé magique","Équipé non magique","Sac","Potions","Bouffe","
 const ECOLES=["Abjuration","Divination","Enchantement","Évocation","Illusion","Invocation","Nécromancie","Transmutation"];
 const RARETES=["Commun","Peu commun","Rare","Très rare","Légendaire","Artefact"];
 const COLORS=["#7bd88f","#6cb6ff","#b48cff","#f0a35e","#e5645c","#f2d16b","#5fd3c8","#e88ad0","#c0c0c0"];
-const TABS=[["id","Identité","🪪"],["car","Caracs","🎲"],["comp","Compét.","📜"],["combat","Combat","⚔️"],["sorts","Sorts","✨"],["inv","Inventaire","🎒"],["dons","Dons","⭐"],["perso","Perso","🧩"],["notes","Notes","📝"]];
-const HTABS=[["persos","Persos","🧙"],["combat","Combat","⚔️"],["mj","Vue MJ","👁️"],["biblio","Biblio","📚"],["cartes","Cartes","🗺️"],["commun","Commun","💰"],["planning","Planning","📅"],["journal","Journal","📖"]];
+const TABS=[["id","Identité","🪪"],["car","Caracs","🎲"],["comp","Compét.","📜"],["combat","Combat","<i class=kic></i>"],["sorts","Sorts","✨"],["inv","Inventaire","🎒"],["dons","Dons","⭐"],["perso","Perso","🧩"],["notes","Notes","📝"]];
+const HTABS=[["persos","Persos","🧙"],["combat","Combat","<i class=kic></i>"],["mj","Vue MJ","👁️"],["biblio","Biblio","📚"],["cartes","Cartes","🗺️"],["commun","Commun","💰"],["planning","Planning","📅"],["journal","Journal","📖"]];
 const DISPO=["","oui","peut","non"];const DLAB={"":"?","oui":"Oui","peut":"Peut-être","non":"Non"};
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -176,7 +176,7 @@ function render(){
       '<div class="wrap">'+roBanner()+(!readOnly&&!canEdit(c)?'<div class="ro">🔒 Fiche d\'un autre joueur : lecture seule.</div>':'')+(!readOnly&&!c.ownerId&&myId?'<div class="ro" style="border-color:var(--acc);color:var(--acc);background:#1f3326">Cette fiche n\'a pas encore de propriétaire. <button class="btn sm" data-act="mine" style="margin-left:6px">C\'est mon perso</button></div>':'')+'<div id="pane">'+pane(c)+'</div></div>'+
       '<nav class="tabs"><div class="in">'+TABS.map(t=>'<button data-tab="'+t[0]+'" class="'+(state.tab===t[0]?"on":"")+'"><b>'+t[2]+'</b>'+t[1]+'</button>').join("")+'</div></nav>';
     derive();lockRO();return}
-  const title={persos:"⚔️ Fiches JDR",combat:"⚔️ Combat",mj:"👁️ Vue MJ",biblio:"📚 Bibliothèque",cartes:"🗺️ Cartes",commun:"💰 Inventaire commun",planning:"📅 Planning",journal:"📖 Journal"}[state.home];
+  const title={persos:"<i class=kic></i> Fiches JDR",combat:"<i class=kic></i> Combat",mj:"👁️ Vue MJ",biblio:"📚 Bibliothèque",cartes:"🗺️ Cartes",commun:"💰 Inventaire commun",planning:"📅 Planning",journal:"📖 Journal"}[state.home];
   app.innerHTML='<div class="top"><div class="wrap"><h1>'+title+'</h1><span class="status" id="st">'+esc(saveStatus)+'</span>'+(state.home==="persos"?'<button class="ico" data-act="io" title="Importer / exporter">⇅</button><button class="ico" data-act="logout" title="Se déconnecter">⎋</button>':'')+'</div></div>'+
     '<div class="wrap">'+roBanner()+'<div id="hpane">'+homePane()+'</div></div>'+
     '<nav class="tabs"><div class="in">'+HTABS.map(t=>'<button data-htab="'+t[0]+'" class="'+(state.home===t[0]?"on":"")+'"><b>'+t[2]+'</b>'+t[1]+'</button>').join("")+'</div></nav>';
@@ -567,7 +567,7 @@ const sel=(path,val,opts,extra)=>'<select data-k="'+path+'" '+(extra||"")+'>'+Ob
 // Éditeur dans la fiche (onglet Combat)
 function atkEditor(c){
   const ress={"":"Aucun coût"};c.ressources.forEach(r=>{if(r.nom)ress[r.nom]=r.nom});
-  return '<div class="card"><h3>Actions d\'attaque</h3><div class="hint" style="margin:-4px 0 8px">Décris chaque attaque une fois. Dans l\'onglet ⚔️ Combat, le bouton « Attaquer » te les propose et calcule les dégâts à partir de tes vrais dés.</div>'+
+  return '<div class="card"><h3>Actions d\'attaque</h3><div class="hint" style="margin:-4px 0 8px">Décris chaque attaque une fois. Dans l\'onglet <i class=kic></i> Combat, le bouton « Attaquer » te les propose et calcule les dégâts à partir de tes vrais dés.</div>'+
   c.attaques.map((a,i)=>{const P="attaques."+i;
     if(!isStruct(a))return '<div class="atkcard"><div class="row"><input placeholder="Arme / attaque" data-k="'+P+'.nom" value="'+esc(a.nom)+'"><button class="del" data-rm="'+P+'">✕</button></div><div class="grid g2" style="margin-top:6px"><input placeholder="Bonus" data-k="'+P+'.bonus" value="'+esc(a.bonus)+'"><input placeholder="Dégâts" data-k="'+P+'.degats" value="'+esc(a.degats)+'"></div><button class="btn sm" data-act="atkstruct" data-i="'+i+'" style="margin-top:8px">⚙️ Activer le calcul automatique</button></div>';
     return '<details class="atkcard"><summary><b>'+esc(a.nom||"Nouvelle attaque")+'</b> <span class="small mute">'+esc(KINDS[atkKind(a)])+'</span></summary><div class="row" style="margin-top:8px"><input placeholder="Nom" data-k="'+P+'.nom" value="'+esc(a.nom)+'"><button class="del" data-rm="'+P+'">✕</button></div>'+
@@ -588,7 +588,7 @@ function atkEditor(c){
     '<div><label class="f">Seulement si dégâts</label>'+typeSel(P+'.siType',p.siType)+'</div><div style="display:flex;align-items:flex-end"><label class="row small"><input type="checkbox" class="tog" data-k="'+P+'.parTour" '+(p.parTour?"checked":"")+'> 1 fois par tour</label></div></div>'+
     '<input placeholder="Rappel affiché après l\'attaque (facultatif)" data-k="'+P+'.note" value="'+esc(p.note)+'" style="margin-top:6px"></div>'}).join("")+
   '<button class="btn add" data-push="passifs">+ Passif</button>'+
-  (presetFor(c)?'<button class="btn pri" data-act="atkpreset" style="width:100%;margin-top:10px">⚔️ '+(c.presetV?"Mettre à jour":"Préremplir")+' les actions de '+esc(c.nom)+'</button>':'')+'</div>';
+  (presetFor(c)?'<button class="btn pri" data-act="atkpreset" style="width:100%;margin-top:10px"><i class=kic></i> '+(c.presetV?"Mettre à jour":"Préremplir")+' les actions de '+esc(c.nom)+'</button>':'')+'</div>';
 }
 // Bouton « Attaquer » dans l'onglet Combat
 function atkCalc(c){
@@ -596,8 +596,8 @@ function atkCalc(c){
   const st=c.attaques.filter(isStruct);
   return (tp.length?'<div class="chips" style="margin-bottom:8px">'+tp.map(p=>{const used=state.eco["p_"+p.label];return '<button class="chip '+(used?"used":"on")+'" data-act="ptog" data-l="'+esc(p.label)+'">'+(used?"✓ ":"")+esc(p.label)+' +'+num(p.val)+(used?" (utilisé)":" dispo")+'</button>'}).join("")+'</div>':'')+
   turnBox()+(state.turnLog.length?'<button class="btn sm" data-act="tlreset" style="margin:-4px 0 8px">↺ Remettre le total du tour à zéro</button>':'')+
-  (st.length?'<button class="btn pri bigatk" data-act="atkopen">⚔️ Attaquer</button>':'<div class="small mute">Configure tes actions d\'attaque dans l\'onglet Combat de ta fiche.</div>')+
-  (presetFor(c)?'<button class="btn" data-act="atkpreset" style="width:100%;margin-top:8px">⚔️ '+(c.presetV?"Mettre à jour":"Préremplir")+' mes actions ('+esc(c.nom)+')</button>':'')+
+  (st.length?'<button class="btn pri bigatk" data-act="atkopen"><i class=kic></i> Attaquer</button>':'<div class="small mute">Configure tes actions d\'attaque dans l\'onglet Combat de ta fiche.</div>')+
+  (presetFor(c)?'<button class="btn" data-act="atkpreset" style="width:100%;margin-top:8px"><i class=kic></i> '+(c.presetV?"Mettre à jour":"Préremplir")+' mes actions ('+esc(c.nom)+')</button>':'')+
   c.attaques.filter(a=>!isStruct(a)).map(a=>'<div class="atk"><b>'+esc(a.nom||"Attaque")+'</b><span>'+esc(a.bonus||"")+'</span><span class="mute">'+esc(a.degats||"")+'</span></div>').join("");
 }
 function passApplies(p,a){const ap=p.applique||"arme";return ap==="tout"||(ap==="arme"&&atkKind(a)==="arme")||(ap==="attaque"&&atkRoll(a))}
@@ -629,7 +629,7 @@ function attackModal(c,step,i){
       const r=computeAtk(c,i,ps.filter((p,k)=>on.has(k)),!entry);
       if(!entry){entry={nom:a.nom,total:r.total,types:r.types};state.turnLog.push(entry)}else{entry.total=r.total;entry.types=r.types}
       const other=a.main?c.attaques.findIndex(x=>isStruct(x)&&x.main&&x.main!==a.main&&atkKind(x)==="arme"):-1;
-      box.querySelector("#ares").innerHTML=r.html+turnBox()+'<div class="row" style="margin-top:10px;flex-wrap:wrap">'+(other>=0?'<button class="btn pri" data-chain="'+other+'" style="flex:1">⚔️ Enchaîner : '+esc(c.attaques[other].nom)+'</button>':'')+'<button class="btn" data-more style="flex:1">+ Autre attaque</button></div>';
+      box.querySelector("#ares").innerHTML=r.html+turnBox()+'<div class="row" style="margin-top:10px;flex-wrap:wrap">'+(other>=0?'<button class="btn pri" data-chain="'+other+'" style="flex:1"><i class=kic></i> Enchaîner : '+esc(c.attaques[other].nom)+'</button>':'')+'<button class="btn" data-more style="flex:1">+ Autre attaque</button></div>';
       const ch=box.querySelector("[data-chain]");if(ch)ch.onclick=()=>{state.atkIn[+ch.dataset.chain]={};attackModal(c,"dice",+ch.dataset.chain)};
       box.querySelector("[data-more]").onclick=()=>attackModal(c,"list");
       box.querySelector("[data-go]").textContent="Recalculer";rerenderPane();
@@ -923,7 +923,7 @@ function emblemHtml(kind){
   const rnd=(a,b)=>a+Math.random()*(b-a);
   if(kind==="persos"){
     const pages=Array.from({length:6},(_,i)=>'<div class="bk-leaf bk-page" style="--i:'+i+';--z0:'+(20-i)+';--z1:'+(32+i)+'"><i></i><i></i><i></i><i></i><i></i></div>').join("");
-    return '<div class="bk"><div class="bk-leaf bk-back" style="--z0:1;--z1:45"></div>'+pages+'<div class="bk-leaf bk-front" style="--z0:30;--z1:31"><span>⚔️</span></div></div>';
+    return '<div class="bk"><div class="bk-leaf bk-back" style="--z0:1;--z1:45"></div>'+pages+'<div class="bk-leaf bk-front" style="--z0:30;--z1:31"><span><i class=kic></i></span></div></div>';
   }
   if(kind==="mj"){
     const drops=Array.from({length:10},(_,i)=>{const a=i/10*Math.PI*2;return '<circle class="drop" r="'+rnd(3,6).toFixed(1)+'" style="--x:'+(Math.cos(a)*rnd(70,110)).toFixed(0)+'px;--y:'+(Math.sin(a)*rnd(70,110)).toFixed(0)+'px"/>'}).join("");
@@ -1196,7 +1196,7 @@ function deckHtml(c){
   const cnt=t=>cards.filter(k=>k.type===t).length;
   state._dealt=state._dealt||{};const dk=c.id+":"+F;const deal=state._dealt[dk]?"":" deal";state._dealt[dk]=1;
   return '<div class="catt">🃏 Ma main (favoris)</div>'+(favs.length?'<div class="hand'+deal+'">'+favs.map((k,i)=>cardHtml(k,false,i)).join("")+'</div>':'<div class="small mute">Touche une carte puis ☆ pour l\'épingler ici : tu la retrouveras tout de suite au round 1.</div>')+
-    '<div class="catt">Mon deck</div>'+fxBtn()+'<div class="seg deckseg">'+[["tout","Tout ("+cards.length+")"],["attaque","⚔️ "+cnt("attaque")],["sort","✨ "+cnt("sort")],["capacite","🌀 "+cnt("capacite")],["dispo","Dispo"]].map(([k,l])=>'<button data-act="deckf" data-f="'+k+'" class="'+(F===k?"on":"")+'">'+l+'</button>').join("")+'</div>'+
+    '<div class="catt">Mon deck</div>'+fxBtn()+'<div class="seg deckseg">'+[["tout","Tout ("+cards.length+")"],["attaque","<i class=kic></i> "+cnt("attaque")],["sort","✨ "+cnt("sort")],["capacite","🌀 "+cnt("capacite")],["dispo","Dispo"]].map(([k,l])=>'<button data-act="deckf" data-f="'+k+'" class="'+(F===k?"on":"")+'">'+l+'</button>').join("")+'</div>'+
     '<div class="deck'+deal+'">'+list.map((k,i)=>cardHtml(k,true,i)).join("")+'</div>';
 }
 // Fluidité : les animations des cartes se mettent en pause pendant le défilement, et peuvent être coupées
@@ -1276,7 +1276,7 @@ function combatPane(){
   if(!state.cbPerso||!S.persos.get(state.cbPerso)||S.persos.get(state.cbPerso).ownerId!==myId)state.cbPerso=(mine[0]||{}).id||"";
   let h="";
   if(!cb.actif){state.cbFoe=false;
-    h+='<div class="card"><h3>Combat</h3><p class="small mute" style="margin-top:0">Lance un combat pour suivre l\'initiative de tout le groupe en direct. Chaque joueur entre son initiative (ou lance le dé), le MJ ajoute les monstres.</p>'+(readOnly?'':'<button class="btn pri" data-act="cbstart" style="width:100%;padding:12px">⚔️ Lancer un combat</button>')+'</div>';
+    h+='<div class="card"><h3>Combat</h3><p class="small mute" style="margin-top:0">Lance un combat pour suivre l\'initiative de tout le groupe en direct. Chaque joueur entre son initiative (ou lance le dé), le MJ ajoute les monstres.</p>'+(readOnly?'':'<button class="btn pri" data-act="cbstart" style="width:100%;padding:12px"><i class=kic></i> Lancer un combat</button>')+'</div>';
   }else{
     const L=lignesTriees(cb);
     h+='<div class="card"><div class="row"><h3 style="flex:1;margin:0">Round '+num(cb.round||1)+'</h3><button class="btn sm" data-act="cbend">Terminer le combat</button></div><div class="ini">'+
@@ -1369,7 +1369,7 @@ let started=false;
 const errMsg=e=>({"auth/invalid-credential":"E-mail ou mot de passe incorrect.","auth/invalid-email":"Adresse e-mail invalide.","auth/email-already-in-use":"Cette adresse a déjà un compte : connecte-toi.","auth/weak-password":"Mot de passe trop court (6 caractères minimum).","auth/missing-password":"Entre un mot de passe.","auth/network-request-failed":"Pas de connexion internet.","permission-denied":"Code du groupe incorrect."}[e&&e.code]||("Erreur : "+((e&&(e.code||e.message))||"inconnue")));
 function loginScreen(mode){document.body.classList.remove("bgparch");
   const reg=mode==="reg";
-  app.innerHTML='<div class="login"><h1>⚔️ Fiches JDR</h1><div class="sub">'+(reg?"Créer ton compte":"Connexion")+'</div><div class="grid">'+
+  app.innerHTML='<div class="login"><h1><i class=kic></i> Fiches JDR</h1><div class="sub">'+(reg?"Créer ton compte":"Connexion")+'</div><div class="grid">'+
     '<div><label class="f">E-mail</label><input id="le" type="email" autocomplete="email"></div>'+
     '<div><label class="f">Mot de passe</label><input id="lp" type="password" autocomplete="'+(reg?"new-password":"current-password")+'"></div>'+
     '<div class="err" id="lerr"></div><button class="btn pri" id="lgo" style="padding:12px">'+(reg?"Créer mon compte":"Se connecter")+'</button>'+
@@ -1380,7 +1380,7 @@ function loginScreen(mode){document.body.classList.remove("bgparch");
   document.getElementById("lgo").onclick=async()=>{err("");try{if(reg)await createUserWithEmailAndPassword(auth,v("le"),document.getElementById("lp").value);else await signInWithEmailAndPassword(auth,v("le"),document.getElementById("lp").value)}catch(e){err(errMsg(e))}};
 }
 function joinScreen(u){
-  app.innerHTML='<div class="login"><h1>⚔️ Rejoindre le groupe</h1><div class="sub">Connecté : '+esc(u.email)+'</div><div class="grid">'+
+  app.innerHTML='<div class="login"><h1><i class=kic></i> Rejoindre le groupe</h1><div class="sub">Connecté : '+esc(u.email)+'</div><div class="grid">'+
     '<div><label class="f">Ton prénom</label><input id="jn" placeholder="Jerem"></div>'+
     '<div><label class="f">Code du groupe (demande-le au créateur)</label><input id="jc" autocapitalize="off"></div>'+
     '<div class="err" id="jerr"></div><button class="btn pri" id="jgo" style="padding:12px">Rejoindre</button><button class="lnkbtn" id="jout" style="color:var(--mute)">Changer de compte</button></div></div>';
@@ -1394,7 +1394,7 @@ onAuthStateChanged(auth,async u=>{
   if(!u){started=false;myId=null;return loginScreen("")}
   myId=u.uid;
   try{const p=await getDoc(doc(fdb,"users",u.uid));if(p.exists()){me=p.data();start()}else joinScreen(u)}
-  catch(e){if(e&&e.code==="permission-denied")joinScreen(u);else{app.innerHTML='<div class="login"><h1>⚔️ Fiches JDR</h1><p class="sub">Impossible de joindre la base. Vérifie ta connexion.</p><button class="btn pri" onclick="location.reload()" style="width:100%">Réessayer</button></div>'}}
+  catch(e){if(e&&e.code==="permission-denied")joinScreen(u);else{app.innerHTML='<div class="login"><h1><i class=kic></i> Fiches JDR</h1><p class="sub">Impossible de joindre la base. Vérifie ta connexion.</p><button class="btn pri" onclick="location.reload()" style="width:100%">Réessayer</button></div>'}}
 });
 // Bouton retour Android
 try{const C=window.Capacitor;if(C&&C.Plugins&&C.Plugins.App)C.Plugins.App.addListener("backButton",()=>{if(document.querySelector(".modal")){document.querySelector(".modal").remove();return}if(state.view==="sheet"){state.view="home";render();return}if(state.home!=="persos"){state.home="persos";render();return}C.Plugins.App.exitApp()})}catch(e){}
