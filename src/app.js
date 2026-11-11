@@ -783,6 +783,26 @@ function cardFx(k,im){
       s='<rect class="ffl" width="200" height="'+H+'" style="--t:3.1s"/><circle class="fc" cx="124" cy="119" r="26" fill="url(#'+gid+')"/>'+
         [[124,119,2,57,8,5],[124,119,8,84,7,5],[124,119,58,26,7,6],[124,119,192,96,6,5],[124,119,164,150,5,5]].map((p,i)=>fxBolt(p,i,seed)).join("")+
         parts(18,i=>{const a=R()*6.28,d=26+R()*60;return fxPart(124,119,.7+R()*1.2,Math.cos(a)*d,Math.sin(a)*d,.8+R()*1.3,R()*2.4,i%3===0)});break;
+    case "ruine":
+      s=fxGlint("M0 15 L75 123",3.4,0)+[[6,24,40,74,6,5],[40,74,74,120,6,5],[30,58,70,50,5,4]].map((p,i)=>fxBolt(p,i,seed)).join("")+
+        parts(5,i=>'<path class="fw thin" d="M'+(8+i*20+R()*10).toFixed(0)+' '+(150-R()*30).toFixed(0)+'q-9 -18 0 -36t0 -36" style="--t:'+(3+R()*2).toFixed(2)+'s;--d:-'+(R()*4).toFixed(2)+'s"/>')+
+        parts(16,i=>fxPart(R()*110,30+R()*120,.7+R()*1.2,-10+R()*30,-26-R()*40,1.8+R()*2.2,R()*4,i%4===0));break;
+    case "fsacree":
+      s='<circle class="fc" cx="118" cy="70" r="46" fill="url(#'+gid+')"/><g class="frr"><circle cx="55" cy="60" r="46"/><circle cx="55" cy="60" r="33" class="in"/></g>'+
+        parts(24,i=>fxPart(80+R()*80,40+R()*110,.8+R()*1.5,-18+R()*36,-40-R()*60,1.2+R()*2,R()*3.5,i%4===0));break;
+    case "cglacial":
+      s=[0,1].map(i=>fxRing(110,95,70,3.4,i*1.7)).join("")+parts(16,i=>{const a=R()*6.28,d=30+R()*60;return fxPart(110,95,.6+R()*1.1,Math.cos(a)*d,Math.sin(a)*d,1.6+R()*2,R()*3.5,true)})+
+        parts(9,i=>fxTw(20+R()*160,10+R()*130,.5+R()*.7,1.8+R()*1.8,R()*3.5));break;
+    case "poigne":
+      s='<rect class="ffl" width="200" height="'+H+'" style="--t:2.8s"/><circle class="fc" cx="110" cy="92" r="30" fill="url(#'+gid+')"/>'+
+        [[110,90,120,0,9,8],[110,90,60,4,8,7],[110,90,178,10,8,7],[110,90,10,70,7,6],[110,90,196,80,7,6],[110,90,150,150,6,6]].map((p,i)=>fxBolt(p,i,seed)).join("")+
+        parts(14,i=>{const a=R()*6.28,d=24+R()*60;return fxPart(110,92,.7+R()*1.1,Math.cos(a)*d,Math.sin(a)*d,.8+R()*1.2,R()*2.4,i%2===0)});break;
+    case "tfeu":
+      s=fxGlint("M35 110 L150 0",2.6,0)+'<circle class="fc" cx="36" cy="110" r="20" fill="url(#'+gid+')"/>'+
+        parts(26,i=>fxPart(30+R()*70,60+R()*70,.8+R()*1.5,50+R()*70,-50-R()*60,.8+R()*1.2,R()*2.6,i%4===0));break;
+    case "rgivre":
+      s=fxGlint("M70 122 L186 24",2.8,0)+'<circle class="fc" cx="70" cy="122" r="18" fill="url(#'+gid+')"/>'+
+        parts(16,i=>fxPart(66+R()*30,96+R()*30,.6+R()*1.1,50+R()*70,-40-R()*60,1+R()*1.4,R()*2.8,true))+parts(9,i=>fxTw(R()*200,R()*140,.5+R()*.7,1.8+R()*1.8,R()*3.5));break;
     case "moquerie":
       s=[0,1,2].map(i=>fxRing(100,102,78,3.3,i*1.1)).join("")+parts(8,i=>{const a=-2.9+R()*2.7,d=46+R()*40;return '<text class="fp ha" x="'+(78+R()*44).toFixed(0)+'" y="'+(92+R()*18).toFixed(0)+'" font-size="'+(7+R()*7).toFixed(0)+'" style="--dx:'+(Math.cos(a)*d).toFixed(0)+'px;--dy:'+(Math.sin(a)*d).toFixed(0)+'px;--t:'+(1.9+R()*1.6).toFixed(2)+'s;--d:-'+(R()*3.4).toFixed(2)+'s">HA</text>'})+
         fxEye(77,43.6,gid+"r",3)+fxEye(124.3,43.5,gid+"r",3,"",1.1);break;
@@ -1111,7 +1131,13 @@ const CARD_IMGS=[
   {p:"seiko",n:"eclair",src:"img/seiko/eclair.jpg",fx:"eclair",col:"#7fb4ff",face:"35% 30%"},
   {p:"seiko",n:"fougue",src:"img/seiko/fougue.jpg",fx:"fougue",col:"#ffa23a",face:"40% 25%"},
   {p:"seiko",n:"decharge occulte",src:"img/seiko/decharge.jpg",fx:"decharge",col:"#ff3b4a",face:"45% 20%"},
+  {p:"seiko",n:"ruine",src:"img/seiko/ruine.jpg",fx:"ruine",col:"#6dff7a",face:"52% 22%"},
   // sans « p » : l'image vaut pour tous les persos qui ont ce sort
+  {n:"flamme sacree",src:"img/sorts/flamme-sacree.jpg",fx:"fsacree",col:"#ffc45a",face:"55% 50%"},
+  {n:"contact glacial",src:"img/sorts/contact-glacial.jpg",fx:"cglacial",col:"#bfe6ff",face:"55% 55%"},
+  {n:"poigne electrique",src:"img/sorts/poigne-electrique.jpg",fx:"poigne",col:"#7fa8ff",face:"55% 55%"},
+  {n:"trait de feu",src:"img/sorts/trait-de-feu.jpg",fx:"tfeu",col:"#ff8a3a",face:"45% 50%"},
+  {n:"rayon de givre",src:"img/sorts/rayon-de-givre.jpg",fx:"rgivre",col:"#bfe6ff",face:"55% 50%"},
   {n:"flammes",src:"img/sorts/flammes.jpg",fx:"flammes",col:"#ffa23a",face:"50% 40%"},
   {n:"moquerie cruelle",src:"img/seiko/moquerie.jpg",fx:"moquerie",col:"#8a3fd0",face:"50% 45%"},
   {p:"seiko",n:"hantise",src:"img/seiko/hantise.jpg",fx:"hantise",col:"#ffffff",face:"68% 40%",ghost:"m"},
