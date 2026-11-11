@@ -437,6 +437,7 @@ function act(a,c,d){
   if(a==="cardopen"&&c){cardModal(c,d.key);return}
   if(a==="deckf"){state.deckF=d.f;rerenderPane();return}
   if(a==="defmode"&&c){c.defMode=d.v;schedule(c);rerenderPane();return}
+  if(a==="fxtog"){fxOff=!fxOff;try{localStorage.setItem("fj_fx",fxOff?"0":"1")}catch(e){}document.body.classList.toggle("nofx",fxOff);rerenderPane();return}
   if(a==="bibview"){state.bibView=d.v;try{localStorage.setItem("fj_bibview",d.v)}catch(e){}rerenderPane();return}
   if(a==="sortview"){state.sortView=d.v;try{localStorage.setItem("fj_sortview",d.v)}catch(e){}rerenderPane();return}
   if(a==="tlreset"){state.turnLog=[];rerenderPane();return}
@@ -1164,14 +1165,19 @@ function deckHtml(c){
   const cnt=t=>cards.filter(k=>k.type===t).length;
   state._dealt=state._dealt||{};const dk=c.id+":"+F;const deal=state._dealt[dk]?"":" deal";state._dealt[dk]=1;
   return '<div class="catt">🃏 Ma main (favoris)</div>'+(favs.length?'<div class="hand'+deal+'">'+favs.map((k,i)=>cardHtml(k,false,i)).join("")+'</div>':'<div class="small mute">Touche une carte puis ☆ pour l\'épingler ici : tu la retrouveras tout de suite au round 1.</div>')+
-    '<div class="catt">Mon deck</div><div class="seg deckseg">'+[["tout","Tout ("+cards.length+")"],["attaque","⚔️ "+cnt("attaque")],["sort","✨ "+cnt("sort")],["capacite","🌀 "+cnt("capacite")],["dispo","Dispo"]].map(([k,l])=>'<button data-act="deckf" data-f="'+k+'" class="'+(F===k?"on":"")+'">'+l+'</button>').join("")+'</div>'+
+    '<div class="catt">Mon deck</div>'+fxBtn()+'<div class="seg deckseg">'+[["tout","Tout ("+cards.length+")"],["attaque","⚔️ "+cnt("attaque")],["sort","✨ "+cnt("sort")],["capacite","🌀 "+cnt("capacite")],["dispo","Dispo"]].map(([k,l])=>'<button data-act="deckf" data-f="'+k+'" class="'+(F===k?"on":"")+'">'+l+'</button>').join("")+'</div>'+
     '<div class="deck'+deal+'">'+list.map((k,i)=>cardHtml(k,true,i)).join("")+'</div>';
 }
+// Fluidité : les animations des cartes se mettent en pause pendant le défilement, et peuvent être coupées
+let fxOff=false;try{fxOff=localStorage.getItem("fj_fx")==="0"}catch(e){}
+document.body.classList.toggle("nofx",fxOff);
+const fxBtn=()=>'<button class="btn sm fxtog" data-act="fxtog">'+(fxOff?"✨ Animations : non":"✨ Animations : oui")+'</button>';
+{let st=null;window.addEventListener("scroll",()=>{if(!st)document.body.classList.add("scrolling");clearTimeout(st);st=setTimeout(()=>{st=null;document.body.classList.remove("scrolling")},220)},{passive:true})}
 // Biblio : les mêmes entrées en cartes ou en liste
 const bibView=()=>{if(!state.bibView){try{state.bibView=localStorage.getItem("fj_bibview")||"cartes"}catch(e){state.bibView="cartes"}}return state.bibView};
 function bibCards(list,t){
   const mine=[...S.persos.values()].find(p=>p.ownerId===myId);state._deckC=mine?mine.id:null;state._favs=[];
-  return '<div class="deck bibdeck">'+list.map((b,i)=>{
+  return fxBtn()+'<div class="deck bibdeck">'+list.map((b,i)=>{
     let k;
     if(t==="sort"){const dt=b.dmg&&b.dmg.type;const dn=b.dmg?(b.dmg.perso?b.dmg.perso[1]:b.dmg.slots&&b.dmg.slots[Object.keys(b.dmg.slots)[0]]):"";
       k={elem:dt||"arcane",medal:num(b.niv)?String(num(b.niv)):"T",key:"bib:"+b.id,type:"sort",nom:b.nom||"Sans nom",icon:dt?(TYPICON[dt]||"✨"):"✨",eco:ecoOf(b.temps||"","action"),
@@ -1187,7 +1193,7 @@ function sortCards(c){
   if(!sorts.length)return '<div class="small mute">Aucun sort pour l\'instant. Passe en liste pour en ajouter.</div>';
   const niv=k=>k.medal==="T"?0:num(k.medal);const levels=[...new Set(sorts.map(niv))].sort((a,b)=>a-b);
   state._dealt=state._dealt||{};const dk="sv:"+c.id;const deal=state._dealt[dk]?"":" deal";state._dealt[dk]=1;let n=0;
-  return levels.map(L=>'<div class="catt">'+(L?"Niveau "+L:"Tours de magie")+'</div><div class="deck'+deal+'">'+sorts.filter(k=>niv(k)===L).map(k=>cardHtml(k,true,n++,true)).join("")+'</div>').join("")+
+  return fxBtn()+levels.map(L=>'<div class="catt">'+(L?"Niveau "+L:"Tours de magie")+'</div><div class="deck'+deal+'">'+sorts.filter(k=>niv(k)===L).map(k=>cardHtml(k,true,n++,true)).join("")+'</div>').join("")+
     '<div class="hint" style="margin-top:10px">Touche une carte pour l\'ouvrir, la lancer ou l\'épingler dans ta main. Pour ajouter ou modifier un sort, passe en liste.</div>';
 }
 function cardModal(c,key){

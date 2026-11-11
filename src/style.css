@@ -535,3 +535,9 @@ body.bgparch #hpane>.card .bar .t{color:#fff}
 body.bgparch #hpane .card4{--panel:#25272b;--panel2:#2e3035;--line:#3a3d43;--txt:#ecebe7;--mute:#9a9ca3;--acc:#7bd88f;--acc2:#5fb873;--warn:#f0a35e;--bad:#e5645c;--blue:#6cb6ff;--violet:#b48cff;color:#ecebe7}
 body.bgparch #hpane>.card .chip.on{color:#fff6e0}
 body.bgparch #hpane>.card [style*="#c9c8c3"],body.bgparch #hpane>.card .rules,body.bgparch #hpane>.card details .small{color:var(--txt)!important}
+/* fluidité du défilement */
+body.scrolling .card4 *,body.scrolling .card4::after{animation-play-state:paused!important}
+.card4.sm .artimg.ghost{display:none}
+.fxtog{display:block;margin:4px 0 8px;font-size:12px}
+body.nofx .cfx,body.nofx .card4::after,body.nofx .artimg.ghost{display:none!important}
+body.nofx .aw,body.nofx .card4 .artimg,body.nofx .shero,body.nofx .sfx,body.nofx .deal .card4{animation:none!important}
