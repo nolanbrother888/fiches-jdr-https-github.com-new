@@ -40,6 +40,31 @@ function blank(){
     monnaie:{pc:0,pa:0,pe:0,po:0,pp:0},monnaieCustom:[],maxMagEquip:4,items:[],dons:[],histoire:"",notes:"",custom:[],passifs:[],favs:[],retire:false,updated:Date.now()};
 }
 const SEIKO_LORE="Seiko, est un jeune vagabond provenant de Kuartse, un pays où vit un tyran qui empêche son peuple de s'ouvrir au monde. Plusieurs guerres ont été menées par les shoguns pour le poste de grand Shogun de Kazoku Tokei. Seiko est selon lui la seule personne qui ait pu en ressortir car il détient \"la clé du pays\", un pouvoir qui est convoité par la noblesse et l'empereur lui-même pour la simple raison qu'il puisse s'opposer a lui et ouvrir les portes au pays de Kuartse. Il n'a connu sa famille qu'en se cachant et fuyant l'armée a travers le pays, pris d'une amnésie passagère lors de son passage dans le nouveau monde, il voit des morceaux de verres brisés dans ses rêves dans lesquels ses souvenirs sont rattachés. Souvent il voit ce qui semble être son tuteur, ses amis, son animal de compagnie, un loup gris tacheté. Aujourd'hui, il cherche à créer un groupe de mercenaire dans un seul but, celui de faire connaître son pays qui apparaît comme une légende aux yeux des Hommes en affrontant le Grand Shogun. Il a pour arme de combat un katana et sait manier les armes de jets, armes à feu. Suivant le Bushido Kuro Makutsu de la vallée des Moulins, il détient les arcanes de l'élément du vent et peut manier l'air grâce à son épée Kuroi Ventus.\n\nDans le pays de Kuartse, un puissant sortilège a été tissé pour maintenir une barrière magique autour de ses frontières. Cette barrière empêche quiconque de quitter le pays sans l'autorisation du tyran au pouvoir. Cela signifie que les habitants de Kuartse sont effectivement pris au piège à l'intérieur du pays, empêchés de s'ouvrir au monde extérieur. L'activation du sceau signifie que Seiko est désormais une proie qui va être traqué par le Shogun, car si cette barrière est désactivée c’est que des soldats sont sorties à sa poursuite. S'il venait à mourir ou à être capturé, la barrière se renforcerait automatiquement, piégeant à nouveau tout le monde à l'intérieur de Kuartse. Cette responsabilité pèse lourdement sur les épaules de Seiko car l’insurrection de son pays ne peut commencer seulement quand cette barrière est affaiblie et cela renforce son engagement envers sa mission de libération.";
+const VIOLETTE_LORE="Mon père travaillait dans les mines d'Éther et il est mort au travail quand j'avais 10 ans.\n\nMa mère m'a appris à maîtriser la magie, qui s'apprend de mère en fille.\n\nMes cheveux sont bruns, mais en présence de l'éther ils deviennent violets, d'où mon nom.\n\nÀ mes 18 ans, un accident a eu lieu pendant un rituel : ma mère a été si gravement blessée qu'elle est désormais en fauteuil roulant.\n\nDepuis, je cherche un moyen de la guérir en travaillant à la guilde.\n\nJ'ai actuellement 25 ans.";
+const ELEM_NOTE="Sort de niveau 4 (invocation). 1 action, portée 27 m, V, S, concentration jusqu'à 1 h. Tu invoques un élémentaire de Feu, d'Air, d'Eau ou de Terre (taille Moyenne, neutre), amical envers toi et tes compagnons. Il a sa propre initiative, obéit à tes ordres verbaux (sans action de ta part) et, sans ordre, ne fait que se défendre. Il disparaît à 0 PV ou à la fin du sort.\nArmure physique 1 par niveau de sort (Terre), armure magique 1 par niveau de sort (Feu, Air, Eau). PV 50 + 10 par niveau au-dessus du 4e. Vitesse 12 m, vol plané 12 m (Air), nage 12 m (Eau). For 18, Dex 15, Con 17, Int 4, Sag 10, Cha 16.\nRésistances : acide (Eau), foudre et tonnerre (Air), perçant et tranchant (Terre). Immunités : feu (Feu), poison, fatigue, paralysie, pétrification. Vision dans le noir 18 m. Amorphe (Air, Feu, Eau).\nAttaque multiple : niveau du sort ÷ 2 attaques (arrondi en dessous). Écrasement : 1d10 + 4 + niveau du sort, contondant (Terre), froid (Eau), foudre (Air) ou feu (Feu).";
+const VIO_V=1;
+function violettePreset(c){
+  if(String(c.nom||"").trim().toLowerCase()!=="violette"||num(c.vioV)>=VIO_V)return;
+  if(!String(c.histoire||"").includes("mines d'Éther"))c.histoire=(c.histoire?c.histoire.trim()+"\n\n":"")+VIOLETTE_LORE;
+  c.sauv=Object.assign({},c.sauv,{int:true,sag:true});
+  if(!c.desVie)c.desVie="d6 + Con";
+  c.res=c.res||{};if(!num(c.res.feu))c.res.feu=50;
+  const D=(nom,desc)=>{if(!c.dons.some(d=>d.nom===nom))c.dons.push({nom,desc})};
+  D("Flamboyante","Trait passif : résistante contre l'élément Feu.");
+  D("Maîtrises de magicienne","Armures : aucune. Armes : bâtons, dagues, sceptres, baguettes. Jets de sauvegarde : Intelligence et Mental (Sagesse).");
+  D("Focaliseur d'incantation (niv 1)","Tu peux utiliser un objet arcanique (orbe, boule de cristal, baguette, bâton…) comme focaliseur pour tes sorts de magicienne.");
+  D("Récupération arcanique (niv 1)","1 fois par repos long, pendant un repos court : tu regagnes des emplacements de sorts pour un total égal à la moitié de ton niveau arrondi au supérieur (6 au niveau 11), répartis à ta guise. Pas d'emplacement au-dessus du niveau 5.");
+  D("Efrit (niv 3)","Réaction, somatique, 1 emplacement de niveau 2 : contre une attaque de mêlée, à distance ou magique qui te vise, tu réduis les dégâts de 1d8 + bonus d'Intelligence.");
+  D("Catalyseur éthérique (niv 5)","Réaction : quand une créature à 8 m ou moins lance un sort, tu regagnes un emplacement de niveau 1 (sort de niveau 5 ou moins) ou de niveau 2 (sort de niveau 6 ou plus).");
+  D("Bouclier arcanique (niv 5)","Réaction, verbale et somatique, portée 9 m, 1 emplacement de niveau 3 : tu rediriges une attaque magique qui te vise vers une autre cible visible si tu réussis un jet de sauvegarde d'Intelligence DD 15 + niveau du sort.");
+  D("À venir : Sorts favoris (niv 18)","Choisis un sort de niveau 1 et un sort de niveau 2 de ton grimoire : tu peux les lancer sans emplacement. Il faut un emplacement pour les lancer à un niveau supérieur.");
+  D("À venir : Sorts signatures (niv 20)","Choisis deux sorts de niveau 3 de ton grimoire : tu peux les lancer sans emplacement, une fois chacun par repos court. Il faut un emplacement pour un niveau supérieur.");
+  if(!c.ressources.some(r=>/R[ée]cup[ée]ration arcanique/i.test(r.nom)))c.ressources.push({nom:"Récupération arcanique",act:1,max:1,reset:"Repos long"});
+  if(!c.sorts.some(s=>/Invocation d'[ÉE]l[ée]mentaire/i.test(s.nom)))c.sorts.push({niv:4,nom:"Invocation d'Élémentaire",prep:true,conc:true,note:ELEM_NOTE});
+  const E=(el,type)=>{const nom="Élémentaire "+el+" : Écrasement";if(!c.attaques.some(a=>a.nom===nom))c.attaques.push({nom,kind:"autre",carac:"",maitrise:false,modDegats:false,bonusToucher:0,jetAttaque:false,sansPassifs:true,des:[{n:"1d10",type}],fixe:[{label:"4 + niveau du sort (4)",val:8,type}],pct:[],degats:"Attaque de l'élémentaire invoqué (2 attaques par tour avec un emplacement de niveau 4). Avec un emplacement plus haut, ajoute 1 dégât par niveau en plus."})};
+  E("de Feu","feu");E("d'Air","foudre");E("d'Eau","froid");E("de Terre","contondant");
+  c.vioV=VIO_V;
+}
 function normPerso(c){const b=blank();for(const k in b){if(c[k]===undefined)c[k]=b[k]}if(!Array.isArray(c.slots)||c.slots.length<9)c.slots=b.slots;
   // Kuroi Ventus : le pouvoir d'arrêt du temps s'appelle Tokidome
   const OLDKV="Kuroi Ventus (katana ancestral)",NEWKV="Kuroi Ventus (Tokidome)";
@@ -47,6 +72,7 @@ function normPerso(c){const b=blank();for(const k in b){if(c[k]===undefined)c[k]
   if(Array.isArray(c.favs))c.favs=c.favs.map(k=>typeof k==="string"?k.replace(OLDKV,NEWKV):k);
   // Histoire de Seiko (fournie par Jon) : ajoutée si elle n'est pas déjà sur la fiche
   if(String(c.nom||"").trim().toLowerCase()==="seiko"&&!String(c.histoire||"").includes("Kuartse"))c.histoire=(c.histoire?c.histoire.trim()+"\n\n":"")+SEIKO_LORE;
+  violettePreset(c);
   return c}
 const level=c=>Math.max(1,c.classes.reduce((a,x)=>a+num(x.niv),0));
 const prof=c=>c.maitriseAuto?2+Math.floor((level(c)-1)/4):num(c.maitrise);
@@ -144,7 +170,7 @@ function softRender(){const a=document.activeElement;if(a&&app.contains(a)&&/INP
 const app=document.getElementById("app");
 const roBanner=()=>readOnly?'<div class="ro">👀 Lecture seule.</div>':'';
 function render(){
-  document.body.classList.toggle("bgparch",state.view==="home"&&state.home==="combat");
+  document.body.classList.toggle("bgparch",state.view==="home"&&(state.home==="combat"||state.home==="persos"));
   if(state.view==="sheet"){const c=cur();if(!c){state.view="home";return render()}
     app.innerHTML='<div class="top"><div class="wrap"><button class="ico" data-act="back">‹</button>'+avatar(c,36)+'<h1 data-d="title">'+esc(c.nom)+'</h1><span class="status" id="st">'+esc(saveStatus)+'</span></div></div>'+
       '<div class="wrap">'+roBanner()+(!readOnly&&!canEdit(c)?'<div class="ro">🔒 Fiche d\'un autre joueur : lecture seule.</div>':'')+(!readOnly&&!c.ownerId&&myId?'<div class="ro" style="border-color:var(--acc);color:var(--acc);background:#1f3326">Cette fiche n\'a pas encore de propriétaire. <button class="btn sm" data-act="mine" style="margin-left:6px">C\'est mon perso</button></div>':'')+'<div id="pane">'+pane(c)+'</div></div>'+
@@ -404,7 +430,7 @@ app.addEventListener("click",e=>{
   if(d.tab){state.tab=d.tab;render();window.scrollTo(0,0);return}
   if(d.pf){state.persoFilter=d.pf;rerenderPane();return}
   if(d.bt&&!d.act){state.bibType=d.bt;state.bibNiv="";rerenderPane();return}
-  if(d.bib){const b=getBib(d.bib);return b&&b.srd?srdModal(b):bibModal(b)}
+  if(d.bib){const b=getBib(d.bib);return b&&(b.srd||b.maison)?srdModal(b):bibModal(b)}
   if(d.act)return act(d.act,c,d);
   if(readOnly)return;
   if(d.dispo){const s=S.sessions.get(d.dispo);if(!s)return;s.dispo=s.dispo||{};const nv=DISPO[(DISPO.indexOf(s.dispo[d.p]||"")+1)%DISPO.length];s.dispo[d.p]=nv;upd("sessions",s.id,"dispo",d.p,nv);rerenderPane();return}
@@ -983,12 +1009,16 @@ function swordsAnim(big,host){
 // ---------- Sorts officiels (SRD 5.1 en français) ----------
 let SRD=[];
 function loadSRD(){if(SRD.length)return;fetch("sorts-srd.json").then(r=>r.json()).then(d=>{SRD=d;softRender()}).catch(()=>{})}
-const getBib=id=>id&&id.startsWith("srd-")?SRD.find(s=>s.id===id):S.biblio.get(id);
+const MAISON=[
+  {id:"mai-invoc-elementaire",type:"sort",maison:1,nom:"Invocation d'Élémentaire",niv:4,ecole:"Invocation",temps:"1 action",portee:"27 mètres",comp:"V, S",duree:"Concentration, jusqu'à 1 heure",conc:true,rituel:false,classes:"Magicien (Violette)",desc:ELEM_NOTE},
+  {id:"mai-invoc-elem-foudre",type:"sort",maison:1,nom:"Invocation d'Élémentaire de Foudre",niv:4,ecole:"Invocation",temps:"1 action",portee:"27 mètres",comp:"V, S",duree:"Concentration, jusqu'à 1 heure",conc:true,rituel:false,classes:"Occultiste (Génie de la Foudre)",desc:"Tu invoques un serviteur élémentaire de foudre (taille Moyenne, neutre), amical envers toi et tes compagnons. Il a sa propre initiative, obéit à tes ordres verbaux (sans action de ta part) et, sans ordre, ne fait que se défendre. Il disparaît à 0 PV ou à la fin du sort.\nArmure physique 0, armure magique 1 par niveau de sort. PV 50 + 10 par niveau au-dessus du 4e. Vitesse 12 m, vol plané 12 m. For 18, Dex 15, Con 17, Int 4, Sag 10, Cha 16.\nRésistance : tonnerre. Immunités : foudre, poison, fatigue, paralysie, pétrification. Vision dans le noir 18 m. Amorphe : passe par des espaces larges de 2,5 cm.\nAttaque multiple : niveau du sort ÷ 2 attaques (arrondi en dessous). Écrasement : 1d10 + 4 + niveau du sort, dégâts de foudre."}
+];
+const getBib=id=>id&&id.startsWith("srd-")?SRD.find(s=>s.id===id):id&&id.startsWith("mai-")?MAISON.find(s=>s.id===id):S.biblio.get(id);
 const CLASSES_SORTS=["Barde","Clerc","Druide","Ensorceleur","Magicien","Occultiste","Paladin","Rôdeur"];
 const myClasses=c=>c.classes.map(x=>x.nom).filter(n=>CLASSES_SORTS.includes(n));
 function bibList(t,Q,niv,cls){
   Q=(Q||"").toLowerCase();
-  return [...(t==="sort"?SRD:[]),...S.biblio.values()].filter(b=>b.type===t&&(!Q||(b.nom+" "+(b.classes||"")+" "+(b.ecole||"")).toLowerCase().includes(Q))&&(t!=="sort"||niv===""||niv==null||String(num(b.niv))===String(niv))&&(!cls||!cls.length||cls.some(k=>(b.classes||"").includes(k))))
+  return [...(t==="sort"?SRD.concat(MAISON):[]),...S.biblio.values()].filter(b=>b.type===t&&(!Q||(b.nom+" "+(b.classes||"")+" "+(b.ecole||"")).toLowerCase().includes(Q))&&(t!=="sort"||niv===""||niv==null||String(num(b.niv))===String(niv))&&(!cls||!cls.length||cls.some(k=>(b.classes||"").includes(k))))
     .sort((a,b)=>t==="sort"?(num(a.niv)-num(b.niv)||String(a.nom).localeCompare(b.nom)):String(a.nom).localeCompare(b.nom));
 }
 // Dés de dégâts d'un sort pour un personnage (tour de magie selon le niveau du perso, sinon niveau de base)
@@ -1016,7 +1046,7 @@ function srdModal(b){
     '<div class="grid g2 small" style="margin:10px 0"><div><span class="mute">Incantation</span><br>'+esc(b.temps)+'</div><div><span class="mute">Portée</span><br>'+esc(b.portee)+'</div><div><span class="mute">Composantes</span><br>'+esc(b.comp)+'</div><div><span class="mute">Durée</span><br>'+esc(b.duree)+(b.conc?" (concentration)":"")+'</div></div>'+
     '<div class="small mute">Classes : '+esc(b.classes||"-")+'</div><div class="srddesc">'+esc(b.desc||"").replace(/\n/g,"<br>")+'</div>'+
     (mine.length&&!readOnly?'<div class="catt">Ajouter à ma fiche</div>'+(b.dmg?'<label class="row small" style="margin-bottom:6px"><input type="checkbox" class="tog" id="watk" checked> Créer aussi l\'action d\'attaque</label>':'')+mine.map(c=>'<button class="btn" data-add="'+c.id+'" style="width:100%;margin-bottom:6px">+ '+esc(c.nom)+'</button>').join(""):'')+
-    '<div class="small mute" style="margin-top:8px">Source : SRD 5.1 (Wizards of the Coast), licence CC BY 4.0.</div><div class="acts"><button class="btn" data-x>Fermer</button></div>');
+    '<div class="small mute" style="margin-top:8px">'+(b.maison?"Source : règles de la table.":"Source : SRD 5.1 (Wizards of the Coast), licence CC BY 4.0.")+'</div><div class="acts"><button class="btn" data-x>Fermer</button></div>');
   m.querySelector("[data-x]").onclick=()=>m.remove();
   m.querySelectorAll("[data-add]").forEach(x=>x.onclick=()=>{const c=S.persos.get(x.dataset.add);if(!c)return;const w=m.querySelector("#watk");const atk=addSortToPerso(c,b,w&&w.checked);toast(b.nom+" ajouté à "+c.nom+(atk?" (et aux attaques)":""));m.remove()});
 }
