@@ -160,7 +160,7 @@ function homePane(){
     const nx=nextAllDate();
     const card=c=>{const p=c.pv.max?clamp(c.pv.act/c.pv.max,0,1):0;return '<button class="ch" data-open="'+c.id+'" style="--c:'+c.couleur+'">'+avatar(c)+
       '<div style="flex:1;min-width:0"><div class="n">'+esc(c.nom)+(c.retire?' <span class="tag">retiré</span>':'')+'</div>'+(ownerName(c)?'<div class="owner">Joué par '+esc(ownerName(c))+'</div>':'')+'<div class="mute small">'+esc(classLine(c))+' · niv. '+level(c)+(c.joueur?' · '+esc(c.joueur):'')+'</div>'+
-      '<div class="mini"><i style="width:'+(p*100)+'%;background:'+barColor(p)+'"></i></div><div class="small mute" style="margin-top:3px">PV '+c.pv.act+'/'+c.pv.max+' · CA '+c.ca+(c.etats.length?' · <span style="color:var(--warn)">'+esc(c.etats.join(", "))+'</span>':'')+'</div></div></button>'};
+      '<div class="mini"><i style="width:'+(p*100)+'%;background:'+barColor(p)+'"></i></div><div class="small mute" style="margin-top:3px">PV '+c.pv.act+'/'+c.pv.max+' · '+defTxt(c)+(c.etats.length?' · <span style="color:var(--warn)">'+esc(c.etats.join(", "))+'</span>':'')+'</div></div></button>'};
     return (nx?'<button class="card nextses" data-htab="planning">📅 Prochaine session où tout le monde est dispo : <b>'+esc(fdate(nx.date))+'</b></button>':'')+
       '<div class="seg">'+[["actifs","Actifs"],["retires","Retirés"],["tous","Tous"]].map(([k,l])=>'<button data-pf="'+k+'" class="'+(state.persoFilter===k?"on":"")+'">'+l+'</button>').join("")+'</div>'+
       (list.length?((mine.length?'<div class="catt">Mes personnages</div><div class="chars">'+mine.map(card).join("")+'</div>':'')+
@@ -174,7 +174,7 @@ function homePane(){
       const sl=c.slots.map((s,i)=>num(s.max)?'<span class="sl">'+(i+1)+' : '+Math.max(0,num(s.max)-num(s.used))+'/'+num(s.max)+'</span>':'').join("")+(num(c.pacte.max)?'<span class="sl">Pacte : '+Math.max(0,num(c.pacte.max)-num(c.pacte.used))+'/'+num(c.pacte.max)+'</span>':'');
       return '<div class="card mjc" style="border-left:5px solid '+c.couleur+'"><div class="row" style="gap:10px">'+avatar(c,44)+'<div style="flex:1;min-width:0"><button class="lnk" data-open="'+c.id+'">'+esc(c.nom)+'</button><div class="small mute">'+esc(classLine(c))+(c.joueur?' · '+esc(c.joueur):'')+'</div></div></div>'+
         '<div class="bar" style="margin-top:10px;height:20px"><i style="width:'+(p*100)+'%;background:'+barColor(p)+'"></i><div class="t">'+c.pv.act+' / '+c.pv.max+(num(c.pv.temp)?' (+'+c.pv.temp+')':'')+'</div></div>'+
-        '<div class="stats4"><div><small>CA</small><b>'+c.ca+'</b></div><div><small>Init</small><b>'+sg(mod(c.car.dex)+num(c.initBonus))+'</b></div><div><small>Perc. pass.</small><b>'+(10+skillTot(c,"perception","sag"))+'</b></div><div><small>DD sorts</small><b>'+(8+prof(c)+mod(c.car[c.sortCar]))+'</b></div></div>'+
+        '<div class="stats4">'+defCell(c)+'<div><small>Init</small><b>'+sg(mod(c.car.dex)+num(c.initBonus))+'</b></div><div><small>Perc. pass.</small><b>'+(10+skillTot(c,"perception","sag"))+'</b></div><div><small>DD sorts</small><b>'+(8+prof(c)+mod(c.car[c.sortCar]))+'</b></div></div>'+
         (c.etats.length||c.epuisement?'<div class="chips" style="margin-top:8px">'+c.etats.map(e=>'<span class="chip on">'+esc(e)+'</span>').join("")+(c.epuisement?'<span class="chip on" style="background:var(--bad);border-color:var(--bad)">Épuisement '+c.epuisement+'</span>':'')+'</div>':'')+
         (sl?'<div class="small" style="margin-top:8px">✨ '+sl+'</div>':'')+
         (c.inspiration?'<div class="small" style="margin-top:4px">⭐ Inspiration : '+c.inspiration+'</div>':'')+
@@ -250,18 +250,22 @@ function pane(c){
     SKILLS.map(([k,n,a])=>{const p=num(c.comp[k]||0);return '<div class="skill"><button class="prof p'+p+'" data-prof="'+k+'">'+(p===1?"M":p===2?"E":"")+'</button><div class="nm">'+n+'<small>('+ABN[a].slice(0,3)+')</small></div><input type="number" data-k="compBonus.'+k+'" data-t="n" value="'+(c.compBonus[k]||0)+'"><div class="tot" data-d="skill:'+k+'"></div></div>'}).join("")+
     '</div><div class="card"><h3>Sens passifs</h3><div class="big"><div><div class="small mute">Perception</div><div class="v" data-d="pp"></div></div><div><div class="small mute">Intuition</div><div class="v" data-d="pi"></div></div><div><div class="small mute">Investigation</div><div class="v" data-d="pinv"></div></div></div></div>';
 
-  case "combat": {const cap=ARMORS[c.armure]||100;return '<div class="card"><h3>Points de vie</h3><div class="bar" style="height:24px"><i data-d="pvbar"></i><i data-d="tmpbar" style="background:var(--blue);opacity:.7"></i><div class="t" data-d="pvtxt"></div></div>'+
+  case "combat": {const cap=ARMORS[c.armure]||100;const dm=defMode(c);return '<div class="card"><h3>Points de vie</h3><div class="bar" style="height:24px"><i data-d="pvbar"></i><i data-d="tmpbar" style="background:var(--blue);opacity:.7"></i><div class="t" data-d="pvtxt"></div></div>'+
     '<div class="grid g3" style="margin-top:10px">'+F("Actuels","pv.act",c,"number",'data-t="n"')+F("Max","pv.max",c,"number",'data-t="n"')+F("Temporaires","pv.temp",c,"number",'data-t="n"')+'</div>'+
     '<div class="row" style="margin-top:10px"><input type="number" id="dmg" placeholder="Valeur" style="flex:1"><button class="btn" data-act="dmg" style="color:var(--bad)">Dégâts</button><button class="btn" data-act="heal" style="color:var(--acc)">Soin</button></div>'+dmgTypeRow(c)+'</div>'+
-    '<div class="card"><div class="big"><div><div class="small mute">CA</div><input type="number" data-k="ca" data-t="n" value="'+c.ca+'"></div><div><div class="small mute">Initiative</div><div class="v" data-d="init"></div></div><div><div class="small mute">Vitesse (m)</div><input type="number" data-k="vitesse" data-t="n" value="'+c.vitesse+'"></div></div>'+
+    '<div class="card"><h3>Défense</h3><div class="seg">'+[["ca","🛡️ CA classique"],["pct","📊 Armure en %"]].map(([k,l])=>'<button data-act="defmode" data-v="'+k+'" class="'+(dm===k?"on":"")+'">'+l+'</button>').join("")+'</div>'+
+    (dm==="pct"?'<div class="big" style="grid-template-columns:1fr 1fr"><div><div class="small mute">Armure physique %</div><input type="number" min="0" max="'+cap+'" data-k="res.physique" data-t="n" value="'+resPct(c,"physique")+'"></div><div><div class="small mute">Armure magique %</div><input type="number" min="0" max="100" data-k="res.magique" data-t="n" value="'+resPct(c,"magique")+'"></div></div>'+
+      '<div class="hint" data-d="defhint" style="margin-top:8px">'+defHint(c)+'</div>'+
+      '<label class="f" style="margin-top:10px">Type d\'armure</label><select data-k="armure" data-rr>'+Object.keys(ARMORS).map(a=>'<option '+(c.armure===a?"selected":"")+'>'+a+'</option>').join("")+'</select><div class="hint">Armure physique maximum avec ce type : '+cap+' %.</div>'
+     :'<div class="big" style="grid-template-columns:1fr"><div><div class="small mute">Classe d\'armure (CA)</div><input type="number" data-k="ca" data-t="n" value="'+c.ca+'"></div></div><div class="hint" style="margin-top:8px">Défense classique : une attaque touche si son jet atteint la CA. Les dégâts sont pris en entier.</div>')+'</div>'+
+    '<div class="card"><div class="big" style="grid-template-columns:repeat('+(dm==="pct"?3:2)+',1fr)">'+(dm==="pct"?'<div><div class="small mute">CA</div><input type="number" data-k="ca" data-t="n" value="'+c.ca+'"></div>':'')+'<div><div class="small mute">Initiative</div><div class="v" data-d="init"></div></div><div><div class="small mute">Vitesse (m)</div><input type="number" data-k="vitesse" data-t="n" value="'+c.vitesse+'"></div></div>'+
     '<div class="grid g2" style="margin-top:10px">'+F("Bonus d'initiative","initBonus",c,"number",'data-t="n"')+F("Dés de vie","desVie",c,"text",'placeholder="ex : 3d10 + 8d8"')+'</div></div>'+
     '<div class="card"><h3>Jets contre la mort</h3><div class="row" style="justify-content:space-between"><span class="small">Succès</span><div class="pips">'+[1,2,3].map(i=>'<button class="pip '+(c.dsSucc>=i?"on":"")+'" data-pip="dsSucc" data-v="'+i+'"></button>').join("")+'</div>'+
     '<span class="small">Échecs</span><div class="pips">'+[1,2,3].map(i=>'<button class="pip bad '+(c.dsEch>=i?"on":"")+'" data-pip="dsEch" data-v="'+i+'"></button>').join("")+'</div></div>'+
     '<div class="grid g2" style="margin-top:12px"><div><label class="f">Tombé à 0 PV</label><div class="counter"><button data-inc="tombe0" data-v="-1" data-min="0">−</button><input type="number" data-k="tombe0" data-t="n" value="'+c.tombe0+'"><button data-inc="tombe0" data-v="1">+</button></div></div>'+
     '<div><label class="f">Nombre de morts</label><div class="counter"><button data-inc="morts" data-v="-1" data-min="0">−</button><input type="number" data-k="morts" data-t="n" value="'+c.morts+'"><button data-inc="morts" data-v="1">+</button></div></div></div></div>'+
-    '<div class="card"><h3>Armure & résistances</h3><label class="f">Type d\'armure</label><select data-k="armure" data-rr>'+Object.keys(ARMORS).map(a=>'<option '+(c.armure===a?"selected":"")+'>'+a+'</option>').join("")+'</select>'+
-    '<div class="hint">Résistance physique max : '+cap+'%</div>'+
-    RES.map(([k,n])=>{const mx=k==="physique"?cap:100;const v=Math.min(num(c.res[k]||0),mx);return '<div class="res"><span class="small">'+n+'</span><input type="range" min="0" max="'+mx+'" step="5" data-k="res.'+k+'" data-t="n" value="'+v+'"><span data-d="res:'+k+'">'+v+'%</span></div>'}).join("")+'</div>'+
+    '<div class="card"><h3>Résistances par élément</h3><div class="hint" style="margin:-4px 0 8px">'+(dm==="pct"?"Pourcentage retiré aux dégâts de ce type. Il apparaît alors dans le choix du type de dégâts.":"Pour mémoire : en CA classique, l\'appli ne retire rien aux dégâts.")+'</div>'+
+    RES.filter(([k])=>k!=="physique"&&k!=="magique").map(([k,n])=>{const mx=100;const v=Math.min(num(c.res[k]||0),mx);return '<div class="res"><span class="small">'+n+'</span><input type="range" min="0" max="'+mx+'" step="5" data-k="res.'+k+'" data-t="n" value="'+v+'"><span data-d="res:'+k+'">'+v+'%</span></div>'}).join("")+'</div>'+
     '<div class="card"><h3>États</h3><div class="chips">'+ETATS.map(e=>'<button class="chip '+(c.etats.includes(e)?"on":"")+'" data-etat="'+e+'">'+e+'</button>').join("")+'</div>'+
     '<label class="f" style="margin-top:12px">Épuisement (niveau 0 à 6)</label><div class="pips">'+[1,2,3,4,5,6].map(i=>'<button class="pip bad '+(c.epuisement>=i?"on":"")+'" data-pip="epuisement" data-v="'+i+'"></button>').join("")+'</div></div>'+
     atkEditor(c);}
@@ -329,6 +333,7 @@ function derive(){
       case "pi":el.textContent=10+skillTot(c,"intuition","sag");break;
       case "pinv":el.textContent=10+skillTot(c,"investigation","int");break;
       case "init":el.textContent=sg(mod(c.car.dex)+num(c.initBonus));break;
+      case "defhint":el.textContent=defHint(c);break;
       case "pvbar":{const p=c.pv.max?clamp(c.pv.act/c.pv.max,0,1):0;el.style.width=p*100+"%";el.style.background=barColor(p);break}
       case "tmpbar":{const t=c.pv.max?clamp(num(c.pv.temp)/c.pv.max,0,1):0;const p=c.pv.max?clamp(c.pv.act/c.pv.max,0,1):0;el.style.left=Math.min(p,1-t)*100+"%";el.style.width=t*100+"%";break}
       case "pvtxt":el.textContent=c.pv.act+" / "+c.pv.max+(num(c.pv.temp)?"  (+"+c.pv.temp+" temp)":"");break;
@@ -345,10 +350,15 @@ function rerenderPane(){const y=window.scrollY;if(state.view==="sheet"){const c=
 function schedule(c){save("persos",c.id)}
 // Règle maison : l'armure retire un pourcentage des dégâts reçus (35 % d'armure physique = dégâts × 0,65)
 const resPct=(c,t)=>{if(!t||t==="brut")return 0;const v=num((c.res||{})[t]||0);return Math.max(0,Math.min(t==="physique"?(ARMORS[c.armure]||100):100,v))};
+// Deux systèmes de défense au choix par perso : CA classique, ou armure en pourcentage
+const defMode=c=>c.defMode==="ca"||c.defMode==="pct"?c.defMode:((resPct(c,"physique")>0||resPct(c,"magique")>0)?"pct":"ca");
+const defTxt=c=>defMode(c)==="pct"?"Armure "+resPct(c,"physique")+" / "+resPct(c,"magique")+" %":"CA "+c.ca;
+const defCell=c=>defMode(c)==="pct"?'<div><small>Armure phys / mag</small><b>'+resPct(c,"physique")+' / '+resPct(c,"magique")+'<span style="font-size:11px"> %</span></b></div>':'<div><small>CA</small><b>'+c.ca+'</b></div>';
+const defHint=c=>{const a=resPct(c,"physique"),b=resPct(c,"magique");return "Dégâts physiques × "+mulTxt(a)+(a?" (on retire "+a+" %)":"")+" · dégâts magiques × "+mulTxt(b)+(b?" (on retire "+b+" %)":"")+"."};
 const dmgTypeOf=c=>state.dmgType||(resPct(c,"physique")>0?"physique":"brut");
 const mulTxt=p=>String(Math.round(100-p)/100).replace(".",",");
 function dmgHint(c,t){const p=resPct(c,t);if(t==="brut")return "Dégâts bruts : rien n'est retiré.";const n=(RES.find(r=>r[0]===t)||[0,t])[1].toLowerCase();return p?"Armure "+n+" "+p+" % : les dégâts sont multipliés par "+mulTxt(p)+".":"Aucune armure "+n+" réglée sur la fiche : dégâts entiers."}
-function dmgTypeRow(c){const t=dmgTypeOf(c);const opts=[["brut","Brut (sans armure)"]].concat(RES.filter(([k])=>k==="physique"||k==="magique"||resPct(c,k)>0).map(([k,n])=>[k,n+" ("+resPct(c,k)+" %)"]));
+function dmgTypeRow(c){if(defMode(c)!=="pct")return "";const t=dmgTypeOf(c);const opts=[["brut","Brut (sans armure)"]].concat(RES.filter(([k])=>k==="physique"||k==="magique"||resPct(c,k)>0).map(([k,n])=>[k,n+" ("+resPct(c,k)+" %)"]));
   return '<div class="dmgt"><select id="dmgtype" aria-label="Type de dégâts">'+opts.map(([k,l])=>'<option value="'+k+'" '+(t===k?"selected":"")+'>'+l+'</option>').join("")+'</select><div class="hint" id="dmghint">'+dmgHint(c,t)+'</div></div>'}
 function applyHP(c,v,heal){
   if(!heal){let r=v;const t=num(c.pv.temp);if(t){const u=Math.min(t,r);c.pv.temp=t-u;r-=u}const b=c.pv.act;c.pv.act=Math.max(0,c.pv.act-r);if(b>0&&c.pv.act===0){c.tombe0++;toast(c.nom+" tombe à 0 PV !")}}
@@ -417,6 +427,7 @@ function act(a,c,d){
   if(a==="eco"||a==="ecoreset"||a==="sexp"||a==="cbperso"){combatAct(a,d);return}
   if(a==="cardopen"&&c){cardModal(c,d.key);return}
   if(a==="deckf"){state.deckF=d.f;rerenderPane();return}
+  if(a==="defmode"&&c){c.defMode=d.v;schedule(c);rerenderPane();return}
   if(a==="bibview"){state.bibView=d.v;try{localStorage.setItem("fj_bibview",d.v)}catch(e){}rerenderPane();return}
   if(a==="sortview"){state.sortView=d.v;try{localStorage.setItem("fj_sortview",d.v)}catch(e){}rerenderPane();return}
   if(a==="tlreset"){state.turnLog=[];rerenderPane();return}
@@ -448,7 +459,7 @@ function act(a,c,d){
   if(a==="dup"){const n=clone(c);n.id=uid();n.ownerId=myId||"";n.nom=c.nom+" (copie)";S.persos.set(n.id,n);save("persos",n.id,true);state.cur=n.id;render();toast("Copie créée");return}
   if(a==="rmavatar"){c.avatar="";schedule(c);render();return}
   if(a==="dmg"||a==="heal"){const v=Math.abs(num(document.getElementById("dmg").value));if(!v)return;
-    if(a==="dmg"){const t=dmgTypeOf(c),p=resPct(c,t),fin=Math.floor(v*(100-p)/100);applyHP(c,fin,false);if(p)toast(v+" × "+mulTxt(p)+" = "+fin+" dégâts subis (armure "+p+" %)")}else applyHP(c,v,true);
+    if(a==="dmg"){const t=defMode(c)==="pct"?dmgTypeOf(c):"brut",p=resPct(c,t),fin=Math.floor(v*(100-p)/100);applyHP(c,fin,false);if(p)toast(v+" × "+mulTxt(p)+" = "+fin+" dégâts subis (armure "+p+" %)")}else applyHP(c,v,true);
     schedule(c);rerenderPane();return}
   if(a==="rest"){longRest(c);schedule(c);rerenderPane();toast("Repos long terminé");return}
   if(a==="short"){c.pacte.used=0;c.ressources.forEach(r=>{if(r.reset==="Repos court")r.act=r.max});schedule(c);rerenderPane();toast("Repos court : pacte et ressources récupérés");return}
@@ -835,8 +846,8 @@ function tabIntro(kind){
 function emblemHtml(kind){
   const rnd=(a,b)=>a+Math.random()*(b-a);
   if(kind==="persos"){
-    const pages=Array.from({length:6},(_,i)=>'<div class="bk-leaf bk-page" style="--i:'+i+';z-index:'+(20-i)+'"><i></i><i></i><i></i><i></i><i></i></div>').join("");
-    return '<div class="bk"><div class="bk-leaf bk-back" style="z-index:1"></div>'+pages+'<div class="bk-leaf bk-front" style="z-index:30"><span>⚔️</span></div></div>';
+    const pages=Array.from({length:6},(_,i)=>'<div class="bk-leaf bk-page" style="--i:'+i+';--z0:'+(20-i)+';--z1:'+(32+i)+'"><i></i><i></i><i></i><i></i><i></i></div>').join("");
+    return '<div class="bk"><div class="bk-leaf bk-back" style="--z0:1;--z1:45"></div>'+pages+'<div class="bk-leaf bk-front" style="--z0:30;--z1:31"><span>⚔️</span></div></div>';
   }
   if(kind==="mj"){
     const drops=Array.from({length:10},(_,i)=>{const a=i/10*Math.PI*2;return '<circle class="drop" r="'+rnd(3,6).toFixed(1)+'" style="--x:'+(Math.cos(a)*rnd(70,110)).toFixed(0)+'px;--y:'+(Math.sin(a)*rnd(70,110)).toFixed(0)+'px"/>'}).join("");
@@ -1173,7 +1184,7 @@ function combatPane(){
     h+='<div class="card"><div class="row"><h3 style="flex:1;margin:0">Round '+num(cb.round||1)+'</h3><button class="btn sm" data-act="cbend">Terminer le combat</button></div><div class="ini">'+
       L.map(l=>{const on=l.id===cb.tour;const p=l.persoId&&S.persos.get(l.persoId);const ed=!readOnly&&(!l.persoId||canEdit(p));
         return '<div class="inil'+(on?' on':'')+'"><span class="arrow">'+(on?'▶':'')+'</span>'+(p?avatar(p,30):'<div class="av" style="width:30px;height:30px;font-size:14px">👹</div>')+
-        '<div class="grow"><b>'+esc(l.nom||"?")+'</b>'+(p?'<div class="small mute">PV '+p.pv.act+'/'+p.pv.max+' · CA '+p.ca+(p.etats.length?' · <span style="color:var(--warn)">'+esc(p.etats.join(", "))+'</span>':'')+'</div>':
+        '<div class="grow"><b>'+esc(l.nom||"?")+'</b>'+(p?'<div class="small mute">PV '+p.pv.act+'/'+p.pv.max+' · '+defTxt(p)+(p.etats.length?' · <span style="color:var(--warn)">'+esc(p.etats.join(", "))+'</span>':'')+'</div>':
           '<div class="small mute row" style="gap:4px">PV <input class="mini-in" type="number" data-cpv="'+l.id+'" value="'+num(l.pv)+'"> / <input class="mini-in" type="number" data-cpvmax="'+l.id+'" value="'+num(l.pvmax)+'"></div>')+'</div>'+
         '<input class="ini-in" type="number" inputmode="numeric" placeholder="Init" data-cinit="'+l.id+'" value="'+(l.init===""||l.init==null?"":l.init)+'" '+(ed?"":"disabled")+'>'+
         (p&&ed?'<button class="ico" data-act="cbroll" data-line="'+l.id+'" title="Lancer 1d20 + initiative">🎲</button>':'')+
@@ -1202,7 +1213,7 @@ function combatSheet(c){
     '<div class="row" style="margin-top:8px"><input type="number" inputmode="numeric" id="dmg" placeholder="Valeur" style="flex:1"><button class="btn" data-act="dmg" style="color:var(--bad)">Dégâts</button><button class="btn" data-act="heal" style="color:var(--acc)">Soin</button></div>'+dmgTypeRow(c)+''+
     '<div class="row small" style="margin-top:8px;gap:6px"><span class="mute">PV temp.</span><div class="counter"><button data-inc="pv.temp" data-v="-1" data-min="0">−</button><input type="number" data-k="pv.temp" data-t="n" value="'+num(c.pv.temp)+'"><button data-inc="pv.temp" data-v="1">+</button></div></div>'+
     (c.pv.act===0?'<div class="ds"><b>À terre : jets contre la mort</b><div class="row" style="justify-content:space-between;margin-top:6px"><span class="small">Succès</span><div class="pips">'+[1,2,3].map(i=>'<button class="pip '+(c.dsSucc>=i?"on":"")+'" data-pip="dsSucc" data-v="'+i+'"></button>').join("")+'</div><span class="small">Échecs</span><div class="pips">'+[1,2,3].map(i=>'<button class="pip bad '+(c.dsEch>=i?"on":"")+'" data-pip="dsEch" data-v="'+i+'"></button>').join("")+'</div></div></div>':'')+
-    '<div class="stats4"><div><small>CA</small><b>'+c.ca+'</b></div><div><small>Init</small><b data-d="init"></b></div><div><small>Perc. pass.</small><b data-d="pp"></b></div><div><small>DD sorts</small><b data-d="dd"></b></div></div>'+
+    '<div class="stats4">'+defCell(c)+'<div><small>Init</small><b data-d="init"></b></div><div><small>Perc. pass.</small><b data-d="pp"></b></div><div><small>DD sorts</small><b data-d="dd"></b></div></div>'+
     '<div class="catt">Ce tour-ci</div><div class="eco">'+ECO.map(([k,l])=>'<button class="chip ecob '+(state.eco[k]?"used":"")+'" data-act="eco" data-e="'+k+'">'+(state.eco[k]?"✓ ":"")+l+'</button>').join("")+'<button class="chip" data-act="ecoreset" title="Nouveau tour">↺</button></div>'+
     deckHtml(c)+'<div class="catt">Attaques et dégâts</div>'+atkCalc(c)+
     (c.ressources.length?'<div class="catt">Charges et ressources</div>'+c.ressources.map((x,i)=>'<div class="row res2"><span class="grow small">'+esc(x.nom)+'</span><div class="counter"><button data-inc="ressources.'+i+'.act" data-v="-1" data-min="0">−</button><input type="number" data-k="ressources.'+i+'.act" data-t="n" value="'+num(x.act)+'"><button data-inc="ressources.'+i+'.act" data-v="1">+</button></div><span class="small mute">/ '+num(x.max)+'</span></div>').join(""):'')+

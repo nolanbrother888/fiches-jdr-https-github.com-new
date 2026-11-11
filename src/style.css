@@ -205,14 +205,19 @@ details.rules{margin-top:12px}
 @keyframes tafade{0%,80%{opacity:1}100%{opacity:0}}
 /* Livre */
 .bk{position:relative;width:130px;height:170px;perspective:900px;transform-style:preserve-3d;animation:bkin 1.9s ease forwards}
-.bk-leaf{position:absolute;left:50%;top:0;width:110px;height:170px;transform-origin:left center;transform-style:preserve-3d;border-radius:0 6px 6px 0}
+.bk-leaf{position:absolute;left:50%;top:0;width:110px;height:170px;transform-origin:left center;transform-style:preserve-3d;border-radius:0 6px 6px 0;z-index:var(--z0);backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.bk-leaf::after{content:"";position:absolute;inset:0;border-radius:inherit;transform:rotateY(180deg);backface-visibility:hidden;-webkit-backface-visibility:hidden;background:linear-gradient(270deg,#cfc3a2,#f4ecd6 18%);border:1px solid #b9ad8c;box-sizing:border-box}
+.bk-front::after{inset:-3px;background:linear-gradient(270deg,#b9a57a,#e6d9b4 22%);border:3px solid #c9a24a}
+.bk-back::after{inset:-3px;background:linear-gradient(225deg,#5a1f1f,#2b0d0d);border:3px solid #c9a24a}
+.bk-page::after{background:linear-gradient(#b8ab8a,#b8ab8a) 14px 26px/72% 3px no-repeat,linear-gradient(#b8ab8a,#b8ab8a) 14px 44px/58% 3px no-repeat,linear-gradient(#b8ab8a,#b8ab8a) 14px 62px/72% 3px no-repeat,linear-gradient(#b8ab8a,#b8ab8a) 14px 80px/50% 3px no-repeat,linear-gradient(270deg,#cfc3a2,#f4ecd6 18%)}
+@keyframes zflip{0%,49.9%{z-index:var(--z0)}50%,100%{z-index:var(--z1)}}
 .bk-back,.bk-front{background:linear-gradient(135deg,#5a1f1f,#2b0d0d);border:3px solid #c9a24a;box-shadow:0 6px 18px rgba(0,0,0,.6)}
-.bk-front{display:grid;place-items:center;animation:flip .35s ease-in .2s forwards}
+.bk-front{display:grid;place-items:center;animation:flip .35s ease-in .2s forwards,zflip .35s linear .2s both}
 .bk-front span{font-size:40px;filter:drop-shadow(0 0 6px #c9a24a)}
-.bk-page{background:linear-gradient(90deg,#d9cfb4,#f4ecd6 18%);border:1px solid #b9ad8c;padding:22px 12px;display:flex;flex-direction:column;gap:12px;animation:flip .28s ease-in-out forwards;animation-delay:calc(.5s + var(--i) * .1s)}
+.bk-page{background:linear-gradient(90deg,#d9cfb4,#f4ecd6 18%);border:1px solid #b9ad8c;padding:22px 12px;display:flex;flex-direction:column;gap:12px;animation:flip .28s ease-in-out forwards,zflip .28s linear both;animation-delay:calc(.5s + var(--i) * .1s)}
 .bk-page i{display:block;height:3px;background:#b8ab8a;border-radius:2px}
 .bk-page i:nth-child(odd){width:80%}
-.bk-back{animation:flip .35s ease-in 1.25s forwards}
+.bk-back{animation:flip .35s ease-in 1.25s forwards,zflip .35s linear 1.25s both}
 @keyframes flip{to{transform:rotateY(-180deg)}}
 @keyframes bkin{0%{transform:scale(.3) rotate(-8deg);opacity:0}12%{transform:scale(1) rotate(0);opacity:1}82%{transform:scale(1) translateX(0);opacity:1}100%{transform:scale(.1) translateX(-55px) rotate(14deg);opacity:0}}
 /* Œil */
@@ -512,3 +517,4 @@ body:has(.cast,.tanim,.modal) #app .card4 *,body:has(.cast,.tanim,.modal) #app .
 .card4.played .artimg,.card4.empty .artimg{animation:none}
 /* type de dégâts (armure en pourcentage) */
 .dmgt{margin-top:8px}.dmgt select{width:100%}.dmgt .hint{margin-top:4px}
+.bk-leaf > *{backface-visibility:hidden;-webkit-backface-visibility:hidden}
