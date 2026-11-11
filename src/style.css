@@ -518,3 +518,10 @@ body:has(.cast,.tanim,.modal) #app .card4 *,body:has(.cast,.tanim,.modal) #app .
 /* type de dégâts (armure en pourcentage) */
 .dmgt{margin-top:8px}.dmgt select{width:100%}.dmgt .hint{margin-top:4px}
 .bk-leaf > *{backface-visibility:hidden;-webkit-backface-visibility:hidden}
+/* onglet Combat : fond parchemin */
+body.bgparch{background:transparent}
+body.bgparch::before{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(rgba(24,15,7,.05),rgba(24,15,7,.22)),url(img/ui/parchemin.jpg) center/cover no-repeat}
+body.bgparch #hpane>.card{background:rgba(38,27,16,.6);border-color:rgba(70,48,24,.75);box-shadow:0 8px 22px rgba(40,24,8,.4);-webkit-backdrop-filter:blur(1.5px);backdrop-filter:blur(1.5px)}
+body.bgparch #hpane>.card .mute,body.bgparch #hpane>.card .hint{color:#e6dcc8}
+body.bgparch .wrap{padding-left:18px;padding-right:18px}
+body.bgparch .top{background:rgba(30,22,14,.92)}

@@ -39,7 +39,12 @@ function blank(){
     sortCar:"int",slots:Array.from({length:9},()=>({max:0,used:0})),pacte:{niv:1,max:0,used:0},sorts:[],ressources:[],
     monnaie:{pc:0,pa:0,pe:0,po:0,pp:0},monnaieCustom:[],maxMagEquip:4,items:[],dons:[],histoire:"",notes:"",custom:[],passifs:[],favs:[],retire:false,updated:Date.now()};
 }
-function normPerso(c){const b=blank();for(const k in b){if(c[k]===undefined)c[k]=b[k]}if(!Array.isArray(c.slots)||c.slots.length<9)c.slots=b.slots;return c}
+function normPerso(c){const b=blank();for(const k in b){if(c[k]===undefined)c[k]=b[k]}if(!Array.isArray(c.slots)||c.slots.length<9)c.slots=b.slots;
+  // Kuroi Ventus : le pouvoir d'arrêt du temps s'appelle Tokidome
+  const OLDKV="Kuroi Ventus (katana ancestral)",NEWKV="Kuroi Ventus (Tokidome)";
+  if(Array.isArray(c.dons))c.dons.forEach(d=>{if(d&&d.nom===OLDKV)d.nom=NEWKV});
+  if(Array.isArray(c.favs))c.favs=c.favs.map(k=>typeof k==="string"?k.replace(OLDKV,NEWKV):k);
+  return c}
 const level=c=>Math.max(1,c.classes.reduce((a,x)=>a+num(x.niv),0));
 const prof=c=>c.maitriseAuto?2+Math.floor((level(c)-1)/4):num(c.maitrise);
 const skillTot=(c,k,a)=>mod(c.car[a])+prof(c)*num(c.comp[k]||0)+num(c.compBonus[k]||0);
@@ -136,6 +141,7 @@ function softRender(){const a=document.activeElement;if(a&&app.contains(a)&&/INP
 const app=document.getElementById("app");
 const roBanner=()=>readOnly?'<div class="ro">👀 Lecture seule.</div>':'';
 function render(){
+  document.body.classList.toggle("bgparch",state.view==="home"&&state.home==="combat");
   if(state.view==="sheet"){const c=cur();if(!c){state.view="home";return render()}
     app.innerHTML='<div class="top"><div class="wrap"><button class="ico" data-act="back">‹</button>'+avatar(c,36)+'<h1 data-d="title">'+esc(c.nom)+'</h1><span class="status" id="st">'+esc(saveStatus)+'</span></div></div>'+
       '<div class="wrap">'+roBanner()+(!readOnly&&!canEdit(c)?'<div class="ro">🔒 Fiche d\'un autre joueur : lecture seule.</div>':'')+(!readOnly&&!c.ownerId&&myId?'<div class="ro" style="border-color:var(--acc);color:var(--acc);background:#1f3326">Cette fiche n\'a pas encore de propriétaire. <button class="btn sm" data-act="mine" style="margin-left:6px">C\'est mon perso</button></div>':'')+'<div id="pane">'+pane(c)+'</div></div>'+
@@ -660,7 +666,7 @@ function applyPreset(c){
   D("Senryaku ka","Tu choisis ton tour de passage en combat.");
   D("Ambidextre","Avec une arme dans chaque main, tu ajoutes ton bonus de dégâts à l'attaque en main gauche.");
   D("Duelliste","Une arme de mêlée dans une main et rien dans l'autre : +2 aux dégâts avec cette arme.");
-  D("Kuroi Ventus (katana ancestral)","Action bonus ou réaction : tu arrêtes le temps pour tout ce qui est à 72 m. Tu gagnes 2 tours (1 minute hors combat). Une action hostile envers une créature rompt l'effet. Utilisations : bonus de mental (min. 1) par repos long.");
+  D("Kuroi Ventus (Tokidome)","Action bonus ou réaction : tu arrêtes le temps pour tout ce qui est à 72 m. Tu gagnes 2 tours (1 minute hors combat). Une action hostile envers une créature rompt l'effet. Utilisations : bonus de mental (min. 1) par repos long.");
   D("Fougue","Une fois par repos court, une action en plus de ton action normale pendant ton tour.");
   D("Manifestation d'Écho","Action bonus : un Écho apparaît à 4 m (CA 14 + maîtrise = "+(14+prof(c))+", 1 PV, immunisé aux conditions). Il se déplace de 9 m sur ton ordre et disparaît au-delà de 9 m. Action bonus + 3 vitesses : échange de place. Tu peux attaquer depuis l'Écho, et il peut faire tes attaques d'opportunité. Il copie l'arme équipée à l'invocation.");
   D("Libération incarnée","Quand tu fais l'action Attaquer, une attaque de mêlée en plus avec ton Écho. Utilisations : bonus de Constitution par repos long.");
@@ -757,6 +763,26 @@ function cardFx(k,im){
         parts(16,i=>fxPart(84+R()*48,30+R()*50,.8+R()*1.4,-18+R()*36,-34-R()*46,1.3+R()*1.8,R()*3,i%4===0))+
         parts(10,i=>fxPart(16+R()*60,118+R()*30,.9+R()*1.5,-30+R()*26,-26-R()*40,1.6+R()*2,R()*3.5))+
         parts(8,i=>fxPart(100+R()*40,96+R()*50,.8+R()*1.2,-8+R()*16,-30-R()*30,1.2+R()*1.6,R()*3,i%3===0));break;
+    case "tempete":
+      s=fxGlint("M22 50 Q100 105 200 146",3.6,0)+[[40,62,112,108,6,5],[112,108,192,142,6,5],[150,30,186,70,5,5]].map((p,i)=>fxBolt(p,i,seed)).join("")+
+        parts(5,i=>'<path class="fw thin" d="M'+(14+i*42+R()*12).toFixed(0)+' '+(150-R()*26).toFixed(0)+'q-9 -18 0 -36t0 -36" style="--t:'+(3+R()*2).toFixed(2)+'s;--d:-'+(R()*4).toFixed(2)+'s"/>')+
+        parts(16,i=>fxPart(R()*200,50+R()*100,.7+R()*1.2,-14+R()*28,-26-R()*40,1.8+R()*2.2,R()*4,i%4===0))+
+        fxEye(26,108,gid,3.6)+fxEye(15.5,112.5,gid,3.6,"",.2)+fxEye(164.5,17,gid,2.8,"",1.4)+fxEye(171.5,21.5,gid,2.8,"",1.6);break;
+    case "eclair":
+      s='<rect class="ffl" width="200" height="'+H+'" style="--t:2.6s"/><circle class="fc" cx="95" cy="46" r="28" fill="url(#'+gid+')"/>'+
+        [[95,46,200,58,9,6],[95,46,200,96,9,7],[95,46,186,4,8,7],[95,46,150,150,8,7],[95,46,200,78,6,4],[95,46,120,2,6,6]].map((p,i)=>fxBolt(p,i,seed)).join("")+
+        parts(16,i=>fxPart(92+R()*10,40+R()*12,.7+R()*1.2,30+R()*80,-30+R()*70,.7+R()*1.1,R()*2.4,i%2===0));break;
+    case "fougue":
+      s=fxGlint("M24 58 Q110 108 200 143",3.4,0)+fxEye(148.5,57,gid+"r",5)+
+        parts(24,i=>fxPart(R()*200,60+R()*90,.7+R()*1.5,-16+R()*32,-40-R()*60,1.4+R()*2.2,R()*4,i%5===0));break;
+    case "tokidome":
+      s='<g class="frr"><circle cx="100" cy="75" r="66"/><circle cx="100" cy="75" r="56" class="in"/></g>'+
+        [[91,39.5,152,22,5,4],[91,39.5,128,58,4,4],[67,47.5,10,54,5,4],[67,47.5,32,78,4,4],[91,39.5,196,40,6,5]].map((p,i)=>fxBolt(p,i,seed)).join("")+
+        parts(18,i=>fxPart(R()*200,R()*H,.7+R()*1.2,0,0,1.6+R()*2.6,R()*4,i%2===0));break;
+    case "decharge":
+      s='<rect class="ffl" width="200" height="'+H+'" style="--t:3.1s"/><circle class="fc" cx="124" cy="119" r="26" fill="url(#'+gid+')"/>'+
+        [[124,119,2,57,8,5],[124,119,8,84,7,5],[124,119,58,26,7,6],[124,119,192,96,6,5],[124,119,164,150,5,5]].map((p,i)=>fxBolt(p,i,seed)).join("")+
+        parts(18,i=>{const a=R()*6.28,d=26+R()*60;return fxPart(124,119,.7+R()*1.2,Math.cos(a)*d,Math.sin(a)*d,.8+R()*1.3,R()*2.4,i%3===0)});break;
     case "moquerie":
       s=[0,1,2].map(i=>fxRing(100,102,78,3.3,i*1.1)).join("")+parts(8,i=>{const a=-2.9+R()*2.7,d=46+R()*40;return '<text class="fp ha" x="'+(78+R()*44).toFixed(0)+'" y="'+(92+R()*18).toFixed(0)+'" font-size="'+(7+R()*7).toFixed(0)+'" style="--dx:'+(Math.cos(a)*d).toFixed(0)+'px;--dy:'+(Math.sin(a)*d).toFixed(0)+'px;--t:'+(1.9+R()*1.6).toFixed(2)+'s;--d:-'+(R()*3.4).toFixed(2)+'s">HA</text>'})+
         fxEye(77,43.6,gid+"r",3)+fxEye(124.3,43.5,gid+"r",3,"",1.1);break;
@@ -1080,6 +1106,11 @@ const CARD_IMGS=[
   {p:"seiko",n:"manifestation",src:"img/seiko/echo.jpg",fx:"echo",col:"#b48cff",face:"70% 18%",ghost:1},
   {p:"seiko",n:"convocation d'elementaire",src:"img/seiko/elementaire.jpg",fx:"elem",col:"#9ff5ff",face:"50% 25%"},
   {p:"seiko",n:"elementaire de foudre",src:"img/seiko/elementaire.jpg",fx:"elem",col:"#9ff5ff",face:"50% 25%"},
+  {p:"seiko",n:"kuroi ventus",t:"capacite",src:"img/seiko/tokidome.jpg",fx:"tokidome",col:"#a88bff",face:"40% 30%"},
+  {p:"seiko",n:"tempete necrotique",src:"img/seiko/tempete.jpg",fx:"tempete",col:"#7dffc0",face:"45% 28%"},
+  {p:"seiko",n:"eclair",src:"img/seiko/eclair.jpg",fx:"eclair",col:"#7fb4ff",face:"35% 30%"},
+  {p:"seiko",n:"fougue",src:"img/seiko/fougue.jpg",fx:"fougue",col:"#ffa23a",face:"40% 25%"},
+  {p:"seiko",n:"decharge occulte",src:"img/seiko/decharge.jpg",fx:"decharge",col:"#ff3b4a",face:"45% 20%"},
   // sans « p » : l'image vaut pour tous les persos qui ont ce sort
   {n:"flammes",src:"img/sorts/flammes.jpg",fx:"flammes",col:"#ffa23a",face:"50% 40%"},
   {n:"moquerie cruelle",src:"img/seiko/moquerie.jpg",fx:"moquerie",col:"#8a3fd0",face:"50% 45%"},
@@ -1261,7 +1292,7 @@ const fbApp=initializeApp(firebaseConfig);const auth=getAuth(fbApp);window.__aut
 const fdb=initializeFirestore(fbApp,{localCache:persistentLocalCache()});
 let started=false;
 const errMsg=e=>({"auth/invalid-credential":"E-mail ou mot de passe incorrect.","auth/invalid-email":"Adresse e-mail invalide.","auth/email-already-in-use":"Cette adresse a déjà un compte : connecte-toi.","auth/weak-password":"Mot de passe trop court (6 caractères minimum).","auth/missing-password":"Entre un mot de passe.","auth/network-request-failed":"Pas de connexion internet.","permission-denied":"Code du groupe incorrect."}[e&&e.code]||("Erreur : "+((e&&(e.code||e.message))||"inconnue")));
-function loginScreen(mode){
+function loginScreen(mode){document.body.classList.remove("bgparch");
   const reg=mode==="reg";
   app.innerHTML='<div class="login"><h1>⚔️ Fiches JDR</h1><div class="sub">'+(reg?"Créer ton compte":"Connexion")+'</div><div class="grid">'+
     '<div><label class="f">E-mail</label><input id="le" type="email" autocomplete="email"></div>'+
