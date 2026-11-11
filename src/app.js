@@ -1148,6 +1148,7 @@ function deckCards(c){
   c.dons.forEach((d,i)=>{const e=ecoOf(d.desc,"passif");const r=e!=="passif"?linkRes(c,d.nom):null;
     cards.push({elem:e==="passif"?"passif":"capa",medal:r?String(num(r.act)):(e==="passif"?"∞":"•"),flavor:(d.desc||"").slice(0,110),key:"cap:"+d.nom,type:"capacite",nom:d.nom,icon:e==="passif"?"🛡️":"🌀",eco:e,sub:r?r.nom+" : "+num(r.act)+"/"+num(r.max):(e==="passif"?"Effet permanent":""),
       tags:[],cost:r?"1 utilisation":"",empty:r&&num(r.act)<=0,desc:d.desc||"",play:e==="passif"?null:()=>{if(r){if(num(r.act)<=0){toast("Plus d'utilisation pour "+r.nom);return}r.act=num(r.act)-1;schedule(c)}toast(d.nom+" utilisé"+(r?" ("+r.act+" restant)":""));rerenderPane()}})});
+  cards.push({elem:"capa",medal:"↺",flavor:"",key:"cap:__intervention",type:"capacite",nom:"Intervention",icon:"🛡️",eco:"reac",sub:"Règle de la table",tags:[],cost:"",desc:"Réaction : quand une attaque (projectile, mêlée ou sort) cible un allié juste à côté de toi, tu utilises la moitié de ton déplacement encore disponible pour t'interposer. Le MJ décide du jet et des conséquences.",play:()=>{toast("Intervention : préviens le MJ, il décide du jet");rerenderPane()}});
   return cards;
 }
 const ECOI={action:"⚔",bonus:"✦",reac:"↺",passif:"◈",libre:"•"};
@@ -1226,6 +1227,7 @@ function sortCards(c){
   return fxBtn()+levels.map(L=>'<div class="catt">'+(L?"Niveau "+L:"Tours de magie")+'</div><div class="deck'+deal+'">'+sorts.filter(k=>niv(k)===L).map(k=>cardHtml(k,true,n++,true)).join("")+'</div>').join("")+
     '<div class="hint" style="margin-top:10px">Touche une carte pour l\'ouvrir, la lancer ou l\'épingler dans ta main. Pour ajouter ou modifier un sort, passe en liste.</div>';
 }
+const canReact=k=>k.eco==="reac"||/reaction/.test(nrm(k.desc));
 function cardModal(c,key){
   const k=(state._deck||deckCards(c)).find(x=>x.key===key);if(!k)return;const fav=(c.favs||[]).includes(key);
   const m=modal('<div class="card4 bigc t-'+k.type+'">'+artHtml(k)+'<div class="ribbon"><div class="medal">'+esc(k.medal)+'</div><div class="ecoic e-'+k.eco+'">'+ECOI[k.eco]+'</div></div>'+
@@ -1237,7 +1239,7 @@ function cardModal(c,key){
   m.classList.add("cardm");tiltBind(m);
   m.querySelector("[data-x]").onclick=()=>m.remove();
   m.querySelector("[data-fav]").onclick=()=>{c.favs=c.favs||[];if(fav)c.favs=c.favs.filter(x=>x!==key);else c.favs.push(key);schedule(c);m.remove();rerenderPane()};
-  const p=m.querySelector("[data-play]");if(p)p.onclick=()=>{m.remove();castFx(c,k,()=>{state.played[key]=true;if(k.eco==="action"&&k.type!=="attaque")state.eco.action=true;if(k.eco==="bonus")state.eco.bonus=true;if(k.eco==="reac")state.eco.reac=true;k.play();rerenderPane()})};
+  const p=m.querySelector("[data-play]");if(p)p.onclick=()=>{m.remove();castFx(c,k,()=>{state.played[key]=true;if(state.cbFoe&&canReact(k))state.eco.reac=true;else{if(k.eco==="action"&&k.type!=="attaque")state.eco.action=true;if(k.eco==="bonus")state.eco.bonus=true;if(k.eco==="reac")state.eco.reac=true}k.play();rerenderPane()})};
 }
 
 // ---------- Combat ----------
@@ -1273,26 +1275,30 @@ function combatPane(){
   const mine=persos().filter(c=>c.ownerId===myId&&!c.retire);
   if(!state.cbPerso||!S.persos.get(state.cbPerso)||S.persos.get(state.cbPerso).ownerId!==myId)state.cbPerso=(mine[0]||{}).id||"";
   let h="";
-  if(!cb.actif){
+  if(!cb.actif){state.cbFoe=false;
     h+='<div class="card"><h3>Combat</h3><p class="small mute" style="margin-top:0">Lance un combat pour suivre l\'initiative de tout le groupe en direct. Chaque joueur entre son initiative (ou lance le dé), le MJ ajoute les monstres.</p>'+(readOnly?'':'<button class="btn pri" data-act="cbstart" style="width:100%;padding:12px">⚔️ Lancer un combat</button>')+'</div>';
   }else{
     const L=lignesTriees(cb);
     h+='<div class="card"><div class="row"><h3 style="flex:1;margin:0">Round '+num(cb.round||1)+'</h3><button class="btn sm" data-act="cbend">Terminer le combat</button></div><div class="ini">'+
-      L.map(l=>{const on=l.id===cb.tour;const p=l.persoId&&S.persos.get(l.persoId);const ed=!readOnly&&(!l.persoId||canEdit(p));
-        return '<div class="inil'+(on?' on':'')+'"><span class="arrow">'+(on?'▶':'')+'</span>'+(p?avatar(p,30):'<div class="av" style="width:30px;height:30px;font-size:14px">👹</div>')+
+      L.map(l=>{const on=l.id===cb.tour;const p=l.persoId&&S.persos.get(l.persoId);const ed=!readOnly&&(!l.persoId||canEdit(p));const foe=!p&&l.camp!=="allie";const mineL=!l.by||l.by===myId;const dead=!p&&num(l.pvmax)>0&&num(l.pv)<=0;
+        return '<div class="inil'+(on?' on':'')+(foe?' foe':'')+(dead?' dead':'')+'"><span class="arrow">'+(on?'▶':'')+'</span>'+(p?avatar(p,30):'<div class="av" style="width:30px;height:30px;font-size:14px">'+(foe?'👹':'🧑')+'</div>')+
         '<div class="grow"><b>'+esc(l.nom||"?")+'</b>'+(p?'<div class="small mute">PV '+p.pv.act+'/'+p.pv.max+' · '+defTxt(p)+(p.etats.length?' · <span style="color:var(--warn)">'+esc(p.etats.join(", "))+'</span>':'')+'</div>':
-          '<div class="small mute row" style="gap:4px">PV <input class="mini-in" type="number" data-cpv="'+l.id+'" value="'+num(l.pv)+'"> / <input class="mini-in" type="number" data-cpvmax="'+l.id+'" value="'+num(l.pvmax)+'"></div>')+'</div>'+
+          (l.cache&&!mineL?'<div class="small mute row" style="gap:6px">'+(dead?'<span style="color:var(--bad)">💀 Vaincu</span>':'PV <b class="qq">???</b>')+(readOnly||dead?'':'<button class="chip" data-act="cbdmg" data-line="'+l.id+'">− Dégâts</button>')+'</div>':
+          '<div class="small mute row" style="gap:4px">PV <input class="mini-in" type="number" data-cpv="'+l.id+'" value="'+num(l.pv)+'"> / <input class="mini-in" type="number" data-cpvmax="'+l.id+'" value="'+num(l.pvmax)+'">'+(l.cache?' <span title="Les autres voient ???">🙈</span>':'')+(readOnly?'':'<button class="chip" data-act="cbdmg" data-line="'+l.id+'">−</button>')+'</div>'))+'</div>'+
         '<input class="ini-in" type="number" inputmode="numeric" placeholder="Init" data-cinit="'+l.id+'" value="'+(l.init===""||l.init==null?"":l.init)+'" '+(ed?"":"disabled")+'>'+
         (p&&ed?'<button class="ico" data-act="cbroll" data-line="'+l.id+'" title="Lancer 1d20 + initiative">🎲</button>':'')+
         (!l.persoId&&!readOnly?'<button class="del" data-act="cbdel" data-line="'+l.id+'">✕</button>':'')+'</div>'}).join("")+'</div>'+
-      (readOnly?'':'<div class="row" style="margin-top:10px"><button class="btn" data-act="cbaddpnj" style="flex:1">+ Monstre / PNJ</button><button class="btn pri" data-act="cbnext" style="flex:1">Tour suivant ▶</button></div>')+'</div>';
+      (readOnly?'':'<div class="row" style="margin-top:10px"><button class="btn" data-act="cbaddpnj" style="flex:1">+ Ennemi / PNJ</button><button class="btn pri" data-act="cbnext" style="flex:1">Tour suivant ▶</button></div>')+'</div>';
     // Remise à zéro des actions quand c'est mon tour
-    const tl=(cb.lignes||{})[cb.tour];
+    const tl=(cb.lignes||{})[cb.tour];state.cbFoe=!!(tl&&!tl.persoId&&tl.camp!=="allie");state.cbFoeNom=tl?tl.nom:"";
     if(cb.tour!==lastTour){if(tl&&tl.persoId===state.cbPerso){state.eco={};state.turnLog=[];state.played={}}lastTour=cb.tour}
   }
   if(!mine.length)h+='<div class="card"><p class="small mute" style="margin:0">Ouvre ta fiche et touche « C\'est mon perso » pour avoir ton panneau de combat ici.</p></div>';
   else{const c=S.persos.get(state.cbPerso);state.cur=c.id;
     if(mine.length>1)h+='<div class="seg">'+mine.map(m=>'<button data-act="cbperso" data-id="'+m.id+'" class="'+(m.id===c.id?"on":"")+'">'+esc(m.nom)+'</button>').join("")+'</div>';
+    if(cb.actif&&state.cbFoe){const rc=deckCards(c).filter(canReact);state._deck=state._deck||deckCards(c);
+      h+='<div class="card reacbox'+(state.eco.reac?' used':'')+'"><div class="row"><h3 style="flex:1;margin:0">↺ '+(state.eco.reac?'Réaction utilisée':'Réaction disponible')+'</h3><span class="small mute">Tour de '+esc(state.cbFoeNom||"l'ennemi")+'</span></div>'+
+        (state.eco.reac?'<p class="small mute" style="margin:6px 0 0">Elle revient au début de ton prochain tour.</p>':'<div class="deck" style="margin-top:8px">'+rc.map((k,i)=>cardHtml(k,true,i,true)).join("")+'</div>')+'</div>'}
     h+=combatSheet(c)}
   return h;
 }
@@ -1338,11 +1344,15 @@ function combatAct(a,d){
   if(a==="cbnext"){const L=lignesTriees(cb);if(!L.length)return true;const i=L.findIndex(l=>l.id===cb.tour);let tour,round=num(cb.round||1);
     if(i<0)tour=L[0].id;else if(i>=L.length-1){tour=L[0].id;round++}else tour=L[i+1].id;
     G.combat.tour=tour;G.combat.round=round;cbUpdate({tour,round});rerenderPane();return true}
-  if(a==="cbaddpnj"){const m=modal('<h2>Ajouter un monstre / PNJ</h2><div class="grid"><div><label class="f">Nom</label><input id="pn" placeholder="Gobelin 1"></div><div class="grid g2"><div><label class="f">Initiative</label><input id="pi" type="number" inputmode="numeric"></div><div><label class="f">PV (facultatif)</label><input id="pp" type="number" inputmode="numeric"></div></div><div><label class="f">Nombre</label><input id="pq" type="number" value="1" min="1" max="20"></div></div><div class="acts"><button class="btn" data-x>Annuler</button><button class="btn pri" data-ok>Ajouter</button></div>');
+  if(a==="cbaddpnj"){const m=modal('<h2>Ajouter un ennemi / PNJ</h2><div class="grid"><div><label class="f">Nom</label><input id="pn" placeholder="Gobelin 1"></div><div class="grid g2"><div><label class="f">Initiative</label><input id="pi" type="number" inputmode="numeric"></div><div><label class="f">PV (facultatif)</label><input id="pp" type="number" inputmode="numeric"></div></div><div class="grid g2"><div><label class="f">Nombre</label><input id="pq" type="number" value="1" min="1" max="20"></div><div><label class="f">Camp</label><select id="pc"><option value="ennemi">Ennemi</option><option value="allie">Allié / PNJ</option></select></div></div><label class="row" style="gap:8px;font-size:14px"><input type="checkbox" id="ph" checked style="width:auto"> PV cachés : les autres joueurs voient « ??? »</label></div><div class="acts"><button class="btn" data-x>Annuler</button><button class="btn pri" data-ok>Ajouter</button></div>');
     m.querySelector("[data-x]").onclick=()=>m.remove();
-    m.querySelector("[data-ok]").onclick=()=>{const nom=m.querySelector("#pn").value.trim()||"Monstre",init=m.querySelector("#pi").value,pv=num(m.querySelector("#pp").value),qn=clamp(num(m.querySelector("#pq").value)||1,1,20);const f={};
-      for(let k=0;k<qn;k++){const id="m"+uid();const l={nom:qn>1?nom+" "+(k+1):nom,init:init===""?"":num(init),persoId:"",pv,pvmax:pv};G.combat.lignes[id]=l;f["lignes."+id]=l}
+    m.querySelector("[data-ok]").onclick=()=>{const nom=m.querySelector("#pn").value.trim()||"Monstre",init=m.querySelector("#pi").value,pv=num(m.querySelector("#pp").value),qn=clamp(num(m.querySelector("#pq").value)||1,1,20),camp=m.querySelector("#pc").value,cache=m.querySelector("#ph").checked;const f={};
+      for(let k=0;k<qn;k++){const id="m"+uid();const l={nom:qn>1?nom+" "+(k+1):nom,init:init===""?"":num(init),persoId:"",pv,pvmax:pv,camp,cache,by:myId};G.combat.lignes[id]=l;f["lignes."+id]=l}
       cbUpdate(f);m.remove();rerenderPane()};return true}
+  if(a==="cbdmg"){const l=cb.lignes[d.line];if(!l)return true;const m=modal('<h2>'+esc(l.nom)+'</h2><label class="f">Dégâts infligés (négatif pour soigner)</label><input id="dg" type="number" inputmode="numeric" autofocus><div class="acts"><button class="btn" data-x>Annuler</button><button class="btn pri" data-ok>Appliquer</button></div>');
+    m.querySelector("[data-x]").onclick=()=>m.remove();
+    m.querySelector("[data-ok]").onclick=()=>{const v=num(m.querySelector("#dg").value);if(!v){m.remove();return}const mx=num(l.pvmax);let pv=num(l.pv)-v;pv=mx?clamp(pv,0,mx):pv;l.pv=pv;cbUpdate({["lignes."+d.line+".pv"]:pv});m.remove();
+      if(mx&&pv<=0)toast("💀 "+l.nom+" est vaincu !");else toast(v>0?"− "+v+" PV à "+l.nom:"+ "+(-v)+" PV à "+l.nom);rerenderPane()};return true}
   if(a==="cbdel"){delete G.combat.lignes[d.line];cbUpdate({["lignes."+d.line]:fs.deleteField()});rerenderPane();return true}
   if(a==="cbroll"){const l=cb.lignes[d.line];const p=l&&S.persos.get(l.persoId);if(!p)return true;const r=1+Math.floor(Math.random()*20),v=r+mod(p.car.dex)+num(p.initBonus);l.init=v;cbUpdate({["lignes."+d.line+".init"]:v});rerenderPane();toast("🎲 "+r+" "+sg(mod(p.car.dex)+num(p.initBonus))+" = "+v);return true}
   if(a==="cbperso"){state.cbPerso=d.id;state.eco={};rerenderPane();return true}
