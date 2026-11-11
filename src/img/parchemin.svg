@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="5 3 54 56">
+<defs>
+<linearGradient id="pp" x1="0" x2="1"><stop offset="0" stop-color="#cfc6b8"/><stop offset=".5" stop-color="#ebe5da"/><stop offset="1" stop-color="#c2b8a8"/></linearGradient>
+<linearGradient id="br" x1="0" x2="1"><stop offset="0" stop-color="#5e4a3d"/><stop offset=".5" stop-color="#7a6253"/><stop offset="1" stop-color="#584538"/></linearGradient>
+<linearGradient id="rl" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#f2efe8"/><stop offset=".5" stop-color="#d9d2c6"/><stop offset="1" stop-color="#a99f90"/></linearGradient>
+<linearGradient id="go" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset=".5" stop-color="#f2b71c"/><stop offset="1" stop-color="#b9780c"/></linearGradient>
+<linearGradient id="rd" x1="0" x2="1"><stop offset="0" stop-color="#e5303a"/><stop offset="1" stop-color="#b8161f"/></linearGradient>
+</defs>
+<rect x="15" y="9" width="34" height="42" rx="2" fill="url(#pp)"/>
+<rect x="22" y="9" width="20" height="42" fill="url(#br)"/>
+<rect x="14" y="5.5" width="36" height="6.5" rx="3.2" fill="url(#rl)"/>
+<rect x="11.5" y="5" width="4" height="7.5" rx="1.8" fill="url(#go)"/><rect x="48.5" y="5" width="4" height="7.5" rx="1.8" fill="url(#go)"/>
+<rect x="9.5" y="6.2" width="3" height="5" rx="1.2" fill="#f5c22a"/><rect x="51.5" y="6.2" width="3" height="5" rx="1.2" fill="#d99a12"/>
+<path d="M13 49 C13 45 17 44 20 46 L48 46 C52 46 53 50 50 52.5 L18 55.5 C14.5 55.8 13 52 13 49 Z" fill="url(#rl)"/>
+<rect x="9" y="48.5" width="4.5" height="8" rx="2" fill="url(#go)"/><rect x="49.5" y="46" width="4.5" height="8" rx="2" fill="url(#go)"/>
+<rect x="7" y="49.8" width="3" height="5.4" rx="1.2" fill="#f5c22a"/><rect x="53.5" y="47.3" width="3" height="5.4" rx="1.2" fill="#d99a12"/>
+<path d="M27 26 L37 26 L37 41 L32 37.5 L27 41 Z" fill="url(#rd)"/>
+<path d="M32 15.5 L38.5 19.25 L38.5 26.75 L32 30.5 L25.5 26.75 L25.5 19.25 Z" fill="url(#go)" stroke="#9a6408" stroke-width=".6"/>
+<path d="M32 18.8 L35.6 20.9 L35.6 25.1 L32 27.2 L28.4 25.1 L28.4 20.9 Z" fill="#ffd34a" stroke="#c98a10" stroke-width=".9"/>
+</svg>

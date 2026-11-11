@@ -18,8 +18,8 @@ const CATS=["Équipé magique","Équipé non magique","Sac","Potions","Bouffe","
 const ECOLES=["Abjuration","Divination","Enchantement","Évocation","Illusion","Invocation","Nécromancie","Transmutation"];
 const RARETES=["Commun","Peu commun","Rare","Très rare","Légendaire","Artefact"];
 const COLORS=["#7bd88f","#6cb6ff","#b48cff","#f0a35e","#e5645c","#f2d16b","#5fd3c8","#e88ad0","#c0c0c0"];
-const TABS=[["id","Identité","🪪"],["car","Caracs","🎲"],["comp","Compét.","📜"],["combat","Combat","<i class=kic></i>"],["sorts","Sorts","✨"],["inv","Inventaire","🎒"],["dons","Dons","⭐"],["perso","Perso","🧩"],["notes","Notes","📝"]];
-const HTABS=[["persos","Persos","🧙"],["combat","Combat","<i class=kic></i>"],["mj","Vue MJ","👁️"],["biblio","Biblio","📚"],["cartes","Cartes","🗺️"],["commun","Commun","💰"],["planning","Planning","📅"],["journal","Journal","📖"]];
+const TABS=[["id","Identité","🪪"],["car","Caracs","🎲"],["comp","Compét.","<i class=\"kic kpar\"></i>"],["combat","Combat","<i class=kic></i>"],["sorts","Sorts","✨"],["inv","Inventaire","🎒"],["dons","Dons","⭐"],["perso","Perso","🧩"],["notes","Notes","📝"]];
+const HTABS=[["persos","Persos","🧙"],["combat","Combat","<i class=kic></i>"],["mj","Vue MJ","<i class=\"kic kmj\"></i>"],["biblio","Biblio","📚"],["cartes","Cartes","🗺️"],["commun","Commun","💰"],["planning","Planning","📅"],["journal","Journal","📖"]];
 const DISPO=["","oui","peut","non"];const DLAB={"":"?","oui":"Oui","peut":"Peut-être","non":"Non"};
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -176,7 +176,7 @@ function render(){
       '<div class="wrap">'+roBanner()+(!readOnly&&!canEdit(c)?'<div class="ro">🔒 Fiche d\'un autre joueur : lecture seule.</div>':'')+(!readOnly&&!c.ownerId&&myId?'<div class="ro" style="border-color:var(--acc);color:var(--acc);background:#1f3326">Cette fiche n\'a pas encore de propriétaire. <button class="btn sm" data-act="mine" style="margin-left:6px">C\'est mon perso</button></div>':'')+'<div id="pane">'+pane(c)+'</div></div>'+
       '<nav class="tabs"><div class="in">'+TABS.map(t=>'<button data-tab="'+t[0]+'" class="'+(state.tab===t[0]?"on":"")+'"><b>'+t[2]+'</b>'+t[1]+'</button>').join("")+'</div></nav>';
     derive();lockRO();return}
-  const title={persos:"<i class=kic></i> Fiches JDR",combat:"<i class=kic></i> Combat",mj:"👁️ Vue MJ",biblio:"📚 Bibliothèque",cartes:"🗺️ Cartes",commun:"💰 Inventaire commun",planning:"📅 Planning",journal:"📖 Journal"}[state.home];
+  const title={persos:"<i class=kic></i> Fiches JDR",combat:"<i class=kic></i> Combat",mj:"<i class=\"kic kmj\"></i> Vue MJ",biblio:"📚 Bibliothèque",cartes:"🗺️ Cartes",commun:"💰 Inventaire commun",planning:"📅 Planning",journal:"📖 Journal"}[state.home];
   app.innerHTML='<div class="top"><div class="wrap"><h1>'+title+'</h1><span class="status" id="st">'+esc(saveStatus)+'</span>'+(state.home==="persos"?'<button class="ico" data-act="io" title="Importer / exporter">⇅</button><button class="ico" data-act="logout" title="Se déconnecter">⎋</button>':'')+'</div></div>'+
     '<div class="wrap">'+roBanner()+'<div id="hpane">'+homePane()+'</div></div>'+
     '<nav class="tabs"><div class="in">'+HTABS.map(t=>'<button data-htab="'+t[0]+'" class="'+(state.home===t[0]?"on":"")+'"><b>'+t[2]+'</b>'+t[1]+'</button>').join("")+'</div></nav>';

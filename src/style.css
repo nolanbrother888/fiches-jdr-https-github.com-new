@@ -561,3 +561,5 @@ body.bgparch .reacbox h3{color:#8a2418}
 .kic{display:inline-block;width:1.35em;height:1.35em;background:url(img/katanas.svg) center/contain no-repeat;vertical-align:-.25em;font-style:normal}
 .tabs button b{display:flex;align-items:center;justify-content:center;height:28px}
 .tabs button b .kic{display:block;width:24px;height:24px}
+.kic.kmj{background-image:url(img/oeil.svg)}
+.kic.kpar{background-image:url(img/parchemin.svg)}
