@@ -518,10 +518,20 @@ body:has(.cast,.tanim,.modal) #app .card4 *,body:has(.cast,.tanim,.modal) #app .
 /* type de dégâts (armure en pourcentage) */
 .dmgt{margin-top:8px}.dmgt select{width:100%}.dmgt .hint{margin-top:4px}
 .bk-leaf > *{backface-visibility:hidden;-webkit-backface-visibility:hidden}
-/* onglet Combat : fond parchemin */
+/* onglet Combat : habillage parchemin dessiné en CSS (aucune photo) */
 body.bgparch{background:transparent}
-body.bgparch::before{content:"";position:fixed;inset:0;z-index:-1;background:linear-gradient(rgba(24,15,7,.05),rgba(24,15,7,.22)),url(img/ui/parchemin.jpg) center/cover no-repeat}
-body.bgparch #hpane>.card{background:rgba(38,27,16,.6);border-color:rgba(70,48,24,.75);box-shadow:0 8px 22px rgba(40,24,8,.4);-webkit-backdrop-filter:blur(1.5px);backdrop-filter:blur(1.5px)}
-body.bgparch #hpane>.card .mute,body.bgparch #hpane>.card .hint{color:#e6dcc8}
-body.bgparch .wrap{padding-left:18px;padding-right:18px}
-body.bgparch .top{background:rgba(30,22,14,.92)}
+body.bgparch::before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(120% 70% at 50% 0%,rgba(255,200,120,.10),transparent 60%),repeating-linear-gradient(90deg,rgba(0,0,0,.22) 0 1px,transparent 1px 46px),repeating-linear-gradient(90deg,rgba(255,220,170,.035) 0 3px,transparent 3px 11px),linear-gradient(180deg,#3a281a,#241710)}
+body.bgparch .top{background:rgba(34,23,14,.94);border-bottom-color:#5d4428}
+body.bgparch .wrap{padding-left:16px;padding-right:16px}
+body.bgparch #hpane>.card{--panel:rgba(255,248,228,.5);--panel2:rgba(255,250,235,.62);--line:#a88a58;--txt:#2c1d0d;--mute:#654c2c;--acc:#2a6636;--acc2:#245a2f;--warn:#8a400f;--bad:#a2281b;--blue:#22568f;--violet:#5636a0;
+  color:var(--txt);border-top:none;border-right:none;border-bottom:none;border-radius:11px 15px 10px 17px/15px 10px 16px 11px;
+  background:radial-gradient(60% 18% at 22% 6%,rgba(150,100,45,.16),transparent 70%),radial-gradient(40% 12% at 80% 38%,rgba(140,92,40,.13),transparent 70%),radial-gradient(55% 14% at 30% 78%,rgba(150,100,45,.12),transparent 70%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .27 0 0 0 0 .11 0 0 0 .55 -.14'/%3E%3C/filter%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.008 .42' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .33 0 0 0 0 .14 0 0 0 .5 -.16'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23a%29'/%3E%3Crect width='100%25' height='100%25' filter='url%28%23b%29'/%3E%3C/svg%3E"),linear-gradient(180deg,#ecdcb3,#dfc998 55%,#d3b882);
+  box-shadow:inset 0 0 0 1px rgba(122,86,42,.55),inset 0 0 34px rgba(122,78,26,.5),inset 0 0 90px rgba(150,100,40,.2),0 10px 26px rgba(0,0,0,.55)}
+body.bgparch #hpane>.card h3{font-family:Georgia,"Times New Roman",serif;color:#7a2912;letter-spacing:.08em;font-size:15px;padding-bottom:6px;border-bottom:1px solid rgba(122,86,42,.45)}
+body.bgparch #hpane>.card .catt{color:#8a400f;font-family:Georgia,"Times New Roman",serif;letter-spacing:.1em;border-bottom:1px dashed rgba(122,86,42,.45);padding-bottom:3px;margin-bottom:8px}
+body.bgparch #hpane>.card .btn.pri{color:#fff8e6}
+body.bgparch #hpane>.card .bar{background:rgba(70,46,22,.62)}
+body.bgparch #hpane>.card .bar .t{color:#fff}
+body.bgparch #hpane .card4{--panel:#25272b;--panel2:#2e3035;--line:#3a3d43;--txt:#ecebe7;--mute:#9a9ca3;--acc:#7bd88f;--acc2:#5fb873;--warn:#f0a35e;--bad:#e5645c;--blue:#6cb6ff;--violet:#b48cff;color:#ecebe7}
+body.bgparch #hpane>.card .chip.on{color:#fff6e0}
+body.bgparch #hpane>.card [style*="#c9c8c3"],body.bgparch #hpane>.card .rules,body.bgparch #hpane>.card details .small{color:var(--txt)!important}
