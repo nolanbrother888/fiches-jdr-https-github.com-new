@@ -1168,6 +1168,16 @@ const CARD_IMGS=[
   {p:"seiko",n:"decharge occulte",src:"img/seiko/decharge.jpg",fx:"decharge",col:"#ff3b4a",face:"45% 20%"},
   {p:"seiko",n:"ruine",src:"img/seiko/ruine.jpg",fx:"ruine",col:"#6dff7a",face:"52% 22%"},
   // sans « p » : l'image vaut pour tous les persos qui ont ce sort
+  {n:"bouffee de poison",src:"img/sorts/bouffee-de-poison.jpg",fx:"poison",col:"#9dff3a",face:"30% 50%"},
+  {n:"aspersion acide",src:"img/sorts/aspersion-acide.jpg",fx:"acide",col:"#d4ff3a",face:"45% 50%"},
+  {n:"illusion mineure",src:"img/sorts/illusion-mineure.jpg",fx:"imineure",col:"#9a7bff",face:"55% 45%"},
+  {n:"lumieres dansantes",src:"img/sorts/lumieres-dansantes.jpg",fx:"ldansantes",col:"#c07bff",face:"50% 50%"},
+  {n:"lumiere",ex:1,src:"img/sorts/lumiere.jpg",fx:"lumiere",col:"#7fb4ff",face:"62% 45%"},
+  {n:"armure du mage",src:"img/sorts/armure-du-mage.jpg",fx:"armure",col:"#6fb8ff",face:"50% 40%"},
+  {n:"bouclier",ex:1,t:"sort",src:"img/sorts/bouclier.jpg",fx:"bouclier",col:"#8f8bff",face:"50% 45%"},
+  {n:"enchevetrement",src:"img/sorts/enchevetrement.jpg",fx:"enchev",col:"#9be35a",face:"55% 45%"},
+  {n:"resistance",ex:1,src:"img/sorts/resistance.jpg",fx:"resist",col:"#ffc45a",face:"50% 40%"},
+  {n:"charme-personne",src:"img/sorts/charme-personne.jpg",fx:"charme",col:"#ff5ad0",face:"50% 45%"},
   {n:"flamme sacree",src:"img/sorts/flamme-sacree.jpg",fx:"fsacree",col:"#ffc45a",face:"55% 50%"},
   {n:"contact glacial",src:"img/sorts/contact-glacial.jpg",fx:"cglacial",col:"#bfe6ff",face:"55% 55%"},
   {n:"poigne electrique",src:"img/sorts/poigne-electrique.jpg",fx:"poigne",col:"#7fa8ff",face:"55% 55%"},
@@ -1180,7 +1190,7 @@ const CARD_IMGS=[
   {p:"seiko",n:"creation de nourriture",src:"img/seiko/festin.jpg",fx:"festin",col:"#bfe6ff",face:"50% 55%"},
   {p:"seiko",n:"force fantasmagorique",src:"img/seiko/illusion.jpg",fx:"illusion",col:"#ff4a3a",face:"57% 28%",ghost:1},
   {p:"seiko",n:"illusion fantasmagorique",src:"img/seiko/illusion.jpg",fx:"illusion",col:"#ff4a3a",face:"57% 28%",ghost:1}];
-function cardImg(k){const c=S.persos.get(state._deckC)||{};const pn=nrm(c.nom),kn=nrm(k.nom);return CARD_IMGS.find(f=>(!f.p||f.p===pn)&&kn.startsWith(f.n)&&(!f.t||f.t===k.type))||null}
+function cardImg(k){const c=S.persos.get(state._deckC)||{};const pn=nrm(c.nom),kn=nrm(k.nom);return CARD_IMGS.find(f=>(!f.p||f.p===pn)&&(f.ex?kn===f.n:kn.startsWith(f.n))&&(!f.t||f.t===k.type))||null}
 function artHtml(k){const im=cardImg(k);return '<div class="art el-'+nrm(k.elem).replace(/[^a-z]/g,"")+(im?' hasimg':'')+'">'+
   (im?'<div class="aw aw-'+im.fx+'"><img class="artimg" src="'+im.src+'" alt="" loading="lazy">'+(im.ghost?'<img class="artimg ghost'+(im.ghost==="m"?" gm":"")+'" src="'+im.src+'" alt="" loading="lazy">':'')+cardFx(k,im)+'</div>':sceneSVG(k)+cardFx(k,null))+'<div class="artico mini">'+k.icon+'</div></div>'}
 function cardHtml(k,small,n,calm,attr){const fav=(state._favs||[]).includes(k.key);const pl=!calm&&state.played[k.key];
