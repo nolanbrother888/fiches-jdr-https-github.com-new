@@ -49,7 +49,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.run_number }}
-          name: Fiches JDR v1.${{ github.run_number }}
+          name: JDR Fable v1.${{ github.run_number }}
           body: "Télécharge **fiches-jdr.apk** ci-dessous et installe-le sur ton téléphone Android."
           files: fiches-jdr.apk
           make_latest: true
