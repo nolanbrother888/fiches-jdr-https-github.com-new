@@ -563,3 +563,13 @@ body.bgparch .reacbox h3{color:#8a2418}
 .tabs button b .kic{display:block;width:24px;height:24px}
 .kic.kmj{background-image:url(img/oeil.svg)}
 .kic.kpar{background-image:url(img/parchemin.svg)}
+
+.sndline{display:flex;align-items:center;gap:8px;margin:10px 0 0;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,.25);font-size:14px}
+.sndline span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sndm .box{max-height:88vh;overflow:auto}
+.sndrow{display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--line)}
+.sndrow span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sndrow.on span{color:var(--acc);font-weight:600}
+.recbox{border:1px solid #e0533f}
+#recb.live{background:#c0392b;border-color:#ff7a6a;animation:recp 1s infinite}
+@keyframes recp{50%{opacity:.6}}
