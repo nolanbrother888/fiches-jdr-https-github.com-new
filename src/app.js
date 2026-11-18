@@ -886,50 +886,26 @@ function tiltBind(m){
 // ===== Sons : synthés intégrés + sons enregistrés par les joueurs =====
 const SONS=new Map();
 let sndOn=true;try{sndOn=localStorage.getItem("fj_snd")!=="0"}catch(e){}
-let actx=null,nbuf=null,master=null;
-function AC(){if(!actx){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;actx=new C();master=actx.createGain();master.gain.value=.8;
-  const dl=actx.createDelay(),fb=actx.createGain(),wet=actx.createGain();dl.delayTime.value=.18;fb.gain.value=.28;wet.gain.value=.22;master.connect(actx.destination);master.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(wet);wet.connect(actx.destination)}
-  if(actx.state==="suspended")actx.resume();return actx}
-function noiseBuf(){const a=AC();if(!nbuf){nbuf=a.createBuffer(1,a.sampleRate*2,a.sampleRate);const d=nbuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}return nbuf}
-function env(g,t,att,dur,vol){g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+Math.max(.005,att));g.gain.exponentialRampToValueAtTime(0.0001,t+dur)}
-function voice(o){const a=AC();if(!a)return;const t=a.currentTime+(o.at||0),dur=o.dur||.4;let src;
-  if(o.type==="noise"){src=a.createBufferSource();src.buffer=noiseBuf();src.loop=true}
-  else{src=a.createOscillator();src.type=o.type||"sine";src.frequency.setValueAtTime(o.f0||440,t);if(o.f1)src.frequency.exponentialRampToValueAtTime(o.f1,t+dur);
-    if(o.vib){const l=a.createOscillator(),lg=a.createGain();l.frequency.value=o.vib[0];lg.gain.value=o.vib[1];l.connect(lg);lg.connect(src.frequency);l.start(t);l.stop(t+dur+.05)}}
-  let node=src;if(o.fl){const f=a.createBiquadFilter();f.type=o.fl[0];f.frequency.setValueAtTime(o.fl[1],t);if(o.fl[2])f.frequency.exponentialRampToValueAtTime(o.fl[2],t+dur);f.Q.value=o.fl[3]||1;node.connect(f);node=f}
-  const g=a.createGain();env(g,t,o.att||.01,dur,o.vol||.3);node.connect(g);g.connect(master);src.start(t);src.stop(t+dur+.05)}
-const R=(a,b)=>a+Math.random()*(b-a);
+const SND=(...f)=>()=>playFile(f[Math.floor(Math.random()*f.length)]);
 const PRESETS={
-  feu:["🔥 Feu",()=>{voice({type:"noise",dur:1,vol:.55,att:.12,fl:["lowpass",300,3500]});for(let i=0;i<9;i++)voice({type:"noise",at:R(.05,.8),dur:.04,vol:.35,fl:["bandpass",R(1500,4000),0,4]})}],
-  foudre:["⚡ Foudre",()=>{voice({type:"noise",dur:.14,vol:.9,fl:["highpass",2500]});voice({type:"sawtooth",dur:.25,f0:900,f1:120,vol:.25});voice({type:"noise",at:.06,dur:1.3,vol:.7,att:.05,fl:["lowpass",260,80]});voice({type:"noise",at:.02,dur:.08,vol:.6,fl:["highpass",5000]})}],
-  froid:["❄️ Froid",()=>{[1760,2349,2960].forEach((f,i)=>voice({type:"sine",at:i*.05,dur:.9,f0:f,f1:f*.92,vol:.1,vib:[11,18]}));voice({type:"noise",dur:.6,vol:.18,att:.1,fl:["highpass",6500]})}],
-  acide:["🧪 Acide",()=>{voice({type:"square",dur:.5,f0:320,f1:110,vol:.12,vib:[28,40],fl:["lowpass",1400]});for(let i=0;i<6;i++){const f=R(300,700);voice({type:"sine",at:R(0,.5),dur:.08,f0:f,f1:f*2.2,vol:.2})}}],
-  poison:["☠️ Poison",()=>{voice({type:"sawtooth",dur:.9,f0:120,f1:70,vol:.22,vib:[6,10],fl:["lowpass",700]});for(let i=0;i<4;i++)voice({type:"sine",at:R(.1,.7),dur:.12,f0:R(150,260),f1:R(90,120),vol:.18})}],
-  necro:["💀 Nécrotique",()=>{voice({type:"sawtooth",dur:1.4,f0:95,f1:42,vol:.28,att:.08,fl:["lowpass",600,200]});voice({type:"sine",dur:1.4,f0:47,vol:.4,att:.1});voice({type:"noise",dur:1,vol:.15,att:.4,fl:["bandpass",400,150,6]})}],
-  radiant:["☀️ Radiant",()=>{[523,659,784,1047].forEach((f,i)=>voice({type:"sine",at:i*.04,dur:1.4,f0:f,vol:.12,att:.18,vib:[5,3]}));voice({type:"noise",dur:.8,vol:.12,att:.3,fl:["highpass",7000]})}],
-  psy:["🌀 Psychique",()=>{voice({type:"sine",dur:1,f0:620,f1:380,vol:.2,vib:[9,120]});voice({type:"triangle",at:.1,dur:.9,f0:930,f1:560,vol:.12,vib:[7,90]})}],
-  tonnerre:["💥 Tonnerre",()=>{voice({type:"noise",dur:1.1,vol:1,att:.01,fl:["lowpass",180,60]});voice({type:"sine",dur:.8,f0:70,f1:32,vol:.6})}],
-  force:["✴️ Force",()=>{voice({type:"sine",dur:.4,f0:220,f1:55,vol:.7});voice({type:"noise",dur:.18,vol:.4,fl:["lowpass",900]})}],
-  lame:["🗡️ Lame",()=>{voice({type:"noise",dur:.22,vol:.7,att:.04,fl:["bandpass",1200,6500,2]});voice({type:"triangle",at:.12,dur:.6,f0:3100,f1:2900,vol:.06,vib:[30,8]})}],
-  choc:["🔨 Choc",()=>{voice({type:"sine",dur:.3,f0:140,f1:48,vol:.9});voice({type:"noise",dur:.12,vol:.5,fl:["lowpass",500]})}],
-  arcane:["✨ Arcane",()=>{[660,880,1100,1320,1760].forEach((f,i)=>voice({type:"sine",at:i*.055,dur:.5,f0:f,vol:.13}));voice({type:"noise",dur:.5,vol:.12,att:.1,fl:["highpass",8000]})}],
-  soin:["💚 Soin",()=>{[784,988,1175,1568].forEach((f,i)=>voice({type:"sine",at:i*.09,dur:.9,f0:f,vol:.13,att:.03}))}],
-  tokidome:["⏱️ Arrêt du temps",()=>{voice({type:"square",dur:.03,f0:2200,vol:.12});voice({type:"square",at:.28,dur:.03,f0:1700,vol:.12});voice({type:"noise",at:.35,dur:.6,vol:.6,att:.55,fl:["bandpass",300,4000,1.5]});[880,1320,1760].forEach((f,i)=>voice({type:"sine",at:.95,dur:1.8,f0:f,vol:.14-i*.03}))}],
-  tour:["🔔 Tour",()=>{voice({type:"sine",dur:1.4,f0:196,vol:.3,att:.005});voice({type:"sine",dur:1.2,f0:294,vol:.15,att:.005})}],
-  ennemi:["👹 Tour ennemi",()=>{voice({type:"sawtooth",dur:1.1,f0:82,f1:78,vol:.22,att:.15,fl:["lowpass",500]});voice({type:"sawtooth",dur:1.1,f0:123,f1:116,vol:.14,att:.15,fl:["lowpass",500]})}],
-  coup:["🩸 Coup reçu",()=>{voice({type:"sine",dur:.22,f0:160,f1:60,vol:.8});voice({type:"noise",dur:.1,vol:.5,fl:["lowpass",1200]})}],
-  mort:["⚰️ Vaincu",()=>{[392,330,262,196].forEach((f,i)=>voice({type:"triangle",at:i*.16,dur:.5,f0:f,vol:.16}))}],
-  combat:["⚔️ Début du combat",()=>{voice({type:"sine",dur:.5,f0:90,f1:45,vol:.9});voice({type:"sine",at:.25,dur:.5,f0:90,f1:45,vol:.9});voice({type:"sawtooth",at:.5,dur:1.3,f0:147,vol:.18,att:.1,fl:["lowpass",900]});voice({type:"sawtooth",at:.5,dur:1.3,f0:220,vol:.12,att:.1,fl:["lowpass",900]})}]
+  feu:["🔥 Feu",SND("feu1","feu2","feu3")],foudre:["⚡ Foudre",SND("foudre1")],froid:["❄️ Froid",SND("froid1","froid2")],
+  acide:["🧪 Acide",SND("acide1","acide2")],poison:["☠️ Poison",SND("poison1","poison2")],necro:["💀 Nécrotique",SND("necro1","necro2")],
+  radiant:["☀️ Radiant",SND("radiant1","radiant2")],psy:["🌀 Psychique",SND("psy1","psy2")],tonnerre:["💥 Tonnerre",SND("tonnerre1")],
+  force:["✴️ Force",SND("force1")],lame:["🗡️ Lame",SND("lame1","lame2","lame3","lame4")],choc:["🔨 Choc",SND("choc1","choc2")],
+  arcane:["✨ Arcane",SND("arcane1","arcane2","arcane3")],soin:["💚 Soin",SND("soin1","soin2")],tokidome:["⏱️ Arrêt du temps",SND("tokidome1")],
+  tour:["🔔 Tour",SND("tour1")],ennemi:["👹 Tour ennemi",SND("ennemi1")],coup:["🩸 Coup reçu",SND("coup1")],mort:["⚰️ Vaincu",SND("mort1")],combat:["⚔️ Début du combat",SND("combat1")]
 };
+const sndCache={};
+function playFile(n){try{let a=sndCache[n];if(!a){a=sndCache[n]=new Audio("sons/"+n+".mp3");a.preload="auto"}const x=a.paused?a:a.cloneNode();x.currentTime=0;x.volume=.9;x.play().catch(()=>{})}catch(e){}}
 const ELEMS={feu:"feu",foudre:"foudre",froid:"froid",acide:"acide",poison:"poison",necrotique:"necro",radiant:"radiant",psychique:"psy",tonnerre:"tonnerre",force:"force",tranchant:"lame",percant:"lame",perforant:"lame",contondant:"choc",arcane:"arcane"};
 function defaultSound(k){const n=nrm(k.nom||""),d=nrm(k.desc||"");if(n.includes("tokidome")||d.includes("tokidome"))return"p:tokidome";if(/soin|guerison|soigne/.test(n))return"p:soin";
   const e=nrm(k.elem||"").replace(/[^a-z]/g,"");return "p:"+(ELEMS[e]||"arcane")}
-const SYNTH_ON=false;
+const SYNTH_ON=true;
 function soundOf(c,k){const m=(c&&c.sons)||{};return m[k.key]||(SYNTH_ON?defaultSound(k):"none")}
 function sndLabel(id){if(!id||id==="none")return"🔇 Aucun";if(id.startsWith("p:"))return(PRESETS[id.slice(2)]||["?"])[0];const s=SONS.get(id);return s?"🎙️ "+s.nom:"🔇 Son supprimé"}
 let curAudio=null;
 function playSnd(id,force){if((!sndOn&&!force)||!id||id==="none")return;try{
-  if(id.startsWith("p:")){const p=PRESETS[id.slice(2)];if(p&&AC())p[1]();return}
+  if(id.startsWith("p:")){const p=PRESETS[id.slice(2)];if(p)p[1]();return}
   const s=SONS.get(id);if(!s||!s.data)return;if(curAudio)curAudio.pause();curAudio=new Audio(s.data);curAudio.volume=.9;curAudio.play().catch(()=>{})}catch(e){}}
 const sfx=name=>{if(SYNTH_ON)playSnd("p:"+name)};
 const sndBtn=()=>'<button class="btn sm fxtog" data-act="sndtog">'+(sndOn?"🔊 Sons : oui":"🔇 Sons : non")+'</button>';
