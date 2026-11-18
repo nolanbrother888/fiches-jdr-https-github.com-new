@@ -900,7 +900,7 @@ function playFile(n){try{let a=sndCache[n];if(!a){a=sndCache[n]=new Audio("sons/
 const ELEMS={feu:"feu",foudre:"foudre",froid:"froid",acide:"acide",poison:"poison",necrotique:"necro",radiant:"radiant",psychique:"psy",tonnerre:"tonnerre",force:"force",tranchant:"lame",percant:"lame",perforant:"lame",contondant:"choc",arcane:"arcane"};
 function defaultSound(k){const n=nrm(k.nom||""),d=nrm(k.desc||"");if(n.includes("tokidome")||d.includes("tokidome"))return"p:tokidome";if(/soin|guerison|soigne/.test(n))return"p:soin";
   const e=nrm(k.elem||"").replace(/[^a-z]/g,"");return "p:"+(ELEMS[e]||"arcane")}
-const SYNTH_ON=true;
+const SYNTH_ON=false;
 function soundOf(c,k){const m=(c&&c.sons)||{};return m[k.key]||(SYNTH_ON?defaultSound(k):"none")}
 function sndLabel(id){if(!id||id==="none")return"🔇 Aucun";if(id.startsWith("p:"))return(PRESETS[id.slice(2)]||["?"])[0];const s=SONS.get(id);return s?"🎙️ "+s.nom:"🔇 Son supprimé"}
 let curAudio=null;
