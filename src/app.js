@@ -463,7 +463,7 @@ function act(a,c,d){
   if(a==="cardopen"&&c){cardModal(c,d.key);return}
   if(a==="deckf"){state.deckF=d.f;rerenderPane();return}
   if(a==="defmode"&&c){c.defMode=d.v;schedule(c);rerenderPane();return}
-  if(a==="sndtog"){sndOn=!sndOn;try{localStorage.setItem("fj_snd",sndOn?"1":"0")}catch(e){}if(sndOn)sfx("arcane");rerenderPane();return}
+  if(a==="sndtog"){sndOn=!sndOn;try{localStorage.setItem("fj_snd",sndOn?"1":"0")}catch(e){}rerenderPane();return}
   if(a==="fxtog"){fxOff=!fxOff;try{localStorage.setItem("fj_fx",fxOff?"0":"1")}catch(e){}document.body.classList.toggle("nofx",fxOff);rerenderPane();return}
   if(a==="bibview"){state.bibView=d.v;try{localStorage.setItem("fj_bibview",d.v)}catch(e){}rerenderPane();return}
   if(a==="sortview"){state.sortView=d.v;try{localStorage.setItem("fj_sortview",d.v)}catch(e){}rerenderPane();return}
@@ -924,13 +924,14 @@ const PRESETS={
 const ELEMS={feu:"feu",foudre:"foudre",froid:"froid",acide:"acide",poison:"poison",necrotique:"necro",radiant:"radiant",psychique:"psy",tonnerre:"tonnerre",force:"force",tranchant:"lame",percant:"lame",perforant:"lame",contondant:"choc",arcane:"arcane"};
 function defaultSound(k){const n=nrm(k.nom||""),d=nrm(k.desc||"");if(n.includes("tokidome")||d.includes("tokidome"))return"p:tokidome";if(/soin|guerison|soigne/.test(n))return"p:soin";
   const e=nrm(k.elem||"").replace(/[^a-z]/g,"");return "p:"+(ELEMS[e]||"arcane")}
-function soundOf(c,k){const m=(c&&c.sons)||{};return m[k.key]||defaultSound(k)}
+const SYNTH_ON=false;
+function soundOf(c,k){const m=(c&&c.sons)||{};return m[k.key]||(SYNTH_ON?defaultSound(k):"none")}
 function sndLabel(id){if(!id||id==="none")return"🔇 Aucun";if(id.startsWith("p:"))return(PRESETS[id.slice(2)]||["?"])[0];const s=SONS.get(id);return s?"🎙️ "+s.nom:"🔇 Son supprimé"}
 let curAudio=null;
 function playSnd(id,force){if((!sndOn&&!force)||!id||id==="none")return;try{
   if(id.startsWith("p:")){const p=PRESETS[id.slice(2)];if(p&&AC())p[1]();return}
   const s=SONS.get(id);if(!s||!s.data)return;if(curAudio)curAudio.pause();curAudio=new Audio(s.data);curAudio.volume=.9;curAudio.play().catch(()=>{})}catch(e){}}
-const sfx=name=>playSnd("p:"+name);
+const sfx=name=>{if(SYNTH_ON)playSnd("p:"+name)};
 const sndBtn=()=>'<button class="btn sm fxtog" data-act="sndtog">'+(sndOn?"🔊 Sons : oui":"🔇 Sons : non")+'</button>';
 const blobToData=b=>new Promise((ok,ko)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=ko;r.readAsDataURL(b)});
 function saveSon(nom,data){const id="son-"+uid(),o={nom:String(nom||"Mon son").slice(0,40),data,by:myId||"",ts:Date.now()};SONS.set(id,Object.assign({id},o));if(remote)enqueue(keyOf("groupe",id),()=>fs.setDoc(ref("groupe",id),o));return id}
@@ -943,11 +944,11 @@ function soundPicker(c,k){
       '<div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn pri" id="recb">● Enregistrer</button><label class="btn" style="margin:0">📁 Importer<input type="file" id="impf" accept="audio/*" style="display:none"></label></div>'+
       '<div id="recout" class="small" style="margin-top:8px"></div></div>'+
     (mine.length?'<div class="catt">Sons du groupe</div>'+mine.map(s=>row(s.id,"🎙️ "+s.nom,s.by===myId||!s.by)).join(""):'')+
-    '<div class="catt">Sons intégrés</div>'+Object.keys(PRESETS).map(p=>row("p:"+p,PRESETS[p][0])).join("")+row("none","🔇 Aucun son")+
+    (SYNTH_ON?'<div class="catt">Sons intégrés</div>'+Object.keys(PRESETS).map(p=>row("p:"+p,PRESETS[p][0])).join(""):'')+row("none","🔇 Aucun son")+
     '<div class="acts"><button class="btn" data-x>Fermer</button></div>');
   m.classList.add("sndm");
   const out=m.querySelector("#recout"),recb=m.querySelector("#recb");
-  const pick=id=>{c.sons=Object.assign({},c.sons);if(id===defaultSound(k))delete c.sons[k.key];else c.sons[k.key]=id;schedule(c);m.remove();toast("Son de la carte : "+sndLabel(id));rerenderPane()};
+  const pick=id=>{c.sons=Object.assign({},c.sons);if(id===(SYNTH_ON?defaultSound(k):"none"))delete c.sons[k.key];else c.sons[k.key]=id;schedule(c);m.remove();toast("Son de la carte : "+sndLabel(id));rerenderPane()};
   const offer=data=>{blobData=data;out.innerHTML='<div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn sm" id="pv">▶ Écouter</button><input id="snm" value="'+esc(k.nom)+'" style="flex:1;min-width:120px" maxlength="40"><button class="btn sm pri" id="keep">Garder</button></div>';
     out.querySelector("#pv").onclick=()=>{try{new Audio(blobData).play()}catch(e){}};
     out.querySelector("#keep").onclick=()=>{if(blobData.length>900000){out.textContent="Fichier trop lourd (900 Ko max). Prends un son plus court.";return}pick(saveSon(out.querySelector("#snm").value,blobData))}};
