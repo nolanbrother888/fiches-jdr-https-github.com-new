@@ -1092,20 +1092,46 @@ function castFx(c,k,then){
 
 // ===== Intros des onglets : une seule fois par onglet tant que l'appli est ouverte =====
 const seenTabs=new Set();
-const INTRO={persos:["Persos","Ouvre ta fiche et fais vivre ton héros","#d9b25a"],combat:["Combat","Initiative, cartes et dégâts du tour","#6cb6ff"],mj:["Vue MJ","Tout le groupe d'un seul regard","#7bd88f"],
-  biblio:["Biblio","Tous les sorts, par classe et par niveau","#ff8a2a"],cartes:["Cartes","Les lieux de la campagne","#e0b46a"],commun:["Commun","Le butin et la bourse du groupe","#f2c94c"],
-  planning:["Planning","Les prochaines sessions","#bfe8ff"],journal:["Journal","La mémoire de l'aventure","#b48cff"]};
+const INTRO={persos:["Persos","Ouvre ta fiche et fais vivre ton héros","#4f9dff"],combat:["Combat","Initiative, cartes et dégâts du tour","#ff5a3c"],mj:["Vue MJ","Tout le groupe d'un seul regard","#b36bff"],
+  biblio:["Biblio","Tous les sorts, par classe et par niveau","#ff8a2a"],cartes:["Cartes","Les lieux de la campagne","#e0b46a"],commun:["Commun","Le butin et la bourse du groupe","#3ddc97"],
+  planning:["Planning","Les prochaines sessions","#bfe8ff"],journal:["Journal","La mémoire de l'aventure","#e8b04a"]};
+const EMB_IMG={persos:"perso",combat:"combat",mj:"mj",cartes:"carte",commun:"inventaire",journal:"journal"};
+function boltPath(x0,y0,x1,y1,n,amp){let d="M"+x0.toFixed(1)+" "+y0.toFixed(1);for(let i=1;i<n;i++){const t=i/n,x=x0+(x1-x0)*t,y=y0+(y1-y0)*t,dx=-(y1-y0),dy=(x1-x0),L=Math.hypot(dx,dy)||1,o=(Math.random()*2-1)*amp;d+=" L"+(x+dx/L*o).toFixed(1)+" "+(y+dy/L*o).toFixed(1)}return d+" L"+x1.toFixed(1)+" "+y1.toFixed(1)}
+function arcPath(r,a0,a1,n,amp){let d="";for(let i=0;i<=n;i++){const a=a0+(a1-a0)*i/n,rr=r+(i&&i<n?(Math.random()*2-1)*amp:0);d+=(i?" L":"M")+(Math.cos(a)*rr).toFixed(1)+" "+(Math.sin(a)*rr).toFixed(1)}return d}
+function elecIntro(host){
+  const w=document.createElement("div");w.className="in-elec";
+  w.innerHTML='<svg viewBox="-200 -200 400 400"><defs><filter id="ieg" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'+
+    '<radialGradient id="iefl"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#bff0ff"/><stop offset="1" stop-color="#3aa8ff" stop-opacity="0"/></radialGradient></defs>'+
+    '<circle class="ie-flash" r="120" fill="url(#iefl)"/><g class="ie-b" fill="none" stroke="#dff7ff" stroke-linecap="round" stroke-linejoin="round" filter="url(#ieg)"></g></svg>';
+  host.appendChild(w);
+  const g=w.querySelector(".ie-b"),t0=performance.now();
+  const tick=()=>{const t=(performance.now()-t0)/1000;let h="";
+    // éclair qui frappe l'emblème au début
+    if(t>.12&&t<.42)h+='<path stroke-width="4" d="'+boltPath((Math.random()*40-20),-200,(Math.random()*16-8),-60,12,14)+'"/><path stroke-width="2" opacity=".7" d="'+boltPath(0,-150,(Math.random()*120-60),-120,5,8)+'"/>';
+    // arcs qui courent autour du cercle
+    const nA=t<1.9?3:1;for(let i=0;i<nA;i++){const a=Math.random()*Math.PI*2,L=.5+Math.random()*.9;h+='<path stroke-width="'+(1.6+Math.random()*1.6).toFixed(1)+'" d="'+arcPath(150+Math.random()*12,a,a+L,9,9)+'"/>'}
+    // décharges vers l'extérieur
+    if(Math.random()<.55){const a=Math.random()*Math.PI*2,r0=140,r1=185+Math.random()*25;h+='<path stroke-width="1.6" d="'+boltPath(Math.cos(a)*r0,Math.sin(a)*r0,Math.cos(a+.15)*r1,Math.sin(a+.15)*r1,5,7)+'"/>'}
+    // petits arcs sur l'emblème
+    if(Math.random()<.35){const x=Math.random()*160-80,y=Math.random()*160-80;h+='<path stroke-width="1.2" opacity=".8" d="'+boltPath(x,y,x+Math.random()*60-30,y+Math.random()*60-30,4,6)+'"/>'}
+    g.innerHTML=h};
+  tick();const iv=setInterval(tick,65);
+  return()=>clearInterval(iv);
+}
 function tabIntro(kind){
   const I=INTRO[kind];if(!I||seenTabs.has(kind))return;seenTabs.add(kind);if(noMotion())return;
   document.querySelectorAll(".tanim").forEach(x=>x.remove());
   const rnd=(a,b)=>a+Math.random()*(b-a);
-  const d=document.createElement("div");d.className="tanim intro ta-"+kind;d.style.setProperty("--ic",I[2]);
+  const img=EMB_IMG[kind];
+  const d=document.createElement("div");d.className="tanim intro ta-"+kind+(img?" in-img":"");d.style.setProperty("--ic",I[2]);
   const motes=Array.from({length:22},()=>'<i class="in-mote" style="left:'+rnd(2,98).toFixed(0)+'%;top:'+rnd(20,98).toFixed(0)+'%;--dx:'+rnd(-40,40).toFixed(0)+'px;--dy:'+rnd(-160,-50).toFixed(0)+'px;--t:'+rnd(1.6,3.2).toFixed(2)+'s;--d:-'+rnd(0,3).toFixed(2)+'s;transform:scale('+rnd(.5,1.6).toFixed(2)+')"></i>').join("");
   const letters=[...I[0]].map((ch,i)=>'<span style="--i:'+i+'">'+(ch===" "?"&nbsp;":esc(ch))+'</span>').join("");
-  d.innerHTML='<i class="in-bar t"></i><i class="in-bar b"></i>'+motes+'<div class="in-stage"><i class="in-halo"></i><div class="in-emb">'+(kind==="combat"?"":emblemHtml(kind))+'</div></div>'+
+  const src=img?"img/emb/hd/"+img+".webp":"";
+  const embHtml=img?'<div class="ie-wrap e-'+img+'"><img class="ie-img" src="'+src+'" alt=""><i class="ie-shine" style="-webkit-mask-image:url('+src+');mask-image:url('+src+')"></i></div>':emblemHtml(kind);
+  d.innerHTML='<i class="in-bar t"></i><i class="in-bar b"></i>'+motes+'<div class="in-stage"><i class="in-halo"></i><div class="in-emb">'+embHtml+'</div></div>'+
     '<div class="in-t"><div class="in-name">'+letters+'</div><svg class="in-ul" viewBox="0 0 200 12" preserveAspectRatio="none"><path pathLength="1" d="M4 7 C40 1 80 11 120 6 S176 2 196 6"/></svg><div class="in-sub">'+esc(I[1])+'</div></div><div class="in-skip">Toucher pour passer</div>';
   document.body.appendChild(d);
-  let stop=null;if(kind==="combat")stop=swordsAnim(false,d.querySelector(".in-emb"));
+  let stop=null;if(img)stop=elecIntro(d.querySelector(".in-emb"));
   const kill=()=>{clearTimeout(tm);if(stop)stop();d.remove()};const tm=setTimeout(kill,2650);d.addEventListener("click",kill);
 }
 function emblemHtml(kind){
