@@ -2,5 +2,5 @@
   "appId": "fr.jtortarolo.fichesjdr",
   "appName": "JDR Fable",
   "webDir": "www",
-  "android": { "backgroundColor": "#1b1c1f" }
+  "android": { "backgroundColor": "#06050d" }
 }
