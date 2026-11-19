@@ -1092,7 +1092,7 @@ function castFx(c,k,then){
 
 // ===== Intros des onglets : une seule fois par onglet tant que l'appli est ouverte =====
 const seenTabs=new Set();
-const INTRO={persos:["Persos","Ouvre ta fiche et fais vivre ton héros","#4f9dff"],combat:["Combat","Initiative, cartes et dégâts du tour","#ff5a3c"],mj:["Vue MJ","Tout le groupe d'un seul regard","#b36bff"],
+const INTRO={persos:["Persos","Ouvre ta fiche et fais vivre ton héros","#4f9dff"],combat:["Combat","Initiative, cartes et dégâts du tour","#6cb6ff"],mj:["Vue MJ","Tout le groupe d'un seul regard","#b36bff"],
   biblio:["Biblio","Tous les sorts, par classe et par niveau","#ff8a2a"],cartes:["Cartes","Les lieux de la campagne","#e0b46a"],commun:["Commun","Le butin et la bourse du groupe","#3ddc97"],
   planning:["Planning","Les prochaines sessions","#bfe8ff"],journal:["Journal","La mémoire de l'aventure","#e8b04a"]};
 const EMB_IMG={persos:"perso",combat:"combat",mj:"mj",cartes:"carte",commun:"inventaire",journal:"journal"};
@@ -1119,6 +1119,17 @@ function elecIntro(host,clash){
   tick();const iv=setInterval(tick,65);
   return()=>clearInterval(iv);
 }
+function clashIntro(w){
+  const ev=w.querySelectorAll(".cb-ev"),bg=w.querySelector(".cb-bolts"),t0=performance.now();
+  const L=[[136,180,342,366],[270,180,66,368]];
+  const tick=()=>{const t=(performance.now()-t0)/1000;
+    ev.forEach((e,i)=>{const l=L[i];e.setAttribute("d",boltPath(l[0],l[1],l[2],l[3],16,t<.9?6:4))});
+    let h="";
+    if(t>.4&&t<.95){const n=t<.6?9:5;for(let i=0;i<n;i++){const a=i/n*Math.PI*2+Math.random()*.6,r=(t<.6?90:50)+Math.random()*70;h+='<path stroke-width="'+(t<.6?3.2:2)+'" d="'+boltPath(202,240,202+Math.cos(a)*r,240+Math.sin(a)*r,7,9)+'"/>'}}
+    else if(t>=.95&&Math.random()<.5){const a=Math.random()*Math.PI*2,r=30+Math.random()*40;h+='<path stroke-width="1.6" d="'+boltPath(202,240,202+Math.cos(a)*r,240+Math.sin(a)*r,5,6)+'"/>'}
+    bg.innerHTML=h};
+  tick();const iv=setInterval(tick,65);return()=>clearInterval(iv);
+}
 function tabIntro(kind){
   const I=INTRO[kind];if(!I||seenTabs.has(kind))return;seenTabs.add(kind);if(noMotion())return;
   document.querySelectorAll(".tanim").forEach(x=>x.remove());
@@ -1128,11 +1139,12 @@ function tabIntro(kind){
   const motes=Array.from({length:22},()=>'<i class="in-mote" style="left:'+rnd(2,98).toFixed(0)+'%;top:'+rnd(20,98).toFixed(0)+'%;--dx:'+rnd(-40,40).toFixed(0)+'px;--dy:'+rnd(-160,-50).toFixed(0)+'px;--t:'+rnd(1.6,3.2).toFixed(2)+'s;--d:-'+rnd(0,3).toFixed(2)+'s;transform:scale('+rnd(.5,1.6).toFixed(2)+')"></i>').join("");
   const letters=[...I[0]].map((ch,i)=>'<span style="--i:'+i+'">'+(ch===" "?"&nbsp;":esc(ch))+'</span>').join("");
   const src=img?"img/emb/hd/"+img+".webp":"";
-  const embHtml=kind==="combat"?'<div class="ie-wrap ie-clash ie-combat"><img class="ie-img cb-bg" src="'+src+'" alt=""><img class="cb-k cb-a" src="img/emb/hd/combat-a.webp" alt=""><img class="cb-k cb-b" src="img/emb/hd/combat-b.webp" alt=""></div>':img?'<div class="ie-wrap ie-'+img+'"><img class="ie-img" src="'+src+'" alt=""><i class="ie-shine" style="-webkit-mask-image:url('+src+');mask-image:url('+src+')"></i></div>':emblemHtml(kind);
+  const embHtml=kind==="combat"?'<div class="ie-wrap ie-clash"><div class="cb-k cb-a"><img src="img/emb/hd/combat-a.webp" alt=""><svg viewBox="0 0 400 400"><path class="cb-ev"/></svg></div><div class="cb-k cb-b"><img src="img/emb/hd/combat-b.webp" alt=""><svg viewBox="0 0 400 400"><path class="cb-ev"/></svg></div>'+
+    '<svg class="cb-fx" viewBox="0 0 400 400"><defs><filter id="cbg" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><radialGradient id="cbfl"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#bff0ff"/><stop offset="1" stop-color="#3aa8ff" stop-opacity="0"/></radialGradient></defs><circle class="cb-fl" cx="202" cy="240" r="70" fill="url(#cbfl)"/><g class="cb-bolts"></g></svg></div>':img?'<div class="ie-wrap ie-'+img+'"><img class="ie-img" src="'+src+'" alt=""><i class="ie-shine" style="-webkit-mask-image:url('+src+');mask-image:url('+src+')"></i></div>':emblemHtml(kind);
   d.innerHTML='<i class="in-bar t"></i><i class="in-bar b"></i>'+motes+'<div class="in-stage"><i class="in-halo"></i><div class="in-emb">'+embHtml+'</div></div>'+
     '<div class="in-t"><div class="in-name">'+letters+'</div><svg class="in-ul" viewBox="0 0 200 12" preserveAspectRatio="none"><path pathLength="1" d="M4 7 C40 1 80 11 120 6 S176 2 196 6"/></svg><div class="in-sub">'+esc(I[1])+'</div></div><div class="in-skip">Toucher pour passer</div>';
   document.body.appendChild(d);
-  let stop=null;if(img)stop=elecIntro(d.querySelector(".in-emb"),kind==="combat");
+  let stop=null;if(kind==="combat")stop=clashIntro(d.querySelector(".ie-clash"));else if(img)stop=elecIntro(d.querySelector(".in-emb"));
   const kill=()=>{clearTimeout(tm);if(stop)stop();d.remove()};const tm=setTimeout(kill,2650);d.addEventListener("click",kill);
 }
 function emblemHtml(kind){
