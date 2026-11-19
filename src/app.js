@@ -83,7 +83,7 @@ const classLine=c=>c.classes.filter(x=>x.nom).map(x=>x.nom+" "+x.niv).join(" / "
 // ---------- Stockage partagé (Firebase) ----------
 const COLS=["persos","biblio","sessions","courses","commun"];
 const S={};COLS.forEach(c=>S[c]=new Map());
-const GDEF=()=>({journal:{texte:""},commun:{monnaie:{pp:0,po:0,pe:0,pa:0,pc:0}},planning:{joueurs:[]},combat:{actif:false,round:1,tour:"",lignes:{}}});
+const GDEF=()=>({regles:{items:{},init:false},journal:{texte:""},commun:{monnaie:{pp:0,po:0,pe:0,pa:0,pc:0}},planning:{joueurs:[]},combat:{actif:false,round:1,tour:"",lignes:{}}});
 let G=GDEF();
 let remote=null,myId=null,me=null,readOnly=false,saveStatus="Connexion…";
 const USERS=new Map();
@@ -128,7 +128,7 @@ function subscribe(){
       if(ch){lsSave();softRender()}
     },()=>setStatus("Hors ligne, enregistré sur l'appareil"));
   });
-  ["journal","commun","planning","combat"].forEach(k=>{
+  ["journal","commun","planning","combat","regles"].forEach(k=>{
     fs.onSnapshot(ref("groupe",k),snap=>{if(k!=="combat"&&busyKey(keyOf("groupe",k)))return;if(snap.exists()){if(k==="combat"){const was=G.combat&&G.combat.actif,now=snap.data().actif;if(now&&!was&&started&&G.combat)swordsAnim(true)}G[k]=Object.assign(GDEF()[k],clone(snap.data()));lsSave();softRender()}},()=>{});
   });
   fs.onSnapshot(fs.collection(db,"groupe"),snap=>{let ch=false;snap.docChanges().forEach(x=>{const id=x.doc.id;if(id.startsWith("son-")){if(x.type==="removed")SONS.delete(id);else SONS.set(id,Object.assign({id},x.doc.data()));return}if(!id.startsWith("carte-"))return;if(x.type==="removed")CARTES.delete(id);else CARTES.set(id,Object.assign({id},x.doc.data()));ch=true});if(ch&&state.home==="cartes"&&state.view==="home")softRender()},()=>{});
@@ -203,9 +203,11 @@ function homePane(){
        :'<div class="empty"><div class="big1">🐉</div><h2>Aucun personnage ici</h2><p>Crée ta fiche, elle sera visible par tout le groupe.</p>'+(firstPersos&&!S.persos.size?'<button class="btn pri" data-act="seed" style="margin-top:10px">Importer les persos du tableur</button>':'')+'</div>')+
       (readOnly?'':'<button class="btn pri" data-act="new" style="width:100%;margin-top:14px;padding:13px">+ Nouveau personnage</button>');}
 
-  case "mj":{const list=persos().filter(c=>!c.retire);
-    if(!list.length)return '<div class="empty"><div class="big1">👁️</div><p>Aucun personnage actif.</p></div>';
-    return '<div class="hint" style="margin:0 0 10px">Vue d\'ensemble du groupe, en lecture seule. Chaque joueur gère ses PV dans sa fiche.</div>'+list.map(c=>{const p=c.pv.max?clamp(c.pv.act/c.pv.max,0,1):0;
+  case "mj":{const list=persos().filter(c=>!c.retire);const mt=state.mjTab||"groupe";
+    if(mt==="tuto")return mjTabs()+tutoPane();
+    if(mt==="regles")return mjTabs()+reglesPane();
+    if(!list.length)return mjTabs()+'<div class="empty"><div class="big1">👁️</div><p>Aucun personnage actif.</p></div>';
+    return mjTabs()+'<div class="hint" style="margin:0 0 10px">Vue d\'ensemble du groupe, en lecture seule. Chaque joueur gère ses PV dans sa fiche.</div>'+list.map(c=>{const p=c.pv.max?clamp(c.pv.act/c.pv.max,0,1):0;
       const sl=c.slots.map((s,i)=>num(s.max)?'<span class="sl">'+(i+1)+' : '+Math.max(0,num(s.max)-num(s.used))+'/'+num(s.max)+'</span>':'').join("")+(num(c.pacte.max)?'<span class="sl">Pacte : '+Math.max(0,num(c.pacte.max)-num(c.pacte.used))+'/'+num(c.pacte.max)+'</span>':'');
       return '<div class="card mjc" style="border-left:5px solid '+c.couleur+'"><div class="row" style="gap:10px">'+avatar(c,44)+'<div style="flex:1;min-width:0"><button class="lnk" data-open="'+c.id+'">'+esc(c.nom)+'</button><div class="small mute">'+esc(classLine(c))+(c.joueur?' · '+esc(c.joueur):'')+'</div></div></div>'+
         '<div class="bar" style="margin-top:10px;height:20px"><i style="width:'+(p*100)+'%;background:'+barColor(p)+'"></i><div class="t">'+c.pv.act+' / '+c.pv.max+(num(c.pv.temp)?' (+'+c.pv.temp+')':'')+'</div></div>'+
@@ -463,6 +465,9 @@ function act(a,c,d){
   if(a==="cardopen"&&c){cardModal(c,d.key);return}
   if(a==="deckf"){state.deckF=d.f;rerenderPane();return}
   if(a==="defmode"&&c){c.defMode=d.v;schedule(c);rerenderPane();return}
+  if(a==="mjtab"){state.mjTab=d.v;rerenderPane();window.scrollTo(0,0);return}
+  if(a==="rgadd"){rgEnsure();const ord=Math.max(-1,...Object.values(G.regles.items).map(r=>num(r.ord)))+1;G.regles.items["r"+uid()]={titre:"",texte:"",ord};save("groupe","regles");rerenderPane();setTimeout(()=>{const i=[...document.querySelectorAll('.rgc input')].pop();if(i)i.focus()},50);return}
+  if(a==="rgdel"){const r=G.regles.items[d.id];confirmBox("Supprimer la règle « "+((r&&r.titre)||"sans nom")+" » pour tout le groupe ?",()=>{delete G.regles.items[d.id];save("groupe","regles");rerenderPane()});return}
   if(a==="sndtog"){sndOn=!sndOn;try{localStorage.setItem("fj_snd",sndOn?"1":"0")}catch(e){}rerenderPane();return}
   if(a==="fxtog"){fxOff=!fxOff;try{localStorage.setItem("fj_fx",fxOff?"0":"1")}catch(e){}document.body.classList.toggle("nofx",fxOff);rerenderPane();return}
   if(a==="bibview"){state.bibView=d.v;try{localStorage.setItem("fj_bibview",d.v)}catch(e){}rerenderPane();return}
@@ -883,6 +888,96 @@ function tiltBind(m){
   let base=null;const ori=e=>{if(!m.isConnected){window.removeEventListener("deviceorientation",ori);return}if(e.gamma==null||e.beta==null||touching)return;if(!base)base=[e.gamma,e.beta];set(cl((e.gamma-base[0])/22),cl((e.beta-base[1])/22),true)};
   window.addEventListener("deviceorientation",ori);
 }
+// ===== Vue MJ : tutoriel (facile, même pour les enfants) et règles maison =====
+const RG_DEF=[
+  ["🛡️ L'armure en pourcentage","Chez nous, l'armure enlève une partie des dégâts.\nExemple : avec 35 % d'armure, si un monstre te fait 10 dégâts, tu n'en perds que 6 (on garde 65 %, arrondi en dessous).\nIl y a l'armure physique (épées, flèches, coups) et l'armure magique (sorts).\nDans l'appli : choisis le type de dégâts, puis appuie sur « Dégâts », le calcul est fait tout seul."],
+  ["🤝 L'intervention","Quand un ami juste à côté de toi se fait attaquer, tu peux te jeter devant lui pour le protéger !\nÇa utilise ta réaction et la moitié de ton déplacement qui te reste.\nLe MJ décide du jet et de ce qui se passe."],
+  ["🎯 Le lancer intense","Parfois, le MJ demande un « lancer intense » : ce jet compte comme une super réussite ou un énorme raté, sans aucun bonus."],
+  ["❤️ Se soigner et tomber K.O.","En dormant (repos long), tu récupères des PV : ton niveau + ton bonus de Constitution (le double si tu dors bien au chaud).\nÀ 0 PV, tu tombes K.O. : à chaque tour, tu lances un dé pour survivre (il faut 10 ou plus, puis 11, puis 12…). Un ami peut t'aider avec un jet de Médecine (10 ou plus).\nSi tu es sauvé, tu te relèves avec 1 PV mais tu es très fatigué.\nSi tu reviens de la mort, tu gardes une cicatrice pour toujours : -1 dé de vie et -1 en Constitution."]
+];
+function rgEnsure(){if(!G.regles)G.regles={items:{},init:false};if(!G.regles.items)G.regles.items={};
+  if(!G.regles.init&&!readOnly){RG_DEF.forEach(([titre,texte],i)=>{G.regles.items["r"+uid()]={titre,texte,ord:i}});G.regles.init=true;save("groupe","regles")}}
+const TUTO=[
+ ["🎭","C'est quoi, un jeu de rôle ?",`<p>C'est une <b>histoire qu'on invente tous ensemble</b>, autour d'une table.</p>
+<p>👁️ Le <b>MJ</b> (maître du jeu) est le conteur. Il décrit les lieux, joue les monstres et tous les autres personnages.</p>
+<p>🧙 Les <b>joueurs</b> sont les héros. Chacun a son personnage et dit ce qu'il fait.</p>
+<p>🏆 Il n'y a <b>ni gagnant ni perdant</b> : on gagne tous ensemble quand l'histoire est géniale.</p>`],
+ ["🎲","Le grand dé à 20 faces",`<p>Quand tu veux faire quelque chose de difficile, tu lances le <b>dé à 20 faces</b> (on l'appelle le <b>d20</b>).</p>
+<p>Tu ajoutes ton <b>bonus</b>, puis tu compares au <b>chiffre à battre</b> choisi par le MJ.</p>
+<div class="tex">🌊 <b>Exemple</b> : tu veux sauter par-dessus une rivière. Le MJ dit : « Il faut faire 10 ».<br>Tu lances le dé : <b>8</b>. Ton bonus est <b>+3</b>. 8 + 3 = <b>11</b>. C'est plus que 10 : <b>tu as réussi ton saut !</b></div>
+<p>📏 Les chiffres à battre : <b>5</b> facile · <b>10</b> normal · <b>15</b> dur · <b>20</b> très dur.</p>
+<p>⭐ Un <b>20</b> sur le dé, c'est une super réussite. 💥 Un <b>1</b>, c'est un gros raté (souvent drôle).</p>
+<p>🍀 <b>Avantage</b> : tu lances deux dés et tu gardes le meilleur. 😬 <b>Désavantage</b> : tu gardes le moins bon.</p>`],
+ ["💪","Ton héros en chiffres",`<p>❤️ Les <b>PV</b> (points de vie), ce sont tes cœurs. Si tu prends des coups, ils baissent.</p>
+<p>Ton héros a <b>6 qualités</b>, avec un bonus pour chacune :</p><ul>
+<li>💪 <b>Force</b> : les muscles (porter, pousser, frapper fort)</li>
+<li>🤸 <b>Dextérité</b> : l'agilité (esquiver, se faufiler, tirer à l'arc)</li>
+<li>🛡️ <b>Constitution</b> : la résistance (encaisser, ne pas tomber malade)</li>
+<li>📚 <b>Intelligence</b> : le savoir (magie, énigmes, histoire)</li>
+<li>👀 <b>Sagesse</b> : l'attention (repérer un piège, sentir un mensonge)</li>
+<li>🗣️ <b>Charisme</b> : la parole (convaincre, impressionner, bluffer)</li></ul>
+<p>✨ Les <b>sorts</b> sont tes pouvoirs magiques. Tu as une petite réserve de magie (les <b>emplacements</b>) qui se recharge quand tu dors.</p>`],
+ ["⚔️","Le combat : chacun son tour",`<p>1️⃣ Au début, tout le monde lance l'<b>initiative</b> : ça décide de l'ordre de passage, comme une file d'attente.</p>
+<p>2️⃣ Quand c'est <b>ton tour</b>, tu peux :</p><ul>
+<li>🏃 <b>bouger</b> ;</li>
+<li>👊 faire <b>une action</b> : attaquer, lancer un sort, aider un ami, te cacher… ;</li>
+<li>⚡ faire <b>une petite action bonus</b>, seulement si un de tes pouvoirs le dit ;</li>
+<li>🛡️ et pendant le tour des autres, tu as <b>une réaction</b> : par exemple protéger un ami ou lancer un bouclier.</li></ul>
+<p>3️⃣ Pour <b>attaquer</b> : tu lances le d20 + ton bonus. Si tu bats la défense du monstre, tu le touches ! Tu lances alors les dés de dégâts, et le monstre perd autant de PV.</p>
+<p>4️⃣ Si un héros tombe à <b>0 PV</b>, il n'est pas mort tout de suite : il est K.O. et lance des dés pour survivre. Vite, ses amis doivent l'aider !</p>
+<p>5️⃣ Quand tout le monde a joué, on recommence : c'est un nouveau <b>round</b>.</p>`],
+ ["🧙","Comment jouer (pour les joueurs)",`<ol>
+<li>👂 <b>Écoute</b> le MJ qui décrit la scène.</li>
+<li>🗣️ <b>Dis ce que fait ton héros</b>, en commençant par « Je… » : « Je regarde sous le lit », « Je parle au garde ».</li>
+<li>🎲 Si le MJ te le demande, <b>lance le dé</b> et dis ton résultat.</li>
+<li>📱 Dans l'appli, ouvre ta fiche dans <b>Persos</b> et touche <b>« C'est mon perso »</b> pour qu'elle soit à toi.</li>
+<li>⚔️ En combat, va dans <b>Combat</b> : touche une <b>carte</b> (attaque ou sort) pour la jouer. L'appli calcule tout et coche ce que tu as utilisé.</li>
+<li>🛡️ Pendant le tour d'un monstre, regarde l'encadré <b>« Réaction disponible »</b>.</li>
+<li>❤️ Quand tu perds ou gagnes des PV, mets-les à jour sur ta fiche.</li></ol>`],
+ ["👁️","Comment mener la partie (pour le MJ)",`<p><b>Avant</b> 📝</p><ul>
+<li>Prépare 2 ou 3 scènes, pas toute l'histoire : les joueurs vont te surprendre, et c'est très bien !</li>
+<li>Choisis quelques monstres et note leurs PV et leurs attaques.</li></ul>
+<p><b>Pendant</b> 🎬</p><ul>
+<li>Commence par raconter ce qui s'est passé la dernière fois (tout est noté dans l'onglet <b>Journal</b>).</li>
+<li>Décris la scène, puis demande toujours : « <b>Que faites-vous ?</b> »</li>
+<li>Ne demande un jet de dé que si rater serait intéressant.</li>
+<li>Pour un combat : <b>Combat</b> → « Lancer un combat » → « + Ennemi / PNJ » (coche « PV cachés » pour que les joueurs voient « ??? ») → chacun note son initiative → « Tour suivant » pour avancer.</li>
+<li>Garde la <b>Vue MJ</b> ouverte pour voir d'un coup d'œil les PV et la magie de tout le monde.</li></ul>
+<p><b>Après</b> 📖</p><ul>
+<li>Écris un petit résumé dans le <b>Journal</b>.</li>
+<li>Partage le trésor dans <b>Commun</b> et choisis la prochaine date dans <b>Planning</b>.</li></ul>`],
+ ["🌟","Les règles d'or de la table",`<ul>
+<li>😄 Le but, c'est de <b>s'amuser ensemble</b>.</li>
+<li>🙋 Chacun <b>son tour de parole</b> : on laisse tout le monde jouer.</li>
+<li>⚖️ En cas de doute, <b>le MJ décide</b>, et on en reparle après la partie.</li>
+<li>💬 Le MJ dit plutôt « <b>Oui, mais…</b> » que « non » : tout est possible, mais pas sans risque !</li>
+<li>🚫 Si un sujet met quelqu'un mal à l'aise, on le dit et on l'enlève de l'histoire.</li>
+<li>📚 Pas besoin de tout connaître : on apprend en jouant.</li></ul>`],
+ ["📖","Le petit dictionnaire",`<ul class="dico">
+<li><b>MJ</b> : maître du jeu, le conteur.</li>
+<li><b>PJ</b> : personnage joueur, un héros joué par un joueur.</li>
+<li><b>PNJ</b> : personnage non joueur, joué par le MJ (marchand, roi, monstre…).</li>
+<li><b>d20, d6, d8…</b> : un dé à 20, 6 ou 8 faces. « 2d6 » veut dire : lance deux dés à 6 faces.</li>
+<li><b>DD</b> : le chiffre à battre avec le dé.</li>
+<li><b>PV</b> : points de vie.</li>
+<li><b>Défense</b> : le chiffre à battre pour toucher quelqu'un en combat.</li>
+<li><b>Round</b> : un tour complet où tout le monde a joué une fois.</li>
+<li><b>Sort</b> : un pouvoir magique.</li>
+<li><b>Emplacement</b> : une « charge » de magie pour lancer un sort.</li>
+<li><b>Repos</b> : une pause pour récupérer (court : 1 heure, long : une nuit).</li></ul>`]
+];
+function mjTabs(){const t=state.mjTab||"groupe";return '<div class="seg">'+[["groupe","👁️ Groupe"],["tuto","📖 Tutoriel"],["regles","📜 Règles maison"]].map(([k,l])=>'<button data-act="mjtab" data-v="'+k+'" class="'+(t===k?"on":"")+'">'+l+'</button>').join("")+'</div>'}
+function tutoPane(){return '<div class="hint" style="margin:0 0 10px">Tout pour apprendre à jouer, même si c\'est ta première fois ! Touche un titre pour l\'ouvrir. Les règles spéciales de votre table sont dans « Règles maison ».</div>'+
+  TUTO.map(([ic,t,h],i)=>'<details class="card tuto"'+(i===0?" open":"")+'><summary><span class="tic">'+ic+'</span>'+t+'</summary><div class="tbody">'+h+'</div></details>').join("")+
+  '<button class="btn" data-act="mjtab" data-v="regles" style="width:100%">📜 Voir les règles maison de la table</button>'}
+function reglesPane(){rgEnsure();const it=Object.entries(G.regles.items).sort((a,b)=>num(a[1].ord)-num(b[1].ord));
+  return '<div class="hint" style="margin:0 0 10px">Les règles spéciales de votre table, partagées avec tout le groupe. Quand une règle maison et une règle de base ne sont pas d\'accord, c\'est la règle maison qui gagne.</div>'+
+    it.map(([id,r])=>'<div class="card rgc">'+(readOnly?'<h3>'+esc(r.titre)+'</h3><p style="white-space:pre-wrap;margin:0">'+esc(r.texte)+'</p>':
+      '<div class="row" style="gap:8px"><input data-gk="groupe|regles|items.'+id+'.titre" value="'+esc(r.titre)+'" placeholder="Nom de la règle" style="flex:1;font-weight:600"><button class="del" data-act="rgdel" data-id="'+id+'">✕</button></div>'+
+      '<textarea data-gk="groupe|regles|items.'+id+'.texte" rows="'+Math.max(3,String(r.texte||"").split("\n").reduce((n,l)=>n+Math.ceil((l.length||1)/36),0)+1)+'" placeholder="Explique la règle simplement, avec un exemple…" style="margin-top:6px">'+esc(r.texte)+'</textarea>')+'</div>').join("")+
+    (it.length?'':'<div class="empty"><p>Aucune règle maison pour l\'instant.</p></div>')+
+    (readOnly?'':'<button class="btn pri" data-act="rgadd" style="width:100%">+ Ajouter une règle maison</button>')}
+
 // ===== Sons : synthés intégrés + sons enregistrés par les joueurs =====
 const SONS=new Map();
 let sndOn=true;try{sndOn=localStorage.getItem("fj_snd")!=="0"}catch(e){}
