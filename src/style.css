@@ -585,3 +585,12 @@ body.bgparch .reacbox h3{color:#8a2418}
 .tuto .tex{background:rgba(255,215,90,.12);border:1px solid rgba(255,215,90,.4);border-radius:10px;padding:10px 12px;margin:10px 0}
 .rgc textarea{width:100%;box-sizing:border-box}
 .rgc textarea{resize:vertical;field-sizing:content}
+
+.cfgc .cfg{padding:12px 0;border-top:1px solid var(--line)}
+.cfgc .cfg:first-of-type{border-top:0}
+.cfgc .cfgt{font-weight:600;font-size:16px}
+.cfgc .seg{margin:8px 0 6px}
+.cfgc .cfgx{font-size:14px;line-height:1.5;background:rgba(255,215,90,.10);border-radius:8px;padding:8px 10px}
+.armx{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:4px}
+.armx label{display:flex;flex-direction:column;font-size:12px;gap:2px}
+.armx input{width:100%;box-sizing:border-box;text-align:center}

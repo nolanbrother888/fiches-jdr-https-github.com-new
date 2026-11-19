@@ -287,17 +287,17 @@ function pane(c){
     SKILLS.map(([k,n,a])=>{const p=num(c.comp[k]||0);return '<div class="skill"><button class="prof p'+p+'" data-prof="'+k+'">'+(p===1?"M":p===2?"E":"")+'</button><div class="nm">'+n+'<small>('+ABN[a].slice(0,3)+')</small></div><input type="number" data-k="compBonus.'+k+'" data-t="n" value="'+(c.compBonus[k]||0)+'"><div class="tot" data-d="skill:'+k+'"></div></div>'}).join("")+
     '</div><div class="card"><h3>Sens passifs</h3><div class="big"><div><div class="small mute">Perception</div><div class="v" data-d="pp"></div></div><div><div class="small mute">Intuition</div><div class="v" data-d="pi"></div></div><div><div class="small mute">Investigation</div><div class="v" data-d="pinv"></div></div></div></div>';
 
-  case "combat": {const cap=ARMORS[c.armure]||100;const dm=defMode(c);return '<div class="card"><h3>Points de vie</h3><div class="bar" style="height:24px"><i data-d="pvbar"></i><i data-d="tmpbar" style="background:var(--blue);opacity:.7"></i><div class="t" data-d="pvtxt"></div></div>'+
+  case "combat": {const cap=armCap(c.armure);const dm=defMode(c);return '<div class="card"><h3>Points de vie</h3><div class="bar" style="height:24px"><i data-d="pvbar"></i><i data-d="tmpbar" style="background:var(--blue);opacity:.7"></i><div class="t" data-d="pvtxt"></div></div>'+
     '<div class="grid g3" style="margin-top:10px">'+F("Actuels","pv.act",c,"number",'data-t="n"')+F("Max","pv.max",c,"number",'data-t="n"')+F("Temporaires","pv.temp",c,"number",'data-t="n"')+'</div>'+
     '<div class="row" style="margin-top:10px"><input type="number" id="dmg" placeholder="Valeur" style="flex:1"><button class="btn" data-act="dmg" style="color:var(--bad)">Dégâts</button><button class="btn" data-act="heal" style="color:var(--acc)">Soin</button></div>'+dmgTypeRow(c)+'</div>'+
-    '<div class="card"><h3>Défense</h3><div class="seg">'+[["ca","🛡️ CA classique"],["pct","📊 Armure en %"]].map(([k,l])=>'<button data-act="defmode" data-v="'+k+'" class="'+(dm===k?"on":"")+'">'+l+'</button>').join("")+'</div>'+
+    '<div class="card"><h3>Défense</h3>'+(RC().def!=="perso"?'<div class="small mute" style="margin-bottom:8px">Réglé pour toute la table : '+(RC().def==="pct"?"armure en %":"CA classique")+' (Vue MJ › Règles maison).</div>':'<div class="seg">'+[["ca","🛡️ CA classique"],["pct","📊 Armure en %"]].map(([k,l])=>'<button data-act="defmode" data-v="'+k+'" class="'+(dm===k?"on":"")+'">'+l+'</button>').join("")+'</div>')+''+
     (dm==="pct"?'<div class="big" style="grid-template-columns:1fr 1fr"><div><div class="small mute">Armure physique %</div><input type="number" min="0" max="'+cap+'" data-k="res.physique" data-t="n" value="'+resPct(c,"physique")+'"></div><div><div class="small mute">Armure magique %</div><input type="number" min="0" max="100" data-k="res.magique" data-t="n" value="'+resPct(c,"magique")+'"></div></div>'+
       '<div class="hint" data-d="defhint" style="margin-top:8px">'+defHint(c)+'</div>'+
       '<label class="f" style="margin-top:10px">Type d\'armure</label><select data-k="armure" data-rr>'+Object.keys(ARMORS).map(a=>'<option '+(c.armure===a?"selected":"")+'>'+a+'</option>').join("")+'</select><div class="hint">Armure physique maximum avec ce type : '+cap+' %.</div>'
      :'<div class="big" style="grid-template-columns:1fr"><div><div class="small mute">Classe d\'armure (CA)</div><input type="number" data-k="ca" data-t="n" value="'+c.ca+'"></div></div><div class="hint" style="margin-top:8px">Défense classique : une attaque touche si son jet atteint la CA. Les dégâts sont pris en entier.</div>')+'</div>'+
     '<div class="card"><div class="big" style="grid-template-columns:repeat('+(dm==="pct"?3:2)+',1fr)">'+(dm==="pct"?'<div><div class="small mute">CA</div><input type="number" data-k="ca" data-t="n" value="'+c.ca+'"></div>':'')+'<div><div class="small mute">Initiative</div><div class="v" data-d="init"></div></div><div><div class="small mute">Vitesse (m)</div><input type="number" data-k="vitesse" data-t="n" value="'+c.vitesse+'"></div></div>'+
     '<div class="grid g2" style="margin-top:10px">'+F("Bonus d'initiative","initBonus",c,"number",'data-t="n"')+F("Dés de vie","desVie",c,"text",'placeholder="ex : 3d10 + 8d8"')+'</div></div>'+
-    '<div class="card"><h3>Jets contre la mort</h3><div class="row" style="justify-content:space-between"><span class="small">Succès</span><div class="pips">'+[1,2,3].map(i=>'<button class="pip '+(c.dsSucc>=i?"on":"")+'" data-pip="dsSucc" data-v="'+i+'"></button>').join("")+'</div>'+
+    '<div class="card"><h3>Jets contre la mort</h3>'+(RC().mort==="maison"?'<div class="hint" style="margin:-4px 0 8px">DD du prochain jet : <b style="font-size:18px">'+(10+num(c.tombe0)+num(c.dsSucc)+num(c.dsEch))+'</b> (10, +1 par jet déjà fait, +1 par fois où tu es déjà tombé à 0 PV)</div>':'')+'<div class="row" style="justify-content:space-between"><span class="small">Succès</span><div class="pips">'+[1,2,3].map(i=>'<button class="pip '+(c.dsSucc>=i?"on":"")+'" data-pip="dsSucc" data-v="'+i+'"></button>').join("")+'</div>'+
     '<span class="small">Échecs</span><div class="pips">'+[1,2,3].map(i=>'<button class="pip bad '+(c.dsEch>=i?"on":"")+'" data-pip="dsEch" data-v="'+i+'"></button>').join("")+'</div></div>'+
     '<div class="grid g2" style="margin-top:12px"><div><label class="f">Tombé à 0 PV</label><div class="counter"><button data-inc="tombe0" data-v="-1" data-min="0">−</button><input type="number" data-k="tombe0" data-t="n" value="'+c.tombe0+'"><button data-inc="tombe0" data-v="1">+</button></div></div>'+
     '<div><label class="f">Nombre de morts</label><div class="counter"><button data-inc="morts" data-v="-1" data-min="0">−</button><input type="number" data-k="morts" data-t="n" value="'+c.morts+'"><button data-inc="morts" data-v="1">+</button></div></div></div></div>'+
@@ -313,7 +313,7 @@ function pane(c){
     c.slots.map((s,i)=>'<div class="slot"><b>Niv '+(i+1)+'</b><input type="number" min="0" max="9" data-k="slots.'+i+'.max" data-t="n" data-rr value="'+s.max+'"><div class="pips">'+Array.from({length:num(s.max)},(_,j)=>'<button class="pip vio '+(s.used>j?"on":"")+'" data-slot="'+i+'" data-v="'+(j+1)+'"></button>').join("")+'</div></div>').join("")+
     '<h3 style="margin-top:14px">Emplacements de pacte (occultiste)</h3><div class="grid g2">'+F("Niveau des emplacements","pacte.niv",c,"number",'data-t="n"')+F("Nombre","pacte.max",c,"number",'data-t="n" data-rr')+'</div>'+
     '<div class="pips" style="margin-top:8px">'+Array.from({length:num(c.pacte.max)},(_,j)=>'<button class="pip vio '+(c.pacte.used>j?"on":"")+'" data-pacte="'+(j+1)+'"></button>').join("")+'</div>'+
-    '<button class="btn" data-act="rest" style="width:100%;margin-top:12px">🌙 Repos long (tout récupérer)</button></div>'+
+    '<button class="btn" data-act="rest" style="width:100%;margin-top:12px">🌙 Repos long ('+(RC().repos==="maison"?"niveau + Con en PV":"tout récupérer")+')</button></div>'+
     '<div class="card"><h3>Ressources de classe</h3><div class="hint" style="margin:-4px 0 6px">Ex : Inspiration bardique, Second souffle, Ki, Rage, Manifestation d\'écho…</div><div class="list">'+
     c.ressources.map((r,i)=>'<div class="it"><div class="grow"><input placeholder="Nom" data-k="ressources.'+i+'.nom" value="'+esc(r.nom)+'"><div class="row"><div class="counter"><button data-inc="ressources.'+i+'.act" data-v="-1" data-min="0">−</button><input type="number" data-k="ressources.'+i+'.act" data-t="n" value="'+r.act+'"><button data-inc="ressources.'+i+'.act" data-v="1">+</button></div><span class="mute">/</span><input type="number" style="width:56px" data-k="ressources.'+i+'.max" data-t="n" value="'+r.max+'"><select data-k="ressources.'+i+'.reset" style="flex:1"><option '+(r.reset==="Repos court"?"selected":"")+'>Repos court</option><option '+(r.reset==="Repos long"?"selected":"")+'>Repos long</option><option '+(r.reset==="Autre"?"selected":"")+'>Autre</option></select></div></div><button class="del" data-rm="ressources.'+i+'">✕</button></div>').join("")+
     '</div><button class="btn add" data-push="ressources">+ Ressource</button><button class="btn" data-act="short" style="width:100%;margin-top:8px">☕ Repos court</button></div>'+
@@ -386,9 +386,9 @@ function derive(){
 function rerenderPane(){const y=window.scrollY;if(state.view==="sheet"){const c=cur();const p=document.getElementById("pane");if(!p||!c)return;p.innerHTML=pane(c);derive()}else{const p=document.getElementById("hpane");if(p)p.innerHTML=homePane();if(state.home==="combat")derive()}lockRO();window.scrollTo(0,y)}
 function schedule(c){save("persos",c.id)}
 // Règle maison : l'armure retire un pourcentage des dégâts reçus (35 % d'armure physique = dégâts × 0,65)
-const resPct=(c,t)=>{if(!t||t==="brut")return 0;const v=num((c.res||{})[t]||0);return Math.max(0,Math.min(t==="physique"?(ARMORS[c.armure]||100):100,v))};
+const resPct=(c,t)=>{if(!t||t==="brut")return 0;const v=num((c.res||{})[t]||0);return Math.max(0,Math.min(t==="physique"?(armCap(c.armure)):100,v))};
 // Deux systèmes de défense au choix par perso : CA classique, ou armure en pourcentage
-const defMode=c=>c.defMode==="ca"||c.defMode==="pct"?c.defMode:((resPct(c,"physique")>0||resPct(c,"magique")>0)?"pct":"ca");
+const defMode=c=>RC().def!=="perso"?RC().def:c.defMode==="ca"||c.defMode==="pct"?c.defMode:((resPct(c,"physique")>0||resPct(c,"magique")>0)?"pct":"ca");
 const defTxt=c=>defMode(c)==="pct"?"Armure "+resPct(c,"physique")+" / "+resPct(c,"magique")+" %":"CA "+c.ca;
 const defCell=c=>defMode(c)==="pct"?'<div><small>Armure phys / mag</small><b>'+resPct(c,"physique")+' / '+resPct(c,"magique")+'<span style="font-size:11px"> %</span></b></div>':'<div><small>CA</small><b>'+c.ca+'</b></div>';
 const defHint=c=>{const a=resPct(c,"physique"),b=resPct(c,"magique");return "Dégâts physiques × "+mulTxt(a)+(a?" (on retire "+a+" %)":"")+" · dégâts magiques × "+mulTxt(b)+(b?" (on retire "+b+" %)":"")+"."};
@@ -409,7 +409,10 @@ app.addEventListener("input",e=>{
   if(el.id==="bibcls"){state.bibCls=el.value;rerenderPane();return}
   if(readOnly)return;
   if(el.dataset.cinit||el.dataset.cpv||el.dataset.cpvmax){const id=el.dataset.cinit||el.dataset.cpv||el.dataset.cpvmax;const f=el.dataset.cinit?"init":el.dataset.cpv?"pv":"pvmax";const l=(G.combat.lignes||{})[id];if(!l)return;
-    const v=el.value===""&&f==="init"?"":num(el.value);l[f]=v;clearTimeout(cbTimers[id+f]);cbTimers[id+f]=setTimeout(()=>cbUpdate({["lignes."+id+"."+f]:v}),600);return}
+    const v=el.value===""&&f==="init"?"":num(el.value);l[f]=v;
+    if(f==="init"&&RC().initGroupe&&!l.persoId&&l.camp!=="allie"){const up={};Object.entries(G.combat.lignes).forEach(([k,x])=>{if(!x.persoId&&x.camp!=="allie"){x.init=v;up["lignes."+k+".init"]=v}});clearTimeout(cbTimers.foeinit);cbTimers.foeinit=setTimeout(()=>cbUpdate(up),600);
+      document.querySelectorAll("[data-cinit]").forEach(i=>{const x=G.combat.lignes[i.dataset.cinit];if(i!==el&&x&&!x.persoId&&x.camp!=="allie")i.value=v});return}
+    clearTimeout(cbTimers[id+f]);cbTimers[id+f]=setTimeout(()=>cbUpdate({["lignes."+id+"."+f]:v}),600);return}
   if(el.dataset.gk){const [col,id,path]=el.dataset.gk.split("|");const o=getObj(col,id);if(!o)return;let v=el.type==="checkbox"?el.checked:el.value;if(el.dataset.t==="n")v=num(v);setP(o,path,v);save(col,id);
     if(el.dataset.rr!==undefined&&el.type==="checkbox")rerenderPane();return}
   const k=el.dataset.k;if(!k)return;const c=cur();if(!c||!canEdit(c))return;
@@ -465,6 +468,7 @@ function act(a,c,d){
   if(a==="cardopen"&&c){cardModal(c,d.key);return}
   if(a==="deckf"){state.deckF=d.f;rerenderPane();return}
   if(a==="defmode"&&c){c.defMode=d.v;schedule(c);rerenderPane();return}
+  if(a==="rcfg"){if(readOnly)return;rgEnsure();const raw=d.v,v=raw==="true"?true:raw==="false"?false:raw;G.regles.cfg=Object.assign({},G.regles.cfg,{[d.k]:v});save("groupe","regles");rerenderPane();return}
   if(a==="mjtab"){state.mjTab=d.v;rerenderPane();window.scrollTo(0,0);return}
   if(a==="rgadd"){rgEnsure();const ord=Math.max(-1,...Object.values(G.regles.items).map(r=>num(r.ord)))+1;G.regles.items["r"+uid()]={titre:"",texte:"",ord};save("groupe","regles");rerenderPane();setTimeout(()=>{const i=[...document.querySelectorAll('.rgc input')].pop();if(i)i.focus()},50);return}
   if(a==="rgdel"){const r=G.regles.items[d.id];confirmBox("Supprimer la règle « "+((r&&r.titre)||"sans nom")+" » pour tout le groupe ?",()=>{delete G.regles.items[d.id];save("groupe","regles");rerenderPane()});return}
@@ -501,9 +505,11 @@ function act(a,c,d){
   if(a==="dup"){const n=clone(c);n.id=uid();n.ownerId=myId||"";n.nom=c.nom+" (copie)";S.persos.set(n.id,n);save("persos",n.id,true);state.cur=n.id;render();toast("Copie créée");return}
   if(a==="rmavatar"){c.avatar="";schedule(c);render();return}
   if(a==="dmg"||a==="heal"){const v=Math.abs(num(document.getElementById("dmg").value));if(!v)return;sfx(a==="dmg"?"coup":"soin");
-    if(a==="dmg"){const t=defMode(c)==="pct"?dmgTypeOf(c):"brut",p=resPct(c,t),fin=Math.floor(v*(100-p)/100);applyHP(c,fin,false);if(p)toast(v+" × "+mulTxt(p)+" = "+fin+" dégâts subis (armure "+p+" %)")}else applyHP(c,v,true);
+    if(a==="dmg"){const t=defMode(c)==="pct"?dmgTypeOf(c):"brut",p=resPct(c,t),fin=roundD(v*(100-p)/100);applyHP(c,fin,false);if(p)toast(v+" × "+mulTxt(p)+" = "+fin+" dégâts subis (armure "+p+" %)")}else applyHP(c,v,true);
     schedule(c);rerenderPane();return}
-  if(a==="rest"){longRest(c);schedule(c);rerenderPane();toast("Repos long terminé");return}
+  if(a==="rest"){if(RC().repos==="maison"){const g=Math.max(1,level(c)+mod(c.car.con));const m=modal('<h2>🌙 Repos long</h2><p>Tu regagnes <b>'+g+' PV</b> (niveau '+level(c)+' + Constitution '+sg(mod(c.car.con))+'), et toute ta magie revient.</p><label class="row" style="gap:8px"><input type="checkbox" id="rbc" style="width:auto"> Bonnes conditions (lit, chaleur, repas) : PV ×2</label><div class="acts"><button class="btn" data-x>Annuler</button><button class="btn pri" data-ok>Se reposer</button></div>');
+      m.querySelector("[data-x]").onclick=()=>m.remove();m.querySelector("[data-ok]").onclick=()=>{const pv=c.pv.act,gain=g*(m.querySelector("#rbc").checked?2:1);longRest(c);c.pv.act=Math.min(c.pv.max,Math.max(0,pv)+gain);schedule(c);m.remove();rerenderPane();toast("Repos long : +"+(c.pv.act-Math.max(0,pv))+" PV, magie récupérée")};return}
+    longRest(c);schedule(c);rerenderPane();toast("Repos long terminé");return}
   if(a==="short"){c.pacte.used=0;c.ressources.forEach(r=>{if(r.reset==="Repos court")r.act=r.max});schedule(c);rerenderPane();toast("Repos court : pacte et ressources récupérés");return}
   if(a==="additem"){const cat=document.getElementById("newcat").value;c.items.push({cat,nom:"",qty:1,note:""});schedule(c);rerenderPane();return}
   if(a==="addcustom"){const t=document.getElementById("ctype").value;c.custom.push({nom:"",type:t,val:t==="case"?false:(t==="texte"?"":0),max:10});schedule(c);rerenderPane();return}
@@ -623,12 +629,14 @@ function attackModal(c,step,i){
     const ps=(a.sansPassifs?[]:(c.passifs||[])).filter(p=>passApplies(p,a)&&num(p.val));
     box.innerHTML='<h2>'+esc(a.nom)+'</h2>'+(a.carac&&atkRoll(a)?'<div class="small">Jet d\'attaque : <b>1d20 '+sg(atkHit(c,a))+'</b></div>':'')+(a.degats?'<div class="small mute">'+esc(a.degats)+'</div>':'')+
       '<div class="catt">Résultat de tes dés</div><div class="dice">'+(a.des||[]).map((d,j)=>'<label class="dl"><span>'+esc(d.n||"dé")+' '+esc(d.type||"")+'</span><input type="number" inputmode="numeric" placeholder="total" data-j="'+j+'" value="'+(inp[j]??"")+'"></label>').join("")+'</div>'+
-      '<label class="row small" style="margin-top:8px"><input type="checkbox" class="tog" id="acrit" '+(inp.crit?"checked":"")+'> Coup critique (tu lances 2× les dés)</label>'+
+      '<label class="row small" style="margin-top:8px"><input type="checkbox" class="tog" id="acrit" '+(inp.crit?"checked":"")+'> Coup critique ('+({double:"tu lances 2× les dés",max:"lance les dés normalement, on ajoute leur maximum",x2:"lance normalement, le total est doublé"})[RC().crit]+')</label>'+
+      (RC().intense?'<label class="row small" style="margin-top:6px"><input type="checkbox" class="tog" id="aint" '+(inp.intense?"checked":"")+'> 🎯 Lancer intense réussi (critique forcé)</label>':'')+
       (ps.length?'<div class="catt">Bonus ajoutés</div>'+ps.map((p,k)=>{const used=p.parTour&&state.eco["p_"+p.label];return '<label class="row small" style="margin:4px 0"><input type="checkbox" class="tog" data-pk="'+k+'" '+(used?"":"checked")+'> '+esc(p.label)+' +'+num(p.val)+(p.type?' '+esc(p.type):'')+(p.parTour?(used?' <span class="mute">(déjà utilisé ce tour)</span>':' <span class="mute">(1×/tour)</span>'):'')+'</label>'}).join(""):'')+
       '<div id="ares"></div><div class="acts"><button class="btn" data-back>‹ Actions</button><button class="btn pri" data-go>Calculer</button></div>';
     box.querySelector("[data-back]").onclick=()=>attackModal(c,"list");
     box.querySelectorAll("[data-j]").forEach(e=>e.oninput=()=>{inp[e.dataset.j]=e.value});
     box.querySelector("#acrit").onchange=e=>{inp.crit=e.target.checked};
+    {const ai=box.querySelector("#aint");if(ai)ai.onchange=e=>{inp.intense=e.target.checked;if(inp.intense){inp.crit=true;box.querySelector("#acrit").checked=true}}}
     let entry=null;
     box.querySelector("[data-go]").onclick=()=>{
       const on=new Set([...box.querySelectorAll("[data-pk]")].filter(e=>e.checked).map(e=>+e.dataset.pk));
@@ -649,7 +657,9 @@ function computeAtk(c,i,ps,spend){
   const a=c.attaques[i];const inp=state.atkIn[i]||{};const lines=[];const byType={};const notes=[];
   const mainType=(a.des&&a.des[0]&&a.des[0].type)||"";
   const add=(label,v,type)=>{if(!v)return;lines.push([label,v,type||""]);const t=type||"(arme)";byType[t]=(byType[t]||0)+v};
-  (a.des||[]).forEach((d,j)=>add("Dés "+(d.n||"")+(inp.crit?" (critique)":""),num(inp[j]),d.type||mainType));
+  const cm=RC().crit;(a.des||[]).forEach((d,j)=>{add("Dés "+(d.n||"")+(inp.crit&&cm==="double"?" (critique)":""),num(inp[j]),d.type||mainType);
+    if(inp.crit&&cm==="max"){const mx=String(d.n||"").replace(/\s/g,"").split("+").reduce((s,t)=>{const m=t.match(/^(\d*)d(\d+)$/i);return s+(m?(num(m[1])||1)*num(m[2]):0)},0);add("Critique : "+(d.n||"dés")+" au max",mx,d.type||mainType)}});
+  if(inp.intense)notes.push("🎯 Lancer intense : réussite critique, sans modificateur au jet.");
   if(a.carac&&a.modDegats!==false)add(ABN[a.carac],mod(c.car[a.carac]),mainType);
   (a.fixe||[]).forEach(f=>add(f.label||"Bonus",num(f.val),f.type||mainType));
   ps.forEach(p=>{if(p.siType&&!byType[p.siType])return;add(p.label,num(p.val),p.type||mainType);if(p.parTour)state.eco["p_"+p.label]=true});
@@ -657,6 +667,7 @@ function computeAtk(c,i,ps,spend){
   (a.sansPassifs?[]:(c.passifs||[])).forEach(p=>{if(p.note&&passApplies(p,a)&&(!p.siType||byType[p.siType]))notes.push(p.note)});
   if(inp.crit)(c.passifs||[]).forEach(p=>{if(p.noteCrit&&passApplies(p,a))notes.push(p.noteCrit)});
   let coutTxt="";if(a.cout){const r=c.ressources.find(x=>x.nom===a.cout);if(r){if(!spend)coutTxt=a.cout+" : "+num(r.act)+" restant";else if(num(r.act)>0){r.act=num(r.act)-1;coutTxt=a.cout+" : "+r.act+" restant";schedule(c)}else coutTxt="⚠️ Plus de "+a.cout+" !"}}
+  if(inp.crit&&cm==="x2"){Object.keys(byType).forEach(t=>{lines.push(["Critique ×2 ("+(t==="(arme)"?"arme":t)+")",byType[t],t==="(arme)"?"":t]);byType[t]*=2})}
   const total=Object.values(byType).reduce((s,v)=>s+v,0);
   return {total,types:byType,html:'<div class="atkres">'+lines.map(([l,v,t])=>'<div class="rl"><span>'+esc(l)+'</span><b>'+sg(v)+'</b><span class="mute">'+esc(t)+'</span></div>').join("")+
     '<div class="rt">Total : <b>'+total+'</b> dégâts</div><div class="small mute">'+Object.entries(byType).map(([t,v])=>v+" "+t).join(" · ")+'</div>'+
@@ -888,13 +899,29 @@ function tiltBind(m){
   let base=null;const ori=e=>{if(!m.isConnected){window.removeEventListener("deviceorientation",ori);return}if(e.gamma==null||e.beta==null||touching)return;if(!base)base=[e.gamma,e.beta];set(cl((e.gamma-base[0])/22),cl((e.beta-base[1])/22),true)};
   window.addEventListener("deviceorientation",ori);
 }
-// ===== Vue MJ : tutoriel (facile, même pour les enfants) et règles maison =====
-const RG_DEF=[
-  ["🛡️ L'armure en pourcentage","Chez nous, l'armure enlève une partie des dégâts.\nExemple : avec 35 % d'armure, si un monstre te fait 10 dégâts, tu n'en perds que 6 (on garde 65 %, arrondi en dessous).\nIl y a l'armure physique (épées, flèches, coups) et l'armure magique (sorts).\nDans l'appli : choisis le type de dégâts, puis appuie sur « Dégâts », le calcul est fait tout seul."],
-  ["🤝 L'intervention","Quand un ami juste à côté de toi se fait attaquer, tu peux te jeter devant lui pour le protéger !\nÇa utilise ta réaction et la moitié de ton déplacement qui te reste.\nLe MJ décide du jet et de ce qui se passe."],
-  ["🎯 Le lancer intense","Parfois, le MJ demande un « lancer intense » : ce jet compte comme une super réussite ou un énorme raté, sans aucun bonus."],
-  ["❤️ Se soigner et tomber K.O.","En dormant (repos long), tu récupères des PV : ton niveau + ton bonus de Constitution (le double si tu dors bien au chaud).\nÀ 0 PV, tu tombes K.O. : à chaque tour, tu lances un dé pour survivre (il faut 10 ou plus, puis 11, puis 12…). Un ami peut t'aider avec un jet de Médecine (10 ou plus).\nSi tu es sauvé, tu te relèves avec 1 PV mais tu es très fatigué.\nSi tu reviens de la mort, tu gardes une cicatrice pour toujours : -1 dé de vie et -1 en Constitution."]
+// ===== Réglages de la table (règles maison qui changent l'appli) =====
+const RC_DEF={def:"perso",crit:"double",repos:"officiel",mort:"officiel",intervention:true,intense:false,pvCaches:true,arrondi:"bas",initGroupe:false,armMax:{}};
+const RC=()=>Object.assign({},RC_DEF,(G.regles&&G.regles.cfg)||{});
+const armCap=n=>{const v=(RC().armMax||{})[n];return v!==undefined&&v!==""?num(v):(ARMORS[n]||100)};
+const roundD=x=>RC().arrondi==="haut"?Math.ceil(x):Math.floor(x);
+const REGLAGES=[
+ ["def","🛡️ La défense","Comment on se protège des coups.",[["perso","Chaque perso choisit"],["ca","CA classique"],["pct","Armure en %"]],{perso:"Chaque joueur choisit sur sa fiche.",ca:"Officiel : pour te toucher, l'ennemi doit faire au moins ta CA avec son dé.",pct:"L'armure enlève un pourcentage des dégâts. Avec 35 %, 10 dégâts deviennent 6."}],
+ ["crit","💥 Les coups critiques","Ce qui se passe quand on fait 20 au dé.",[["double","Doubler les dés"],["max","Dés au max + dés"],["x2","Tout ×2"]],{double:"Officiel : tu lances deux fois plus de dés de dégâts.",max:"Plus fort : on compte les dés au maximum, puis tu les lances en plus.",x2:"Simple : tu lances normalement et on double le total."}],
+ ["repos","🌙 Le repos long","Ce qu'on récupère après une nuit de sommeil.",[["officiel","Tout récupérer"],["maison","Niveau + Con"]],{officiel:"Officiel : tous les PV et toute la magie reviennent.",maison:"Plus dur : tu regagnes ton niveau + ton bonus de Constitution en PV (le double si tu dors bien au chaud). La magie revient."}],
+ ["mort","💀 Tomber à 0 PV","Les jets pour survivre quand on est K.O.",[["officiel","3 réussites / 3 échecs"],["maison","Le DD monte"]],{officiel:"Officiel : à chaque tour, fais 10 ou plus. 3 réussites = sauvé, 3 échecs = mort.",maison:"Plus tendu : il faut 10, puis 11, puis 12… Et à chaque fois qu'on est sauvé, le DD de départ monte de 1 pour toujours."}],
+ ["intervention","🤝 L'intervention","Se jeter devant un ami pour le protéger.",[[true,"Activée"],[false,"Désactivée"]],{true:"Une carte « Intervention » apparaît dans tes réactions : tu utilises la moitié de ton déplacement pour protéger un ami juste à côté.",false:"Pas de carte Intervention."}],
+ ["intense","🎯 Le lancer intense","Un jet où tout se joue.",[[true,"Activé"],[false,"Désactivé"]],{true:"Le MJ peut demander un lancer intense : c'est forcément une super réussite ou un gros raté, sans bonus. Une case apparaît dans les attaques.",false:"Pas de lancer intense."}],
+ ["pvCaches","🙈 PV des ennemis cachés","Ce que les joueurs voient des monstres.",[[true,"Cachés (???)"],[false,"Visibles"]],{true:"Les joueurs voient « ??? » à la place des PV des ennemis. Plus de suspense !",false:"Tout le monde voit les PV des ennemis."}],
+ ["arrondi","🔢 L'arrondi des dégâts","Quand l'armure donne un nombre à virgule.",[["bas","Vers le bas"],["haut","Vers le haut"]],{bas:"6,5 dégâts deviennent 6 : un peu plus gentil pour les héros.",haut:"6,5 dégâts deviennent 7 : un peu plus dangereux."}],
+ ["initGroupe","🎲 L'initiative des monstres","L'ordre de passage des ennemis.",[[false,"Chacun la sienne"],[true,"Tous ensemble"]],{false:"Chaque monstre a sa propre initiative.",true:"Tous les ennemis jouent au même moment : tu changes l'initiative d'un monstre, tous les autres suivent. Plus rapide pour le MJ."}]
 ];
+function reglagesHtml(){const c=RC(),ro=readOnly;
+  return '<div class="card cfgc"><h3>⚙️ Réglages de la table</h3><p class="small mute" style="margin:-4px 0 6px">Choisissez vos règles : l\'appli s\'adapte toute seule. Ces réglages comptent pour tout le groupe.</p>'+
+   REGLAGES.map(([k,t,sub,opts,ex])=>{const cur=c[k];return '<div class="cfg"><div class="cfgt">'+t+'</div><div class="small mute">'+sub+'</div><div class="seg">'+opts.map(([v,l])=>'<button '+(ro?'disabled ':'')+'data-act="rcfg" data-k="'+k+'" data-v="'+v+'" class="'+(String(cur)===String(v)?"on":"")+'">'+l+'</button>').join("")+'</div><div class="cfgx">'+(ex[String(cur)]||"")+'</div>'+
+     (k==="def"&&cur!=="ca"?'<div class="small mute" style="margin-top:6px">Armure maximum par type (%)</div><div class="armx">'+Object.keys(ARMORS).filter(n=>n!=="Aucune").map(n=>'<label><span>'+n+'</span><input type="number" min="0" max="100" '+(ro?'disabled ':'')+'data-gk="groupe|regles|cfg.armMax.'+n+'" data-t="n" value="'+armCap(n)+'"></label>').join("")+'</div>':'')+'</div>'}).join("")+'</div>'}
+
+// ===== Vue MJ : tutoriel (facile, même pour les enfants) et règles maison =====
+const RG_DEF=[];
 function rgEnsure(){if(!G.regles)G.regles={items:{},init:false};if(!G.regles.items)G.regles.items={};
   if(!G.regles.init&&!readOnly){RG_DEF.forEach(([titre,texte],i)=>{G.regles.items["r"+uid()]={titre,texte,ord:i}});G.regles.init=true;save("groupe","regles")}}
 const TUTO=[
@@ -971,7 +998,8 @@ function tutoPane(){return '<div class="hint" style="margin:0 0 10px">Tout pour 
   TUTO.map(([ic,t,h],i)=>'<details class="card tuto"'+(i===0?" open":"")+'><summary><span class="tic">'+ic+'</span>'+t+'</summary><div class="tbody">'+h+'</div></details>').join("")+
   '<button class="btn" data-act="mjtab" data-v="regles" style="width:100%">📜 Voir les règles maison de la table</button>'}
 function reglesPane(){rgEnsure();const it=Object.entries(G.regles.items).sort((a,b)=>num(a[1].ord)-num(b[1].ord));
-  return '<div class="hint" style="margin:0 0 10px">Les règles spéciales de votre table, partagées avec tout le groupe. Quand une règle maison et une règle de base ne sont pas d\'accord, c\'est la règle maison qui gagne.</div>'+
+  return '<div class="hint" style="margin:0 0 10px">Les règles spéciales de votre table, partagées avec tout le groupe. Quand une règle maison et une règle de base ne sont pas d\'accord, c\'est la règle maison qui gagne.</div>'+reglagesHtml()+
+    '<div class="catt" style="margin-top:14px">✍️ Vos règles écrites</div><p class="small mute" style="margin:0 0 8px">Pour tout le reste, écrivez vos propres règles ici, simplement, avec un exemple.</p>'+
     it.map(([id,r])=>'<div class="card rgc">'+(readOnly?'<h3>'+esc(r.titre)+'</h3><p style="white-space:pre-wrap;margin:0">'+esc(r.texte)+'</p>':
       '<div class="row" style="gap:8px"><input data-gk="groupe|regles|items.'+id+'.titre" value="'+esc(r.titre)+'" placeholder="Nom de la règle" style="flex:1;font-weight:600"><button class="del" data-act="rgdel" data-id="'+id+'">✕</button></div>'+
       '<textarea data-gk="groupe|regles|items.'+id+'.texte" rows="'+Math.max(3,String(r.texte||"").split("\n").reduce((n,l)=>n+Math.ceil((l.length||1)/36),0)+1)+'" placeholder="Explique la règle simplement, avec un exemple…" style="margin-top:6px">'+esc(r.texte)+'</textarea>')+'</div>').join("")+
@@ -1308,7 +1336,7 @@ function deckCards(c){
   c.dons.forEach((d,i)=>{const e=ecoOf(d.desc,"passif");const r=e!=="passif"?linkRes(c,d.nom):null;
     cards.push({elem:e==="passif"?"passif":"capa",medal:r?String(num(r.act)):(e==="passif"?"∞":"•"),flavor:(d.desc||"").slice(0,110),key:"cap:"+d.nom,type:"capacite",nom:d.nom,icon:e==="passif"?"🛡️":"🌀",eco:e,sub:r?r.nom+" : "+num(r.act)+"/"+num(r.max):(e==="passif"?"Effet permanent":""),
       tags:[],cost:r?"1 utilisation":"",empty:r&&num(r.act)<=0,desc:d.desc||"",play:e==="passif"?null:()=>{if(r){if(num(r.act)<=0){toast("Plus d'utilisation pour "+r.nom);return}r.act=num(r.act)-1;schedule(c)}toast(d.nom+" utilisé"+(r?" ("+r.act+" restant)":""));rerenderPane()}})});
-  cards.push({elem:"capa",medal:"↺",flavor:"",key:"cap:__intervention",type:"capacite",nom:"Intervention",icon:"🛡️",eco:"reac",sub:"Règle de la table",tags:[],cost:"",desc:"Réaction : quand une attaque (projectile, mêlée ou sort) cible un allié juste à côté de toi, tu utilises la moitié de ton déplacement encore disponible pour t'interposer. Le MJ décide du jet et des conséquences.",play:()=>{toast("Intervention : préviens le MJ, il décide du jet");rerenderPane()}});
+  if(RC().intervention!==false)cards.push({elem:"capa",medal:"↺",flavor:"",key:"cap:__intervention",type:"capacite",nom:"Intervention",icon:"🛡️",eco:"reac",sub:"Règle de la table",tags:[],cost:"",desc:"Réaction : quand une attaque (projectile, mêlée ou sort) cible un allié juste à côté de toi, tu utilises la moitié de ton déplacement encore disponible pour t'interposer. Le MJ décide du jet et des conséquences.",play:()=>{toast("Intervention : préviens le MJ, il décide du jet");rerenderPane()}});
   return cards;
 }
 const ECOI={action:"⚔",bonus:"✦",reac:"↺",passif:"◈",libre:"•"};
@@ -1514,7 +1542,7 @@ function combatSheet(c){
     '<div class="catt">Emplacements de sorts</div>'+(slotRows||'<div class="small mute">Aucun emplacement renseigné.</div>')+
     (canCalc&&(noSlots||state.showCalc)?'<button class="btn add" data-act="slotcalc">✨ Calculer mes emplacements (règles D&D) : '+esc(slotText(r))+'</button>':'')+
     '<div class="catt">États</div><div class="chips">'+ETATS.map(e=>'<button class="chip '+(c.etats.includes(e)?"on":"")+'" data-etat="'+e+'">'+e+'</button>').join("")+'</div>'+
-    '<details class="don rules"><summary>📜 Règles de la table</summary><div class="small"><b>Intervention</b> : quand une attaque (projectile, mêlée ou sort) cible un joueur, un autre joueur juste à côté peut, par sa réaction, utiliser la moitié de son déplacement encore disponible pour s\'interposer et l\'intercepter. Le jet à réussir et les conséquences sont décidés par le MJ.<br><br><b>Lancer intense</b> : le MJ peut demander un jet intense. Il devient critique : réussite ou échec critique selon le résultat. Aucun modificateur ne s\'ajoute.<br><br><b>À 0 PV</b> : jet contre la mort DD 10, +1 par tour. 20 = 3 succès, 1 = 2 échecs, subir des dégâts = 1 échec. Tu peux ajouter des dés de vie au jet. Un allié peut donner un succès avec Médecine DD 10.</div></details>'+
+    '<details class="don rules"><summary>📜 Règles de la table</summary><div class="small">'+REGLAGES.map(([k,t,sub,opts,ex])=>'<div style="margin:6px 0"><b>'+t+'</b> : '+(ex[String(RC()[k])]||"")+'</div>').join("")+Object.values((G.regles&&G.regles.items)||{}).sort((a,b)=>num(a.ord)-num(b.ord)).map(r=>'<div style="margin:6px 0"><b>'+esc(r.titre)+'</b> : '+esc(r.texte).replace(/\n/g,"<br>")+'</div>').join("")+'</div></details>'+
     '<button class="btn" data-act="short" style="width:100%;margin-top:14px">☕ Repos court</button></div>';
 }
 function castSpell(c,i,after){
@@ -1536,7 +1564,7 @@ function combatAct(a,d){
   if(a==="cbnext"){const L=lignesTriees(cb);if(!L.length)return true;const i=L.findIndex(l=>l.id===cb.tour);let tour,round=num(cb.round||1);
     if(i<0)tour=L[0].id;else if(i>=L.length-1){tour=L[0].id;round++}else tour=L[i+1].id;
     G.combat.tour=tour;G.combat.round=round;cbUpdate({tour,round});{const nl=cb.lignes[tour];sfx(nl&&!nl.persoId&&nl.camp!=="allie"?"ennemi":"tour")}rerenderPane();return true}
-  if(a==="cbaddpnj"){const m=modal('<h2>Ajouter un ennemi / PNJ</h2><div class="grid"><div><label class="f">Nom</label><input id="pn" placeholder="Gobelin 1"></div><div class="grid g2"><div><label class="f">Initiative</label><input id="pi" type="number" inputmode="numeric"></div><div><label class="f">PV (facultatif)</label><input id="pp" type="number" inputmode="numeric"></div></div><div class="grid g2"><div><label class="f">Nombre</label><input id="pq" type="number" value="1" min="1" max="20"></div><div><label class="f">Camp</label><select id="pc"><option value="ennemi">Ennemi</option><option value="allie">Allié / PNJ</option></select></div></div><label class="row" style="gap:8px;font-size:14px"><input type="checkbox" id="ph" checked style="width:auto"> PV cachés : les autres joueurs voient « ??? »</label></div><div class="acts"><button class="btn" data-x>Annuler</button><button class="btn pri" data-ok>Ajouter</button></div>');
+  if(a==="cbaddpnj"){const m=modal('<h2>Ajouter un ennemi / PNJ</h2><div class="grid"><div><label class="f">Nom</label><input id="pn" placeholder="Gobelin 1"></div><div class="grid g2"><div><label class="f">Initiative</label><input id="pi" type="number" inputmode="numeric"></div><div><label class="f">PV (facultatif)</label><input id="pp" type="number" inputmode="numeric"></div></div><div class="grid g2"><div><label class="f">Nombre</label><input id="pq" type="number" value="1" min="1" max="20"></div><div><label class="f">Camp</label><select id="pc"><option value="ennemi">Ennemi</option><option value="allie">Allié / PNJ</option></select></div></div><label class="row" style="gap:8px;font-size:14px"><input type="checkbox" id="ph" '+(RC().pvCaches?"checked":"")+' style="width:auto"> PV cachés : les autres joueurs voient « ??? »</label></div><div class="acts"><button class="btn" data-x>Annuler</button><button class="btn pri" data-ok>Ajouter</button></div>');
     m.querySelector("[data-x]").onclick=()=>m.remove();
     m.querySelector("[data-ok]").onclick=()=>{const nom=m.querySelector("#pn").value.trim()||"Monstre",init=m.querySelector("#pi").value,pv=num(m.querySelector("#pp").value),qn=clamp(num(m.querySelector("#pq").value)||1,1,20),camp=m.querySelector("#pc").value,cache=m.querySelector("#ph").checked;const f={};
       for(let k=0;k<qn;k++){const id="m"+uid();const l={nom:qn>1?nom+" "+(k+1):nom,init:init===""?"":num(init),persoId:"",pv,pvmax:pv,camp,cache,by:myId};G.combat.lignes[id]=l;f["lignes."+id]=l}
