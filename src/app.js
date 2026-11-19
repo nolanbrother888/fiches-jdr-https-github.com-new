@@ -18,8 +18,8 @@ const CATS=["Équipé magique","Équipé non magique","Sac","Potions","Bouffe","
 const ECOLES=["Abjuration","Divination","Enchantement","Évocation","Illusion","Invocation","Nécromancie","Transmutation"];
 const RARETES=["Commun","Peu commun","Rare","Très rare","Légendaire","Artefact"];
 const COLORS=["#7bd88f","#6cb6ff","#b48cff","#f0a35e","#e5645c","#f2d16b","#5fd3c8","#e88ad0","#c0c0c0"];
-const TABS=[["id","Identité","🪪"],["car","Caracs","🎲"],["comp","Compét.","<i class=\"kic kpar\"></i>"],["combat","Combat","<i class=kic></i>"],["sorts","Sorts","✨"],["inv","Inventaire","🎒"],["dons","Dons","⭐"],["perso","Perso","🧩"],["notes","Notes","📝"]];
-const HTABS=[["persos","Persos","🧙"],["combat","Combat","<i class=kic></i>"],["mj","Vue MJ","<i class=\"kic kmj\"></i>"],["biblio","Biblio","📚"],["cartes","Cartes","🗺️"],["commun","Commun","💰"],["planning","Planning","📅"],["journal","Journal","📖"]];
+const TABS=[["id","Identité","🪪"],["car","Caracs","🎲"],["comp","Compét.","<i class=\"kic kpar\"></i>"],["combat","Combat","<i class=\"emb e-combat\"><i></i></i>"],["sorts","Sorts","✨"],["inv","Inventaire","<i class=\"emb e-inventaire\"><i></i></i>"],["dons","Dons","⭐"],["perso","Perso","🧩"],["notes","Notes","<i class=\"emb e-journal\"><i></i></i>"]];
+const HTABS=[["persos","Persos","<i class=\"emb e-perso\"><i></i></i>"],["combat","Combat","<i class=\"emb e-combat\"><i></i></i>"],["mj","Vue MJ","<i class=\"emb e-mj\"><i></i></i>"],["biblio","Biblio","📚"],["cartes","Cartes","<i class=\"emb e-carte\"><i></i></i>"],["commun","Commun","<i class=\"emb e-inventaire\"><i></i></i>"],["planning","Planning","📅"],["journal","Journal","<i class=\"emb e-journal\"><i></i></i>"]];
 const DISPO=["","oui","peut","non"];const DLAB={"":"?","oui":"Oui","peut":"Peut-être","non":"Non"};
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -174,13 +174,14 @@ function render(){
   if(state.view==="sheet"){const c=cur();if(!c){state.view="home";return render()}
     app.innerHTML='<div class="top"><div class="wrap"><button class="ico" data-act="back">‹</button>'+avatar(c,36)+'<h1 data-d="title">'+esc(c.nom)+'</h1><span class="status" id="st">'+esc(saveStatus)+'</span></div></div>'+
       '<div class="wrap">'+roBanner()+(!readOnly&&!canEdit(c)?'<div class="ro">🔒 Fiche d\'un autre joueur : lecture seule.</div>':'')+(!readOnly&&!c.ownerId&&myId?'<div class="ro" style="border-color:var(--acc);color:var(--acc);background:#1f3326">Cette fiche n\'a pas encore de propriétaire. <button class="btn sm" data-act="mine" style="margin-left:6px">C\'est mon perso</button></div>':'')+'<div id="pane">'+pane(c)+'</div></div>'+
-      '<nav class="tabs"><div class="in">'+TABS.map(t=>'<button data-tab="'+t[0]+'" class="'+(state.tab===t[0]?"on":"")+'"><b>'+t[2]+'</b>'+t[1]+'</button>').join("")+'</div></nav>';
-    derive();lockRO();return}
+      '<nav class="tabs"><div class="in">'+TABS.map(t=>'<button data-tab="'+t[0]+'" class="'+(state.tab===t[0]?"on"+(state._ptab!==state.tab?" pop":""):"")+'"><b>'+t[2]+'</b>'+t[1]+'</button>').join("")+'</div></nav>';
+    derive();lockRO();state._ptab=state.tab;state._phome=state.home;return}
   const title={persos:"<i class=kic></i> JDR Fable",combat:"<i class=kic></i> Combat",mj:"<i class=\"kic kmj\"></i> Vue MJ",biblio:"📚 Bibliothèque",cartes:"🗺️ Cartes",commun:"💰 Inventaire commun",planning:"📅 Planning",journal:"📖 Journal"}[state.home];
   app.innerHTML='<div class="top"><div class="wrap"><h1>'+title+'</h1><span class="status" id="st">'+esc(saveStatus)+'</span>'+(state.home==="persos"?'<button class="ico" data-act="io" title="Importer / exporter">⇅</button><button class="ico" data-act="logout" title="Se déconnecter">⎋</button>':'')+'</div></div>'+
     '<div class="wrap">'+roBanner()+'<div id="hpane">'+homePane()+'</div></div>'+
-    '<nav class="tabs"><div class="in">'+HTABS.map(t=>'<button data-htab="'+t[0]+'" class="'+(state.home===t[0]?"on":"")+'"><b>'+t[2]+'</b>'+t[1]+'</button>').join("")+'</div></nav>';
+    '<nav class="tabs"><div class="in">'+HTABS.map(t=>'<button data-htab="'+t[0]+'" class="'+(state.home===t[0]?"on"+(state._phome!==state.home?" pop":""):"")+'"><b>'+t[2]+'</b>'+t[1]+'</button>').join("")+'</div></nav>';
   lockRO();if(state.home==="combat")derive();
+  state._ptab=state.tab;state._phome=state.home;
 }
 function lockRO(){if(state.view==="sheet"&&!canEdit(cur())){app.querySelectorAll("#pane input,#pane select,#pane textarea,#pane button:not([data-tab])").forEach(e=>e.disabled=true);return}if(!readOnly)return;app.querySelectorAll("#pane input,#pane select,#pane textarea,#hpane input,#hpane select,#hpane textarea").forEach(e=>{if(e.id!=="bibq"&&e.id!=="bibniv")e.disabled=true})}
 

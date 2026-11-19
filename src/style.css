@@ -594,3 +594,34 @@ body.bgparch .reacbox h3{color:#8a2418}
 .armx{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:4px}
 .armx label{display:flex;flex-direction:column;font-size:12px;gap:2px}
 .armx input{width:100%;box-sizing:border-box;text-align:center}
+
+/* ===== Emblèmes animés des onglets ===== */
+.tabs button b{height:34px}
+.emb{position:relative;display:block;width:34px;height:34px;background:center/contain no-repeat;transition:filter .3s,opacity .3s,transform .3s;--glow:#fff}
+.emb>i{position:absolute;inset:0;pointer-events:none;border-radius:50%}
+.e-combat{background-image:url(img/emb/combat.webp);--glow:#ff5a3a}
+.e-perso{background-image:url(img/emb/perso.webp);--glow:#4aa8ff}
+.e-journal{background-image:url(img/emb/journal.webp);--glow:#ffc24a}
+.e-mj{background-image:url(img/emb/mj.webp);--glow:#b45aff}
+.e-inventaire{background-image:url(img/emb/inventaire.webp);--glow:#3ad59a}
+.e-carte{background-image:url(img/emb/carte.webp);--glow:#5ab4ff}
+.tabs button:not(.on) .emb{filter:saturate(.55) brightness(.82);opacity:.9;transform:scale(.9)}
+.tabs button.on .emb{filter:brightness(1.12) drop-shadow(0 0 5px var(--glow));animation:embFloat 3.2s ease-in-out infinite}
+.tabs button.on.pop .emb{animation:embPop .6s cubic-bezier(.3,1.6,.5,1),embFloat 3.2s ease-in-out .6s infinite}
+@keyframes embFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes embPop{0%{transform:scale(.6) rotate(-12deg);filter:brightness(2.2) drop-shadow(0 0 12px var(--glow))}60%{transform:scale(1.18) rotate(4deg)}100%{transform:scale(1) rotate(0)}}
+/* effets propres à chaque emblème, seulement sur l'onglet actif */
+.tabs button.on .e-combat>i{background:linear-gradient(125deg,transparent 42%,rgba(255,235,210,.95) 50%,transparent 58%) 160% 0/250% 100% no-repeat;mix-blend-mode:screen;animation:embSlash 2.8s ease-in-out 1s infinite}
+@keyframes embSlash{0%,55%{background-position:160% 0}75%,100%{background-position:-60% 0}}
+.tabs button.on .e-perso>i{background:radial-gradient(circle at 50% 45%,rgba(90,170,255,.55),transparent 62%);animation:embBreath 2.6s ease-in-out infinite}
+.tabs button.on .e-mj>i{background:radial-gradient(circle at 50% 74%,rgba(200,120,255,.9),transparent 30%);mix-blend-mode:screen;animation:embBreath 2.2s ease-in-out infinite}
+.tabs button.on .e-inventaire>i{background:radial-gradient(circle at 22% 68%,rgba(160,255,230,.95),transparent 9%),radial-gradient(circle at 34% 84%,rgba(255,225,130,.95),transparent 8%);mix-blend-mode:screen;animation:embTwinkle 2.4s ease-in-out infinite}
+.tabs button.on .e-journal>i{background:radial-gradient(circle at 74% 28%,rgba(255,230,150,.95),transparent 8%),radial-gradient(circle at 30% 30%,rgba(255,210,120,.8),transparent 7%),radial-gradient(circle at 60% 60%,rgba(255,240,190,.7),transparent 6%);mix-blend-mode:screen;animation:embTwinkle 2s ease-in-out infinite alternate}
+@keyframes embBreath{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes embTwinkle{0%,100%{opacity:0}40%,60%{opacity:1}}
+/* carte : boussole qui tourne + tracé lumineux */
+.e-carte>i{border-radius:0}
+.tabs button.on .e-carte>i{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M22 70 C35 55 44 66 55 50 S72 38 80 30' fill='none' stroke='%23ffe9a8' stroke-width='3' stroke-linecap='round' stroke-dasharray='6 7' opacity='.95'%3E%3Canimate attributeName='stroke-dashoffset' from='52' to='0' dur='1.6s' repeatCount='indefinite'/%3E%3C/path%3E%3C/svg%3E") center/100% 100% no-repeat}
+.tabs button.on .e-carte::after{content:"";position:absolute;left:39%;top:2%;width:22%;height:22%;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-10 -10 20 20'%3E%3Cpath d='M0-10 1.6-1.6 10 0 1.6 1.6 0 10-1.6 1.6-10 0-1.6-1.6Z' fill='%23ffd86a' stroke='%237a5300' stroke-width='.6'/%3E%3Ccircle r='1.6' fill='%23fff6d0'/%3E%3C/svg%3E") center/contain no-repeat;filter:drop-shadow(0 0 3px #ffd86a);animation:embSpin 4s linear infinite}
+@keyframes embSpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.tabs .emb,.tabs .emb>i,.tabs .emb::after{animation:none!important}}
