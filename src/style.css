@@ -563,6 +563,7 @@ body.bgparch .reacbox h3{color:#8a2418}
 .tabs button b .kic{display:block;width:24px;height:24px}
 .kic.kmj{background-image:url(img/oeil.svg)}
 .kic.kpar{background-image:url(img/parchemin.svg)}
+.kic.kbib{background-image:url(img/emb/biblio.webp)}
 
 .sndline{display:flex;align-items:center;gap:8px;margin:10px 0 0;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:rgba(0,0,0,.25);font-size:14px}
 .sndline span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -602,6 +603,9 @@ body.bgparch .reacbox h3{color:#8a2418}
 .e-combat{background-image:url(img/emb/combat.webp);--glow:#ff5a3a}
 .e-perso{background-image:url(img/emb/perso.webp);--glow:#4aa8ff}
 .e-journal{background-image:url(img/emb/journal.webp);--glow:#ffc24a}
+.e-biblio{background-image:url(img/emb/biblio.webp);--glow:#ff8a2a;border-radius:0}
+.e-biblio>i{border-radius:0}
+.tabs button.on .e-biblio>i{background:linear-gradient(115deg,transparent 40%,rgba(255,230,180,.85) 50%,transparent 60%) 160% 0/250% 100% no-repeat;-webkit-mask:url(img/emb/biblio.webp) center/contain no-repeat;mask:url(img/emb/biblio.webp) center/contain no-repeat;mix-blend-mode:screen;animation:embSlash 3s ease-in-out 1s infinite}
 .e-mj{background-image:url(img/emb/mj.webp);--glow:#b45aff}
 .e-inventaire{background-image:url(img/emb/inventaire.webp);--glow:#3ad59a}
 .e-carte{background-image:url(img/emb/carte.webp);--glow:#5ab4ff}
