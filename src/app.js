@@ -1472,6 +1472,21 @@ const CARD_IMGS=[
   {n:"coup au but",ex:1,src:"img/sorts/coup-au-but.jpg",fx:"ripple",col:"#ff4a4a",face:"60% 40%"},
   {n:"rayon tracant",ex:1,src:"img/sorts/rayon-tracant.jpg",fx:"ray",col:"#cfeaff",face:"60% 45%"},
   {n:"repli expeditif",ex:1,src:"img/sorts/repli-expeditif.jpg",fx:"wisp",col:"#e8d5b0",face:"62% 45%"},
+  {n:"agrandissement/rapetissement",ex:1,src:"img/sorts/agrandissement.jpg",fx:"ripple",col:"#ff9a6a",face:"40% 40%"},
+  {n:"aide",ex:1,src:"img/sorts/aide.jpg",fx:"ray",col:"#ffd86a",face:"50% 35%"},
+  {n:"amelioration de caracteristique",ex:1,src:"img/sorts/amelioration-caracteristique.jpg",fx:"rune",col:"#8fd0ff",face:"50% 40%"},
+  {n:"apaisement des emotions",ex:1,src:"img/sorts/apaisement-emotions.jpg",fx:"ripple",col:"#a8d8ff",face:"50% 30%"},
+  {n:"appel de destrier",ex:1,src:"img/sorts/appel-destrier.jpg",fx:"mote",col:"#cfefff",face:"55% 40%"},
+  {n:"arme magique",ex:1,src:"img/sorts/arme-magique.jpg",fx:"bolt",col:"#6cb6ff",face:"55% 45%"},
+  {n:"arme spirituelle",ex:1,src:"img/sorts/arme-spirituelle.jpg",fx:"bolt",col:"#bfe8ff",face:"45% 40%"},
+  {n:"augure",ex:1,src:"img/sorts/augure.jpg",fx:"wisp",col:"#d8c8ff",face:"45% 35%"},
+  {n:"aura magique de l’arcaniste",ex:1,src:"img/sorts/aura-arcaniste.jpg",fx:"rune",col:"#7fc8ff",face:"50% 35%"},
+  {n:"bouche magique",ex:1,src:"img/sorts/bouche-magique.jpg",fx:"ripple",col:"#e8f4ff",face:"50% 50%"},
+  {n:"bourrasque",ex:1,src:"img/sorts/bourrasque.jpg",fx:"wisp",col:"#e0f0e8",face:"45% 45%"},
+  {n:"cecite/surdite",ex:1,src:"img/sorts/cecite-surdite.jpg",fx:"wisp",col:"#c8a8ff",face:"40% 35%"},
+  {n:"gardien de la foi",ex:1,src:"img/sorts/gardien-foi.jpg",fx:"ray",col:"#ffe08a",face:"40% 35%"},
+  {n:"invisibilite supreme",ex:1,src:"img/sorts/invisibilite-supreme.jpg",fx:"wisp",col:"#bcd8ff",face:"50% 35%"},
+  {n:"mur de feu",ex:1,src:"img/sorts/mur-de-feu.jpg",fx:"ember",col:"#ff8a2a",face:"40% 50%"},
   {n:"druidisme",ex:1,src:"img/sorts/druidisme.jpg",fx:"mote",col:"#9be27a",face:"55% 30%"},
   {n:"assistance",ex:1,src:"img/sorts/assistance.jpg",fx:"ray",col:"#ffd86a",face:"50% 40%"},
   {n:"marque du chasseur",ex:1,src:"img/sorts/marque-chasseur.jpg",fx:"rune",col:"#6fffd2",face:"45% 45%"},
@@ -1499,7 +1514,7 @@ const CARD_IMGS=[
   {p:"seiko",n:"creation de nourriture",src:"img/seiko/festin.jpg",fx:"festin",col:"#bfe6ff",face:"50% 55%"},
   {p:"seiko",n:"force fantasmagorique",src:"img/seiko/illusion.jpg",fx:"illusion",col:"#ff4a3a",face:"57% 28%",ghost:1},
   {p:"seiko",n:"illusion fantasmagorique",src:"img/seiko/illusion.jpg",fx:"illusion",col:"#ff4a3a",face:"57% 28%",ghost:1}];
-const longW=t=>{t=String(t||"");return (t.length>30||t.split(/\s+/).some(w=>w.length>14))?" lw xl":(t.length>20||t.split(/\s+/).some(w=>w.length>10))?" lw":""};
+const longW=t=>{t=String(t||"").replace(/\//g,"/ ");return (t.length>30||t.split(/\s+/).some(w=>w.length>14))?" lw xl":(t.length>20||t.split(/\s+/).some(w=>w.length>10))?" lw":""};
 function cardImg(k){const c=S.persos.get(state._deckC)||{};const pn=nrm(c.nom),kn=nrm(k.nom);return CARD_IMGS.find(f=>(!f.p||f.p===pn)&&(f.ex?kn===f.n:kn.startsWith(f.n))&&(!f.t||f.t===k.type))||null}
 function artHtml(k){const im=cardImg(k);return '<div class="art el-'+nrm(k.elem).replace(/[^a-z]/g,"")+(im?' hasimg':'')+'">'+
   (im?'<div class="aw aw-'+im.fx+'"><img class="artimg" src="'+im.src+'" alt="" loading="lazy">'+(im.ghost?'<img class="artimg ghost'+(im.ghost==="m"?" gm":"")+'" src="'+im.src+'" alt="" loading="lazy">':'')+cardFx(k,im)+'</div>':sceneSVG(k)+cardFx(k,null))+'<div class="artico mini">'+k.icon+'</div></div>'}
@@ -1507,7 +1522,7 @@ function cardHtml(k,small,n,calm,attr){const fav=(state._favs||[]).includes(k.ke
   return '<button class="card4 t-'+k.type+(small?" sm":"")+(pl?" played":"")+(k.empty?" empty":"")+'" style="--n:'+(n||0)+';--sd:-'+(((n||0)*1.37)%7).toFixed(2)+'s" '+(attr||'data-act="cardopen" data-key="'+esc(k.key)+'"')+'>'+
     artHtml(k)+'<div class="ribbon"><div class="medal">'+esc(k.medal)+'</div><div class="ecoic e-'+k.eco+'" title="'+ECOL[k.eco]+'">'+ECOI[k.eco]+'</div></div>'+
     (fav?'<div class="favst">★</div>':'')+
-    '<div class="parch"><div class="ptitle'+longW(k.nom)+'">'+esc(k.nom)+'</div><div class="psub">'+esc(k.sub||ECOL[k.eco])+'</div></div>'+
+    '<div class="parch"><div class="ptitle'+longW(k.nom)+'">'+esc(k.nom).replace(/\//g,"/<wbr>")+'</div><div class="psub">'+esc(k.sub||ECOL[k.eco])+'</div></div>'+
     '<div class="cfoot"><span>'+(k.typeL||TYPEL[k.type])+'</span><span>'+ECOL[k.eco]+'</span></div>'+(pl?'<div class="c3pl">Jouée</div>':'')+'</button>'}
 function deckHtml(c){
   const cards=deckCards(c);state._favs=c.favs||[];state._deck=cards;state._deckC=c.id;
@@ -1551,7 +1566,7 @@ const canReact=k=>k.eco==="reac"||/reaction/.test(nrm(k.desc));
 function cardModal(c,key){
   const k=(state._deck||deckCards(c)).find(x=>x.key===key);if(!k)return;const fav=(c.favs||[]).includes(key);
   const m=modal('<div class="card4 bigc t-'+k.type+'">'+artHtml(k)+'<div class="ribbon"><div class="medal">'+esc(k.medal)+'</div><div class="ecoic e-'+k.eco+'">'+ECOI[k.eco]+'</div></div>'+
-    '<div class="parch"><div class="ptitle'+longW(k.nom)+'">'+esc(k.nom)+'</div><div class="psub">'+esc(k.sub||"")+'</div>'+
+    '<div class="parch"><div class="ptitle'+longW(k.nom)+'">'+esc(k.nom).replace(/\//g,"/<wbr>")+'</div><div class="psub">'+esc(k.sub||"")+'</div>'+
     (k.tags.length||k.cost?'<div class="ptags">'+k.tags.concat(k.cost?["Coût : "+k.cost]:[]).map(t=>'<span>'+esc(t)+'</span>').join("")+'</div>':'')+
     '<div class="pdesc">'+(esc(k.desc)||'<i>Pas de description.</i>').replace(/\n/g,"<br>")+'</div></div>'+
     '<div class="cfoot"><span>'+TYPEL[k.type]+'</span><span>'+ECOL[k.eco]+'</span></div><i class="glare"></i></div>'+
