@@ -1119,6 +1119,27 @@ function elecIntro(host,clash){
   tick();const iv=setInterval(tick,65);
   return()=>clearInterval(iv);
 }
+function quillIntro(w){
+  const q=w.querySelector(".jq-q"),ink=w.querySelector(".jq-ink"),t0=performance.now(),H=[212,352];
+  const L1=[[88,232],[172,238]],L2=[[92,262],[160,268]];
+  const lerp=(a,b,k)=>a+(b-a)*k,ez=k=>k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+  let pts=[],raf=0;
+  const write=(seg,k,i0)=>{const x=lerp(seg[0][0],seg[1][0],k),y=lerp(seg[0][1],seg[1][1],k);const ph=k*7*Math.PI*2;return[x+3*Math.cos(ph),y-5*Math.abs(Math.sin(ph/2))+2*Math.sin(ph)]};
+  const frame=()=>{const t=(performance.now()-t0)/1000;let p,wr=false,lift=0;
+    if(t<.35)p=H;
+    else if(t<.75){const k=ez((t-.35)/.4);p=[lerp(H[0],L1[0][0],k),lerp(H[1],L1[0][1],k)];lift=Math.sin(k*Math.PI)}
+    else if(t<1.35){p=write(L1,(t-.75)/.6);wr=1}
+    else if(t<1.5){const k=ez((t-1.35)/.15);p=[lerp(L1[1][0],L2[0][0],k),lerp(L1[1][1],L2[0][1],k)];lift=Math.sin(k*Math.PI)}
+    else if(t<2){p=write(L2,(t-1.5)/.5);wr=2}
+    else if(t<2.4){const k=ez((t-2)/.4);p=[lerp(L2[1][0],H[0],k),lerp(L2[1][1],H[1],k)];lift=Math.sin(k*Math.PI)}
+    else p=H;
+    if(wr){if(!pts[wr-1])pts[wr-1]=[];pts[wr-1].push(p)}
+    ink.setAttribute("d",pts.filter(Boolean).map(a=>"M"+a.map(v=>v[0].toFixed(1)+" "+v[1].toFixed(1)).join(" L")).join(" "));
+    const dx=(p[0]-H[0])/4,dy=(p[1]-H[1])/4-lift*3,rot=wr?Math.sin(t*40)*3-6:-lift*8;
+    q.style.transform="translate("+dx.toFixed(2)+"%,"+dy.toFixed(2)+"%) rotate("+rot.toFixed(1)+"deg) scale("+(1+lift*.05).toFixed(3)+")";
+    if(t<2.6)raf=requestAnimationFrame(frame)};
+  raf=requestAnimationFrame(frame);return()=>cancelAnimationFrame(raf);
+}
 function clashIntro(w){
   const ev=w.querySelectorAll(".cb-ev"),bg=w.querySelector(".cb-bolts"),t0=performance.now();
   const L=[[136,180,342,366],[270,180,66,368]];
@@ -1140,11 +1161,12 @@ function tabIntro(kind){
   const letters=[...I[0]].map((ch,i)=>'<span style="--i:'+i+'">'+(ch===" "?"&nbsp;":esc(ch))+'</span>').join("");
   const src=img?"img/emb/hd/"+img+".webp":"";
   const embHtml=kind==="combat"?'<div class="ie-wrap ie-clash"><div class="cb-k cb-a"><img src="img/emb/hd/combat-a.webp" alt=""><svg viewBox="0 0 400 400"><path class="cb-ev"/></svg></div><div class="cb-k cb-b"><img src="img/emb/hd/combat-b.webp" alt=""><svg viewBox="0 0 400 400"><path class="cb-ev"/></svg></div>'+
-    '<svg class="cb-fx" viewBox="0 0 400 400"><defs><filter id="cbg" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><radialGradient id="cbfl"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#bff0ff"/><stop offset="1" stop-color="#3aa8ff" stop-opacity="0"/></radialGradient></defs><circle class="cb-fl" cx="202" cy="240" r="70" fill="url(#cbfl)"/><g class="cb-bolts"></g></svg></div>':kind==="cartes"?'<div class="ie-wrap ie-map"><img class="mp-full" src="'+src+'" alt=""><img class="mp-c" src="img/emb/hd/carte-c.webp" alt=""><img class="mp-roll mp-l" src="img/emb/hd/carte-l.webp" alt=""><img class="mp-roll mp-r" src="img/emb/hd/carte-r.webp" alt=""></div>':img?'<div class="ie-wrap ie-'+img+'"><img class="ie-img" src="'+src+'" alt=""><i class="ie-shine" style="-webkit-mask-image:url('+src+');mask-image:url('+src+')"></i></div>':emblemHtml(kind);
+    '<svg class="cb-fx" viewBox="0 0 400 400"><defs><filter id="cbg" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><radialGradient id="cbfl"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#bff0ff"/><stop offset="1" stop-color="#3aa8ff" stop-opacity="0"/></radialGradient></defs><circle class="cb-fl" cx="202" cy="240" r="70" fill="url(#cbfl)"/><g class="cb-bolts"></g></svg></div>':kind==="commun"?'<div class="ie-wrap ie-bag"><img src="img/emb/hd/commun-b.webp" alt=""><i class="bg-burst"></i><img class="bg-flap" src="img/emb/hd/commun-f.webp" alt="">'+Array.from({length:9},(_,i)=>'<i class="bg-coin" style="--dx:'+(rnd(-420,420)).toFixed(0)+'%;--dy:'+(rnd(-620,-330)).toFixed(0)+'%;--r:'+(rnd(360,900)).toFixed(0)+'deg;--d:'+(.62+i*.07).toFixed(2)+'s"></i>').join("")+'</div>'
+  :kind==="journal"?'<div class="ie-wrap ie-jou"><img src="img/emb/hd/journal-b.webp" alt=""><svg viewBox="0 0 400 400"><path class="jq-ink"/></svg><img class="jq-q" src="img/emb/hd/journal-q.webp" alt=""></div>':kind==="cartes"?'<div class="ie-wrap ie-map"><img class="mp-full" src="'+src+'" alt=""><img class="mp-c" src="img/emb/hd/carte-c.webp" alt=""><img class="mp-roll mp-l" src="img/emb/hd/carte-l.webp" alt=""><img class="mp-roll mp-r" src="img/emb/hd/carte-r.webp" alt=""></div>':img?'<div class="ie-wrap ie-'+img+'"><img class="ie-img" src="'+src+'" alt=""><i class="ie-shine" style="-webkit-mask-image:url('+src+');mask-image:url('+src+')"></i></div>':emblemHtml(kind);
   d.innerHTML='<i class="in-bar t"></i><i class="in-bar b"></i>'+motes+'<div class="in-stage"><i class="in-halo"></i><div class="in-emb">'+embHtml+'</div></div>'+
     '<div class="in-t"><div class="in-name">'+letters+'</div><svg class="in-ul" viewBox="0 0 200 12" preserveAspectRatio="none"><path pathLength="1" d="M4 7 C40 1 80 11 120 6 S176 2 196 6"/></svg><div class="in-sub">'+esc(I[1])+'</div></div><div class="in-skip">Toucher pour passer</div>';
   document.body.appendChild(d);
-  let stop=null;if(kind==="combat")stop=clashIntro(d.querySelector(".ie-clash"));else if(img)stop=elecIntro(d.querySelector(".in-emb"));
+  let stop=null;if(kind==="combat")stop=clashIntro(d.querySelector(".ie-clash"));else if(img){const s1=elecIntro(d.querySelector(".in-emb"));const s2=kind==="journal"?quillIntro(d.querySelector(".ie-jou")):null;stop=()=>{s1();if(s2)s2()}}
   const kill=()=>{clearTimeout(tm);if(stop)stop();d.remove()};const tm=setTimeout(kill,2650);d.addEventListener("click",kill);
 }
 function emblemHtml(kind){
