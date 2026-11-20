@@ -1457,6 +1457,21 @@ const CARD_IMGS=[
   {n:"globe d",src:"img/sorts/globe-invulnerabilite.jpg",fx:"globe",col:"#ffd86a",face:"50% 40%"},
   {n:"chaine d",src:"img/sorts/chaine-eclairs.jpg",fx:"chaine",col:"#7fa8ff",face:"45% 45%"},
   {n:"cercle de mort",src:"img/sorts/cercle-de-mort.jpg",fx:"cmort",col:"#b45aff",face:"50% 50%"},
+  {n:"creation ou destruction d'eau",ex:1,src:"img/sorts/creation-destruction-eau.jpg",fx:"wisp",col:"#7fd0ff",face:"40% 45%"},
+  {n:"amitie avec les animaux",ex:1,src:"img/sorts/amitie-animaux.jpg",fx:"mote",col:"#9be27a",face:"50% 45%"},
+  {n:"reparation",ex:1,src:"img/sorts/reparation.jpg",fx:"rune",col:"#ffc45a",face:"50% 40%"},
+  {n:"stabilisation",ex:1,src:"img/sorts/stabilisation.jpg",fx:"ray",col:"#fff2c0",face:"50% 55%"},
+  {n:"appel de familier",ex:1,src:"img/sorts/appel-familier.jpg",fx:"rune",col:"#c48cff",face:"60% 35%"},
+  {n:"baies nourricieres",ex:1,src:"img/sorts/baies-nourricieres.jpg",fx:"mote",col:"#e05aa8",face:"40% 55%"},
+  {n:"communication avec les animaux",ex:1,src:"img/sorts/communication-animaux.jpg",fx:"ripple",col:"#ffd86a",face:"50% 35%"},
+  {n:"thaumaturgie",ex:1,src:"img/sorts/thaumaturgie.jpg",fx:"ripple",col:"#9ab8ff",face:"50% 30%"},
+  {n:"prestidigitation",ex:1,src:"img/sorts/prestidigitation.jpg",fx:"couleurs",col:"#ff8af0",face:"58% 60%"},
+  {n:"message",ex:1,src:"img/sorts/message.jpg",fx:"ripple",col:"#7fd0ff",face:"60% 40%"},
+  {n:"main du mage",ex:1,src:"img/sorts/main-du-mage.jpg",fx:"wisp",col:"#8fe0ff",face:"45% 35%"},
+  {n:"crosse des druides",ex:1,src:"img/sorts/crosse-druides.jpg",fx:"mote",col:"#9be27a",face:"50% 45%"},
+  {n:"coup au but",ex:1,src:"img/sorts/coup-au-but.jpg",fx:"ripple",col:"#ff4a4a",face:"60% 40%"},
+  {n:"rayon tracant",ex:1,src:"img/sorts/rayon-tracant.jpg",fx:"ray",col:"#cfeaff",face:"60% 45%"},
+  {n:"repli expeditif",ex:1,src:"img/sorts/repli-expeditif.jpg",fx:"wisp",col:"#e8d5b0",face:"62% 45%"},
   {n:"detection de la magie",ex:1,src:"img/sorts/detection-magie.jpg",fx:"rune",col:"#b48cff",face:"55% 40%"},
   {n:"blessure",ex:1,src:"img/sorts/blessure.jpg",fx:"wisp",col:"#ff3b3b",face:"60% 40%"},
   {n:"bouclier de la foi",ex:1,src:"img/sorts/bouclier-foi.jpg",fx:"ward",col:"#ffd86a",face:"50% 35%"},
@@ -1480,7 +1495,7 @@ const CARD_IMGS=[
   {p:"seiko",n:"creation de nourriture",src:"img/seiko/festin.jpg",fx:"festin",col:"#bfe6ff",face:"50% 55%"},
   {p:"seiko",n:"force fantasmagorique",src:"img/seiko/illusion.jpg",fx:"illusion",col:"#ff4a3a",face:"57% 28%",ghost:1},
   {p:"seiko",n:"illusion fantasmagorique",src:"img/seiko/illusion.jpg",fx:"illusion",col:"#ff4a3a",face:"57% 28%",ghost:1}];
-const longW=t=>{t=String(t||"");return t.length>30?" lw xl":(t.length>20||t.split(/\s+/).some(w=>w.length>10))?" lw":""};
+const longW=t=>{t=String(t||"");return (t.length>30||t.split(/\s+/).some(w=>w.length>14))?" lw xl":(t.length>20||t.split(/\s+/).some(w=>w.length>10))?" lw":""};
 function cardImg(k){const c=S.persos.get(state._deckC)||{};const pn=nrm(c.nom),kn=nrm(k.nom);return CARD_IMGS.find(f=>(!f.p||f.p===pn)&&(f.ex?kn===f.n:kn.startsWith(f.n))&&(!f.t||f.t===k.type))||null}
 function artHtml(k){const im=cardImg(k);return '<div class="art el-'+nrm(k.elem).replace(/[^a-z]/g,"")+(im?' hasimg':'')+'">'+
   (im?'<div class="aw aw-'+im.fx+'"><img class="artimg" src="'+im.src+'" alt="" loading="lazy">'+(im.ghost?'<img class="artimg ghost'+(im.ghost==="m"?" gm":"")+'" src="'+im.src+'" alt="" loading="lazy">':'')+cardFx(k,im)+'</div>':sceneSVG(k)+cardFx(k,null))+'<div class="artico mini">'+k.icon+'</div></div>'}
