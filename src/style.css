@@ -699,3 +699,28 @@ body.bgparch .reacbox h3{color:#8a2418}
 @keyframes djburst{0%{opacity:0;scale:.2}25%{opacity:1}100%{opacity:0;scale:1.6}}
 .dj-sp{position:absolute;left:50%;top:50%;width:3%;aspect-ratio:1;margin:-1.5%;border-radius:50%;background:#f0dcff;box-shadow:0 0 8px #b36bff,0 0 4px #fff;opacity:0;animation:djsp .8s ease-out 1.75s both}
 @keyframes djsp{0%{opacity:1;transform:none}100%{opacity:0;transform:translate(var(--x),var(--y)) scale(.3)}}
+/* biblio : pile de livres, parchemin, boule de feu */
+.tanim svg.bb{width:min(84vw,330px)}
+.bb-book{transform-box:fill-box;transform-origin:center;animation:bbdrop .5s cubic-bezier(.3,1.45,.5,1) calc(.08s + var(--i)*.13s) both}
+@keyframes bbdrop{0%{opacity:0;transform:translateY(-330px) rotate(var(--r0))}30%{opacity:1}100%{opacity:1;transform:rotate(var(--r))}}
+.bb-scroll{animation:bbrise .35s ease-out .95s both}
+@keyframes bbrise{0%{opacity:0;transform:translateY(40px)}30%{opacity:1}100%{opacity:1;transform:none}}
+.bb-rt{animation:bbrt .4s cubic-bezier(.3,1.2,.5,1) 1.28s both}
+@keyframes bbrt{from{transform:translateY(136px)}to{transform:none}}
+.bb-paper{transform-box:fill-box;transform-origin:50% 100%;animation:bbun .4s cubic-bezier(.3,1.2,.5,1) 1.28s both}
+@keyframes bbun{from{transform:scaleY(0)}to{transform:none}}
+.bb-glyph *{stroke-dasharray:1;stroke-dashoffset:1;animation:bbdraw .45s ease 1.6s forwards}
+@keyframes bbdraw{to{stroke-dashoffset:0}}
+.bb-name{opacity:0;animation:bbfade .3s ease 1.75s forwards}
+@keyframes bbfade{to{opacity:1}}
+.bb-fire{transform-box:fill-box;transform-origin:50% 70%;opacity:0;filter:drop-shadow(0 0 16px #ff7a1a) drop-shadow(0 0 6px #ffd34d);animation:bbfire .55s cubic-bezier(.2,1.4,.4,1) 1.95s both,bbflick .12s steps(2) 2.1s infinite}
+@keyframes bbfire{0%{opacity:0;transform:scale(.1)}100%{opacity:1;transform:scale(.95)}}
+.bb-flame{transform-box:fill-box;transform-origin:50% 100%;animation:bbfl .18s ease-in-out 2.05s infinite alternate}
+.bb-flame.f2{animation-duration:.13s}
+@keyframes bbfl{from{transform:scale(1,1) skewX(-3deg)}to{transform:scale(.94,1.12) skewX(4deg)}}
+.tanim svg.bb{width:min(78vw,300px)}
+@keyframes bbflick{50%{filter:drop-shadow(0 0 22px #ffb13a) brightness(1.15)}}
+.bb-core{transform-box:fill-box;transform-origin:center;animation:bbcore .3s ease-in-out 2.1s infinite alternate}
+@keyframes bbcore{to{transform:scale(1.25)}}
+.bb-em{fill:#ffcf5a;opacity:0;filter:drop-shadow(0 0 3px #ff7a1a);animation:bbem .7s ease-out var(--d) both}
+@keyframes bbem{0%{opacity:0;transform:none}8%{opacity:1}100%{opacity:0;transform:translate(var(--x),var(--y))}}

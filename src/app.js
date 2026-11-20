@@ -1156,7 +1156,7 @@ function tabIntro(kind){
   document.querySelectorAll(".tanim").forEach(x=>x.remove());
   const rnd=(a,b)=>a+Math.random()*(b-a);
   const img=EMB_IMG[kind];
-  const d=document.createElement("div");d.className="tanim intro ta-"+kind+(img?" in-img":"");d.style.setProperty("--ic",I[2]);
+  const d=document.createElement("div");d.className="tanim intro ta-"+kind+(img?" in-img":"");d.style.setProperty("--ic",I[2]);if(kind==="biblio")d.style.setProperty("--td","3.3s");
   const motes=Array.from({length:22},()=>'<i class="in-mote" style="left:'+rnd(2,98).toFixed(0)+'%;top:'+rnd(20,98).toFixed(0)+'%;--dx:'+rnd(-40,40).toFixed(0)+'px;--dy:'+rnd(-160,-50).toFixed(0)+'px;--t:'+rnd(1.6,3.2).toFixed(2)+'s;--d:-'+rnd(0,3).toFixed(2)+'s;transform:scale('+rnd(.5,1.6).toFixed(2)+')"></i>').join("");
   const letters=[...I[0]].map((ch,i)=>'<span style="--i:'+i+'">'+(ch===" "?"&nbsp;":esc(ch))+'</span>').join("");
   const src=img?"img/emb/hd/"+img+".webp":"";
@@ -1166,8 +1166,8 @@ function tabIntro(kind){
   d.innerHTML='<i class="in-bar t"></i><i class="in-bar b"></i>'+motes+'<div class="in-stage"><i class="in-halo"></i><div class="in-emb">'+embHtml+'</div></div>'+
     '<div class="in-t"><div class="in-name">'+letters+'</div><svg class="in-ul" viewBox="0 0 200 12" preserveAspectRatio="none"><path pathLength="1" d="M4 7 C40 1 80 11 120 6 S176 2 196 6"/></svg><div class="in-sub">'+esc(I[1])+'</div></div><div class="in-skip">Toucher pour passer</div>';
   document.body.appendChild(d);
-  let stop=null;if(kind==="combat")stop=clashIntro(d.querySelector(".ie-clash"));else if(img){const s1=elecIntro(d.querySelector(".in-emb"));const s2=kind==="journal"?quillIntro(d.querySelector(".ie-jou")):null;stop=()=>{s1();if(s2)s2()}}
-  const kill=()=>{clearTimeout(tm);if(stop)stop();d.remove()};const tm=setTimeout(kill,2650);d.addEventListener("click",kill);
+  let stop=null;if(kind==="combat")stop=clashIntro(d.querySelector(".ie-clash"));else if(img||kind==="biblio"){const s1=elecIntro(d.querySelector(".in-emb"));const s2=kind==="journal"?quillIntro(d.querySelector(".ie-jou")):null;stop=()=>{s1();if(s2)s2()}}
+  const kill=()=>{clearTimeout(tm);if(stop)stop();d.remove()};const tm=setTimeout(kill,kind==="biblio"?3300:2650);d.addEventListener("click",kill);
 }
 function emblemHtml(kind){
   const rnd=(a,b)=>a+Math.random()*(b-a);
@@ -1182,8 +1182,29 @@ function emblemHtml(kind){
       '<path class="lidline" d="M-110 0 Q0 -78 110 0 Q0 78 -110 0Z" fill="none" stroke="#1a1c22" stroke-width="5"/></g><circle class="popring" r="60" fill="none" stroke="#bfe8ff" stroke-width="4"/><g class="drops" fill="#bfe8ff">'+drops+'</g></svg>';
   }
   if(kind==="biblio"){
-    const emb=Array.from({length:16},()=>'<span class="ember" style="--x:'+rnd(-120,120).toFixed(0)+'px;--y:'+rnd(-220,-90).toFixed(0)+'px;--d:'+rnd(.9,1.3).toFixed(2)+'s;left:'+rnd(25,75).toFixed(0)+'%;top:'+rnd(35,65).toFixed(0)+'%"></span>').join("");
-    return '<div class="scroll"><div class="roll top"></div><div class="paper"><div class="runes">ᚠ ᚱ ᚨ ᚷ ᛗ ᛟ<br>✶ ᛞ ᚹ ᛃ ✶<br>ᛉ ᛊ ᛏ ᛒ ᛖ</div><div class="burn"></div></div><div class="roll bot"></div><div class="fireball"></div>'+emb+'</div>';
+    const B=[[190,26,"#7a1f24"],[176,24,"#1f3f7a"],[186,28,"#2c5b33"],[166,22,"#5a2a76"],[176,26,"#6b4320"]];
+    let y=128,books="";
+    B.forEach(([w,h,c],i)=>{y-=h;const r=(i%2?1:-1)*rnd(1,4),x=rnd(-8,8);
+      books+='<g class="bb-book" style="--i:'+i+';--r:'+r.toFixed(1)+'deg;--r0:'+(r*6).toFixed(0)+'deg"><g transform="translate('+x.toFixed(1)+' 0)">'+
+        '<rect x="'+(-w/2)+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="4" fill="'+c+'" stroke="#160c06" stroke-width="2"/>'+
+        '<rect x="'+(w/2-16)+'" y="'+(y+3)+'" width="12" height="'+(h-6)+'" rx="2" fill="#efe2bd"/>'+
+        '<path d="M'+(-w/2+16)+' '+(y+2)+' v'+(h-4)+' M'+(-w/2+28)+' '+(y+2)+' v'+(h-4)+'" stroke="#d9b25a" stroke-width="3"/>'+
+        '<rect x="-22" y="'+(y+h/2-5)+'" width="44" height="10" rx="2" fill="none" stroke="#d9b25a" stroke-width="1.6"/>'+
+        '<rect x="'+(-w/2+2)+'" y="'+(y+2)+'" width="'+(w-20)+'" height="4" rx="2" fill="#fff" opacity=".12"/></g></g>'});
+    const emb=Array.from({length:14},(_,i)=>'<circle class="bb-em" r="'+rnd(1.6,3.2).toFixed(1)+'" cx="'+rnd(-30,30).toFixed(0)+'" cy="-78" style="--x:'+rnd(-70,70).toFixed(0)+'px;--y:'+rnd(-120,-60).toFixed(0)+'px;--d:'+(1.95+i*.03).toFixed(2)+'s"/>').join("");
+    return '<svg viewBox="-150 -170 300 310" class="bb"><defs>'+
+      '<linearGradient id="bbp" x1="0" x2="1"><stop offset="0" stop-color="#d8bf86"/><stop offset=".5" stop-color="#f6e7ba"/><stop offset="1" stop-color="#d0b278"/></linearGradient>'+
+      '<linearGradient id="bbr" y2="1"><stop offset="0" stop-color="#f3dfa8"/><stop offset=".5" stop-color="#b98d4a"/><stop offset="1" stop-color="#6e4b1e"/></linearGradient>'+
+      '<linearGradient id="bbfl" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffd34d"/><stop offset=".45" stop-color="#ff7a1a"/><stop offset="1" stop-color="#d42a00" stop-opacity=".2"/></linearGradient><radialGradient id="bbf"><stop offset="0" stop-color="#fffbe0"/><stop offset=".3" stop-color="#ffd34d"/><stop offset=".62" stop-color="#ff6a12"/><stop offset="1" stop-color="#ff3000" stop-opacity="0"/></radialGradient></defs>'+
+      '<g class="bb-scroll"><g class="bb-paper"><rect x="-64" y="-140" width="128" height="126" fill="url(#bbp)" stroke="#8a6a35" stroke-width="1.5"/>'+
+        '<text x="0" y="-122" text-anchor="middle" font-size="9" letter-spacing="3" fill="#7a3b12" font-family="serif">ᚠ ᚱ ✶ ᛞ ᚹ</text>'+
+        '<g class="bb-glyph" fill="none" stroke="#9a2a08" stroke-width="2.4" stroke-linecap="round"><circle pathLength="1" cx="0" cy="-78" r="30"/><circle pathLength="1" cx="0" cy="-78" r="22" stroke-width="1.2"/>'+
+        '<path pathLength="1" d="M0 -98 C-14 -84 -12 -70 0 -60 C12 -70 14 -84 0 -98 M0 -88 C-6 -80 -5 -72 0 -66 C5 -72 6 -80 0 -88"/></g>'+
+        '<text class="bb-name" x="0" y="-26" text-anchor="middle" font-size="13" font-weight="700" fill="#6b1a06" font-family="serif">Boule de feu</text></g>'+
+        '<rect class="bb-rt" x="-72" y="-152" width="144" height="13" rx="6.5" fill="url(#bbr)" stroke="#4a3010" stroke-width="1.5"/>'+
+        '<rect class="bb-rb" x="-72" y="-16" width="144" height="13" rx="6.5" fill="url(#bbr)" stroke="#4a3010" stroke-width="1.5"/></g>'+
+      books+
+      '<g class="bb-fire"><path class="bb-flame" d="M0 -150 C22 -122 48 -104 44 -72 C40 -46 20 -36 0 -36 C-20 -36 -40 -46 -44 -72 C-48 -104 -22 -122 0 -150Z" fill="url(#bbfl)"/><path class="bb-flame f2" d="M-14 -132 C-2 -112 20 -100 18 -76 C16 -58 6 -52 -4 -52 C-16 -52 -28 -62 -28 -80 C-28 -100 -18 -112 -14 -132Z" fill="#ffe27a" opacity=".75"/><circle cx="0" cy="-74" r="40" fill="url(#bbf)"/><circle class="bb-core" cx="0" cy="-74" r="18" fill="#fff6c0" opacity=".85"/></g>'+emb+'</svg>';
   }
   if(kind==="commun"){
     const coins=Array.from({length:18},(_,i)=>'<span class="coin" style="--x:'+rnd(-150,150).toFixed(0)+'px;--h:'+rnd(-260,-140).toFixed(0)+'px;--r:'+rnd(-540,540).toFixed(0)+'deg;animation-delay:'+(0.35+i*0.025).toFixed(2)+'s"></span>').join("");
