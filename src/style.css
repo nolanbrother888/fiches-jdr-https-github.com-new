@@ -331,6 +331,9 @@ details.rules{margin-top:12px}
 .card4.bigc .medal{width:40px;height:40px;font-size:16px}
 .card4.bigc .ecoic{width:28px;height:28px;font-size:15px}
 .card4.bigc .ptitle{font-size:20px}
+.ptitle.lw{letter-spacing:0;font-size:11.5px}
+.sm .ptitle.lw{font-size:9.8px}
+.card4.bigc .ptitle.lw{font-size:17px}
 .card4.bigc .psub{font-size:13px}
 .ptags{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:8px}
 .ptags span{font-size:11px;background:rgba(90,70,40,.15);border:1px solid #a89064;border-radius:10px;padding:2px 8px;color:#4a3a22}
@@ -744,3 +747,7 @@ body.bgparch .reacbox h3{color:#8a2418}
 @keyframes bb2glow{0%{opacity:.25;scale:.85}100%{opacity:.85;scale:1.1}}
 .bb2-em{position:absolute;left:50%;top:41%;width:5px;height:5px;margin:-2.5px;border-radius:50%;background:#ffd257;box-shadow:0 0 6px #ff7a1a,0 0 2px #fff;opacity:0;animation:bb2em .9s ease-out var(--d) both}
 @keyframes bb2em{0%{opacity:0;transform:none}10%{opacity:1}100%{opacity:0;transform:translate(var(--x),var(--y))}}
+/* compréhension des langues : lettres de toutes les langues qui sortent de la pupille */
+.flt{fill:#fff;font-family:serif;font-weight:700;opacity:0;paint-order:stroke;stroke:#000;stroke-width:1.5px;animation:flt var(--t,3s) ease-out var(--d,0s) infinite}
+@keyframes flt{0%{opacity:0;transform:translate(0,0) scale(.4)}15%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1.2)}}
+@media (prefers-reduced-motion:reduce){.flt{animation:none;opacity:0}}

@@ -883,6 +883,14 @@ function cardFx(k,im){
     case "ripple":s=[0,1,2].map(i=>fxRing(150,70,48,3.6,i*1.2)).join("")+parts(8,i=>fxPart(R()*200,R()*H,.8+R(),-10+R()*20,-18+R()*10,2+R()*2,R()*4,i%2===0));break;
     case "ray":s='<g class="fry">'+parts(10,i=>'<path d="M100 '+(H/2)+'L'+(100+Math.cos(i*.628)*170).toFixed(0)+' '+(H/2+Math.sin(i*.628)*170).toFixed(0)+'L'+(100+Math.cos(i*.628+.12)*170).toFixed(0)+' '+(H/2+Math.sin(i*.628+.12)*170).toFixed(0)+'Z"/>')+'</g>'+parts(8,i=>fxPart(R()*200,R()*H,.8+R(),-6+R()*12,-24-R()*20,2+R()*2,R()*4,true));break;
     case "rune":s='<g class="frr"><circle cx="150" cy="72" r="40"/><circle cx="150" cy="72" r="31" class="in"/>'+parts(6,i=>'<path d="M'+(150+Math.cos(i*1.047)*35.5-3).toFixed(1)+' '+(72+Math.sin(i*1.047)*35.5).toFixed(1)+'l3 -4l3 4l-3 4z"/>')+'</g>'+parts(10,i=>fxPart(R()*200,R()*H,.7+R()*1.1,-8+R()*16,-20-R()*20,1.8+R()*2.2,R()*4,i%2===0));break;
+    case "bened":
+      s=fxRing(100,H/2,30,3,0)+fxRing(100,H/2,30,3,1.5)+'<circle class="fc" cx="100" cy="'+(H/2)+'" r="24" fill="url(#'+gid+')"/>'+
+        fxGlint("M40 "+(H-10)+" C70 "+(H*.3).toFixed(0)+" 140 "+(H*.9).toFixed(0)+" 165 12",3.4,0)+fxGlint("M30 20 C80 "+(H*.8).toFixed(0)+" 130 10 175 "+(H-16),3.4,1.7)+
+        parts(6,i=>fxTw(30+R()*140,15+R()*(H-30),.8+R()*.8,1.6+R()*1.6,R()*3))+
+        parts(10,i=>{const a=R()*6.28,d=16+R()*40;return fxPart(100,H/2,.6+R(),Math.cos(a)*d,Math.sin(a)*d,1.4+R()*1.4,R()*3,i%3===0)});break;
+    case "langues":{const G="AБΩアᚠאξЖλ文ᛟπДあΣ";
+      s='<circle class="fc" cx="100" cy="'+(H/2)+'" r="22" fill="url(#'+gid+')"/>'+
+        parts(14,i=>{const a=R()*6.28,d=50+R()*45;return '<text class="flt" x="100" y="'+(H/2+4)+'" text-anchor="middle" font-size="'+(9+R()*7).toFixed(0)+'" style="--dx:'+(Math.cos(a)*d).toFixed(0)+'px;--dy:'+(Math.sin(a)*d*.7).toFixed(0)+'px;--t:'+(2.4+R()*1.6).toFixed(2)+'s;--d:-'+(R()*4).toFixed(2)+'s">'+G[i%G.length]+'</text>'})}break;
     case "blade":s=fxGlint("M30 "+(H-14)+" Q96 "+(H*.45).toFixed(0)+" 186 16",3.6,(seed%5)*.6)+parts(8,i=>fxPart(110+R()*70,20+R()*60,.6+R(),10+R()*26,-6+R()*30,.7+R()*1.1,R()*3.5,true));break;
     case "ward":s=fxRing(100,H/2,62,4,0)+fxRing(100,H/2,62,4,2)+parts(8,i=>fxPart(R()*200,H*.5+R()*H*.5,.8+R(),-6+R()*12,-36-R()*26,2.4+R()*2,R()*4));break;
     default:s=parts(12,i=>fxPart(R()*200,H*.5+R()*H*.5,.8+R()*1.2,-10+R()*20,-40-R()*36,2+R()*2.2,R()*4,i%3===0));
@@ -1447,6 +1455,8 @@ const CARD_IMGS=[
   {n:"globe d",src:"img/sorts/globe-invulnerabilite.jpg",fx:"globe",col:"#ffd86a",face:"50% 40%"},
   {n:"chaine d",src:"img/sorts/chaine-eclairs.jpg",fx:"chaine",col:"#7fa8ff",face:"45% 45%"},
   {n:"cercle de mort",src:"img/sorts/cercle-de-mort.jpg",fx:"cmort",col:"#b45aff",face:"50% 50%"},
+  {n:"benediction",ex:1,src:"img/sorts/benediction.jpg",fx:"bened",col:"#7fe8ff",face:"50% 50%"},
+  {n:"comprehension des langues",ex:1,src:"img/sorts/comprehension-langues.jpg",fx:"langues",col:"#ffffff",face:"50% 46%"},
   {n:"boule de feu",ex:1,src:"img/sorts/boule-de-feu.jpg",fx:"bfeu",col:"#ff7a2a",face:"50% 50%"},
   {n:"flamme sacree",src:"img/sorts/flamme-sacree.jpg",fx:"fsacree",col:"#ffc45a",face:"55% 50%"},
   {n:"contact glacial",src:"img/sorts/contact-glacial.jpg",fx:"cglacial",col:"#bfe6ff",face:"55% 55%"},
@@ -1460,6 +1470,7 @@ const CARD_IMGS=[
   {p:"seiko",n:"creation de nourriture",src:"img/seiko/festin.jpg",fx:"festin",col:"#bfe6ff",face:"50% 55%"},
   {p:"seiko",n:"force fantasmagorique",src:"img/seiko/illusion.jpg",fx:"illusion",col:"#ff4a3a",face:"57% 28%",ghost:1},
   {p:"seiko",n:"illusion fantasmagorique",src:"img/seiko/illusion.jpg",fx:"illusion",col:"#ff4a3a",face:"57% 28%",ghost:1}];
+const longW=t=>String(t||"").split(/\s+/).some(w=>w.length>10);
 function cardImg(k){const c=S.persos.get(state._deckC)||{};const pn=nrm(c.nom),kn=nrm(k.nom);return CARD_IMGS.find(f=>(!f.p||f.p===pn)&&(f.ex?kn===f.n:kn.startsWith(f.n))&&(!f.t||f.t===k.type))||null}
 function artHtml(k){const im=cardImg(k);return '<div class="art el-'+nrm(k.elem).replace(/[^a-z]/g,"")+(im?' hasimg':'')+'">'+
   (im?'<div class="aw aw-'+im.fx+'"><img class="artimg" src="'+im.src+'" alt="" loading="lazy">'+(im.ghost?'<img class="artimg ghost'+(im.ghost==="m"?" gm":"")+'" src="'+im.src+'" alt="" loading="lazy">':'')+cardFx(k,im)+'</div>':sceneSVG(k)+cardFx(k,null))+'<div class="artico mini">'+k.icon+'</div></div>'}
@@ -1467,7 +1478,7 @@ function cardHtml(k,small,n,calm,attr){const fav=(state._favs||[]).includes(k.ke
   return '<button class="card4 t-'+k.type+(small?" sm":"")+(pl?" played":"")+(k.empty?" empty":"")+'" style="--n:'+(n||0)+';--sd:-'+(((n||0)*1.37)%7).toFixed(2)+'s" '+(attr||'data-act="cardopen" data-key="'+esc(k.key)+'"')+'>'+
     artHtml(k)+'<div class="ribbon"><div class="medal">'+esc(k.medal)+'</div><div class="ecoic e-'+k.eco+'" title="'+ECOL[k.eco]+'">'+ECOI[k.eco]+'</div></div>'+
     (fav?'<div class="favst">★</div>':'')+
-    '<div class="parch"><div class="ptitle">'+esc(k.nom)+'</div><div class="psub">'+esc(k.sub||ECOL[k.eco])+'</div></div>'+
+    '<div class="parch"><div class="ptitle'+(longW(k.nom)?' lw':'')+'">'+esc(k.nom)+'</div><div class="psub">'+esc(k.sub||ECOL[k.eco])+'</div></div>'+
     '<div class="cfoot"><span>'+(k.typeL||TYPEL[k.type])+'</span><span>'+ECOL[k.eco]+'</span></div>'+(pl?'<div class="c3pl">Jouée</div>':'')+'</button>'}
 function deckHtml(c){
   const cards=deckCards(c);state._favs=c.favs||[];state._deck=cards;state._deckC=c.id;
@@ -1511,7 +1522,7 @@ const canReact=k=>k.eco==="reac"||/reaction/.test(nrm(k.desc));
 function cardModal(c,key){
   const k=(state._deck||deckCards(c)).find(x=>x.key===key);if(!k)return;const fav=(c.favs||[]).includes(key);
   const m=modal('<div class="card4 bigc t-'+k.type+'">'+artHtml(k)+'<div class="ribbon"><div class="medal">'+esc(k.medal)+'</div><div class="ecoic e-'+k.eco+'">'+ECOI[k.eco]+'</div></div>'+
-    '<div class="parch"><div class="ptitle">'+esc(k.nom)+'</div><div class="psub">'+esc(k.sub||"")+'</div>'+
+    '<div class="parch"><div class="ptitle'+(longW(k.nom)?' lw':'')+'">'+esc(k.nom)+'</div><div class="psub">'+esc(k.sub||"")+'</div>'+
     (k.tags.length||k.cost?'<div class="ptags">'+k.tags.concat(k.cost?["Coût : "+k.cost]:[]).map(t=>'<span>'+esc(t)+'</span>').join("")+'</div>':'')+
     '<div class="pdesc">'+(esc(k.desc)||'<i>Pas de description.</i>').replace(/\n/g,"<br>")+'</div></div>'+
     '<div class="cfoot"><span>'+TYPEL[k.type]+'</span><span>'+ECOL[k.eco]+'</span></div><i class="glare"></i></div>'+
