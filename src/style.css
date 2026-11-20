@@ -685,3 +685,17 @@ body.bgparch .reacbox h3{color:#8a2418}
 .ie-jou img{filter:drop-shadow(0 0 10px #e8b04a) drop-shadow(0 0 4px #3aa8ff)}
 .jq-q{transform-origin:53% 88%;will-change:transform}
 .jq-ink{fill:none;stroke:#3a1c06;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 2px #ffb63a) drop-shadow(0 0 5px #ff9a1a)}
+/* vue MJ : le d20 tourne au centre puis disparaît */
+.ie-mj{perspective:600px}
+.ie-mj img{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 0 10px #b36bff) drop-shadow(0 0 4px #3aa8ff)}
+.dj-d{transform-origin:50.75% 77.75%;animation:djspin 1.8s cubic-bezier(.45,.05,.4,1) .25s both}
+@keyframes djspin{
+ 0%{transform:none;filter:drop-shadow(0 0 10px #b36bff)}
+ 22%{transform:translateY(-27.75%) scale(1.7) rotateZ(90deg) rotateY(180deg)}
+ 70%{transform:translateY(-27.75%) scale(1.8) rotateZ(600deg) rotateY(1260deg);filter:drop-shadow(0 0 16px #d9a8ff) drop-shadow(0 0 6px #6cb6ff) brightness(1.4);opacity:1}
+ 84%{transform:translateY(-27.75%) scale(2.1) rotateZ(700deg) rotateY(1440deg);filter:brightness(3) drop-shadow(0 0 24px #fff);opacity:1}
+ 100%{transform:translateY(-27.75%) scale(.1) rotateZ(760deg) rotateY(1440deg);filter:brightness(4) blur(4px);opacity:0}}
+.dj-burst{position:absolute;left:50%;top:50%;width:70%;aspect-ratio:1;translate:-50% -50%;border-radius:50%;background:radial-gradient(closest-side,#fff,#e2c2ff 25%,rgba(179,107,255,.55) 50%,rgba(58,168,255,.25) 70%,transparent);mix-blend-mode:screen;opacity:0;animation:djburst .7s ease-out 1.75s both}
+@keyframes djburst{0%{opacity:0;scale:.2}25%{opacity:1}100%{opacity:0;scale:1.6}}
+.dj-sp{position:absolute;left:50%;top:50%;width:3%;aspect-ratio:1;margin:-1.5%;border-radius:50%;background:#f0dcff;box-shadow:0 0 8px #b36bff,0 0 4px #fff;opacity:0;animation:djsp .8s ease-out 1.75s both}
+@keyframes djsp{0%{opacity:1;transform:none}100%{opacity:0;transform:translate(var(--x),var(--y)) scale(.3)}}
