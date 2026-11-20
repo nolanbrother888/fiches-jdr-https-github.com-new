@@ -883,6 +883,8 @@ function cardFx(k,im){
     case "ripple":s=[0,1,2].map(i=>fxRing(150,70,48,3.6,i*1.2)).join("")+parts(8,i=>fxPart(R()*200,R()*H,.8+R(),-10+R()*20,-18+R()*10,2+R()*2,R()*4,i%2===0));break;
     case "ray":s='<g class="fry">'+parts(10,i=>'<path d="M100 '+(H/2)+'L'+(100+Math.cos(i*.628)*170).toFixed(0)+' '+(H/2+Math.sin(i*.628)*170).toFixed(0)+'L'+(100+Math.cos(i*.628+.12)*170).toFixed(0)+' '+(H/2+Math.sin(i*.628+.12)*170).toFixed(0)+'Z"/>')+'</g>'+parts(8,i=>fxPart(R()*200,R()*H,.8+R(),-6+R()*12,-24-R()*20,2+R()*2,R()*4,true));break;
     case "rune":s='<g class="frr"><circle cx="150" cy="72" r="40"/><circle cx="150" cy="72" r="31" class="in"/>'+parts(6,i=>'<path d="M'+(150+Math.cos(i*1.047)*35.5-3).toFixed(1)+' '+(72+Math.sin(i*1.047)*35.5).toFixed(1)+'l3 -4l3 4l-3 4z"/>')+'</g>'+parts(10,i=>fxPart(R()*200,R()*H,.7+R()*1.1,-8+R()*16,-20-R()*20,1.8+R()*2.2,R()*4,i%2===0));break;
+    case "couleurs":{const C=["#ff5ab4","#ffd34d","#5ae0ff","#9a7bff","#7bff9a","#ff8a3a"];
+      s=parts(18,i=>'<g style="color:'+C[i%C.length]+'">'+fxPart(40+R()*120,30+R()*(H-50),.8+R()*1.4,-30+R()*60,-30+R()*40,1.6+R()*1.6,R()*3,i%2===0)+'</g>')}break;
     case "bened":
       s=fxRing(100,H/2,30,3,0)+fxRing(100,H/2,30,3,1.5)+'<circle class="fc" cx="100" cy="'+(H/2)+'" r="24" fill="url(#'+gid+')"/>'+
         fxGlint("M40 "+(H-10)+" C70 "+(H*.3).toFixed(0)+" 140 "+(H*.9).toFixed(0)+" 165 12",3.4,0)+fxGlint("M30 20 C80 "+(H*.8).toFixed(0)+" 130 10 175 "+(H-16),3.4,1.7)+
@@ -1455,6 +1457,14 @@ const CARD_IMGS=[
   {n:"globe d",src:"img/sorts/globe-invulnerabilite.jpg",fx:"globe",col:"#ffd86a",face:"50% 40%"},
   {n:"chaine d",src:"img/sorts/chaine-eclairs.jpg",fx:"chaine",col:"#7fa8ff",face:"45% 45%"},
   {n:"cercle de mort",src:"img/sorts/cercle-de-mort.jpg",fx:"cmort",col:"#b45aff",face:"50% 50%"},
+  {n:"detection de la magie",ex:1,src:"img/sorts/detection-magie.jpg",fx:"rune",col:"#b48cff",face:"55% 40%"},
+  {n:"blessure",ex:1,src:"img/sorts/blessure.jpg",fx:"wisp",col:"#ff3b3b",face:"60% 40%"},
+  {n:"bouclier de la foi",ex:1,src:"img/sorts/bouclier-foi.jpg",fx:"ward",col:"#ffd86a",face:"50% 35%"},
+  {n:"detection du mal et du bien",ex:1,src:"img/sorts/detection-mal-bien.jpg",fx:"ray",col:"#e7c2ff",face:"50% 35%"},
+  {n:"detection du poison et des maladies",ex:1,src:"img/sorts/detection-poison.jpg",fx:"wisp",col:"#7bd88f",face:"50% 45%"},
+  {n:"faveur divine",ex:1,src:"img/sorts/faveur-divine.jpg",fx:"ray",col:"#ffd86a",face:"50% 40%"},
+  {n:"disque flottant",ex:1,src:"img/sorts/disque-flottant.jpg",fx:"ward",col:"#7fd0ff",face:"50% 60%"},
+  {n:"couleurs dansantes",ex:1,src:"img/sorts/couleurs-dansantes.jpg",fx:"couleurs",col:"#ff8af0",face:"50% 40%"},
   {n:"benediction",ex:1,src:"img/sorts/benediction.jpg",fx:"bened",col:"#7fe8ff",face:"50% 50%"},
   {n:"comprehension des langues",ex:1,src:"img/sorts/comprehension-langues.jpg",fx:"langues",col:"#ffffff",face:"50% 46%"},
   {n:"boule de feu",ex:1,src:"img/sorts/boule-de-feu.jpg",fx:"bfeu",col:"#ff7a2a",face:"50% 50%"},
@@ -1470,7 +1480,7 @@ const CARD_IMGS=[
   {p:"seiko",n:"creation de nourriture",src:"img/seiko/festin.jpg",fx:"festin",col:"#bfe6ff",face:"50% 55%"},
   {p:"seiko",n:"force fantasmagorique",src:"img/seiko/illusion.jpg",fx:"illusion",col:"#ff4a3a",face:"57% 28%",ghost:1},
   {p:"seiko",n:"illusion fantasmagorique",src:"img/seiko/illusion.jpg",fx:"illusion",col:"#ff4a3a",face:"57% 28%",ghost:1}];
-const longW=t=>String(t||"").split(/\s+/).some(w=>w.length>10);
+const longW=t=>{t=String(t||"");return t.length>30?" lw xl":(t.length>20||t.split(/\s+/).some(w=>w.length>10))?" lw":""};
 function cardImg(k){const c=S.persos.get(state._deckC)||{};const pn=nrm(c.nom),kn=nrm(k.nom);return CARD_IMGS.find(f=>(!f.p||f.p===pn)&&(f.ex?kn===f.n:kn.startsWith(f.n))&&(!f.t||f.t===k.type))||null}
 function artHtml(k){const im=cardImg(k);return '<div class="art el-'+nrm(k.elem).replace(/[^a-z]/g,"")+(im?' hasimg':'')+'">'+
   (im?'<div class="aw aw-'+im.fx+'"><img class="artimg" src="'+im.src+'" alt="" loading="lazy">'+(im.ghost?'<img class="artimg ghost'+(im.ghost==="m"?" gm":"")+'" src="'+im.src+'" alt="" loading="lazy">':'')+cardFx(k,im)+'</div>':sceneSVG(k)+cardFx(k,null))+'<div class="artico mini">'+k.icon+'</div></div>'}
@@ -1478,7 +1488,7 @@ function cardHtml(k,small,n,calm,attr){const fav=(state._favs||[]).includes(k.ke
   return '<button class="card4 t-'+k.type+(small?" sm":"")+(pl?" played":"")+(k.empty?" empty":"")+'" style="--n:'+(n||0)+';--sd:-'+(((n||0)*1.37)%7).toFixed(2)+'s" '+(attr||'data-act="cardopen" data-key="'+esc(k.key)+'"')+'>'+
     artHtml(k)+'<div class="ribbon"><div class="medal">'+esc(k.medal)+'</div><div class="ecoic e-'+k.eco+'" title="'+ECOL[k.eco]+'">'+ECOI[k.eco]+'</div></div>'+
     (fav?'<div class="favst">★</div>':'')+
-    '<div class="parch"><div class="ptitle'+(longW(k.nom)?' lw':'')+'">'+esc(k.nom)+'</div><div class="psub">'+esc(k.sub||ECOL[k.eco])+'</div></div>'+
+    '<div class="parch"><div class="ptitle'+longW(k.nom)+'">'+esc(k.nom)+'</div><div class="psub">'+esc(k.sub||ECOL[k.eco])+'</div></div>'+
     '<div class="cfoot"><span>'+(k.typeL||TYPEL[k.type])+'</span><span>'+ECOL[k.eco]+'</span></div>'+(pl?'<div class="c3pl">Jouée</div>':'')+'</button>'}
 function deckHtml(c){
   const cards=deckCards(c);state._favs=c.favs||[];state._deck=cards;state._deckC=c.id;
@@ -1522,7 +1532,7 @@ const canReact=k=>k.eco==="reac"||/reaction/.test(nrm(k.desc));
 function cardModal(c,key){
   const k=(state._deck||deckCards(c)).find(x=>x.key===key);if(!k)return;const fav=(c.favs||[]).includes(key);
   const m=modal('<div class="card4 bigc t-'+k.type+'">'+artHtml(k)+'<div class="ribbon"><div class="medal">'+esc(k.medal)+'</div><div class="ecoic e-'+k.eco+'">'+ECOI[k.eco]+'</div></div>'+
-    '<div class="parch"><div class="ptitle'+(longW(k.nom)?' lw':'')+'">'+esc(k.nom)+'</div><div class="psub">'+esc(k.sub||"")+'</div>'+
+    '<div class="parch"><div class="ptitle'+longW(k.nom)+'">'+esc(k.nom)+'</div><div class="psub">'+esc(k.sub||"")+'</div>'+
     (k.tags.length||k.cost?'<div class="ptags">'+k.tags.concat(k.cost?["Coût : "+k.cost]:[]).map(t=>'<span>'+esc(t)+'</span>').join("")+'</div>':'')+
     '<div class="pdesc">'+(esc(k.desc)||'<i>Pas de description.</i>').replace(/\n/g,"<br>")+'</div></div>'+
     '<div class="cfoot"><span>'+TYPEL[k.type]+'</span><span>'+ECOL[k.eco]+'</span></div><i class="glare"></i></div>'+

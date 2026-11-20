@@ -334,6 +334,9 @@ details.rules{margin-top:12px}
 .ptitle.lw{letter-spacing:0;font-size:11.5px}
 .sm .ptitle.lw{font-size:9.8px}
 .card4.bigc .ptitle.lw{font-size:17px}
+.ptitle.xl{font-size:10.2px}
+.sm .ptitle.xl{font-size:8.8px}
+.card4.bigc .ptitle.xl{font-size:15px}
 .card4.bigc .psub{font-size:13px}
 .ptags{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:8px}
 .ptags span{font-size:11px;background:rgba(90,70,40,.15);border:1px solid #a89064;border-radius:10px;padding:2px 8px;color:#4a3a22}
