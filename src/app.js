@@ -1607,6 +1607,14 @@ function cardModal(c,key){
   m.querySelector(".acts").insertAdjacentHTML("beforebegin",'<div class="sndline"><span>🔊 '+esc(sndLabel(soundOf(c,k)))+'</span><button class="btn sm" data-sndp>▶</button>'+(canEdit(c)?'<button class="btn sm" data-sndc>🎙️ Changer le son</button>':'')+'</div>');
   m.querySelector("[data-sndp]").onclick=()=>playSnd(soundOf(c,k),true);
   const sc=m.querySelector("[data-sndc]");if(sc)sc.onclick=()=>{m.remove();soundPicker(c,k)};
+  const rmOk=canEdit(c)&&!readOnly&&key!=="cap:__intervention";
+  if(rmOk)m.querySelector(".acts").insertAdjacentHTML("afterend",'<button class="btn bad" data-rmcard style="width:100%;margin-top:8px">🗑️ Retirer cette carte de la fiche</button>');
+  const rc=m.querySelector("[data-rmcard]");if(rc)rc.onclick=()=>{m.remove();confirmBox("Retirer « "+k.nom+" » de la fiche de "+c.nom+" ?",()=>{
+    const nm=key.slice(key.indexOf(":")+1);
+    if(key.startsWith("sort:")){c.sorts=c.sorts.filter(x=>x.nom!==nm);c.attaques=c.attaques.filter(a=>!(isStruct(a)&&a.nom&&nrm(a.nom).startsWith(nrm(nm))))}
+    else if(key.startsWith("atk:"))c.attaques=c.attaques.filter(a=>!(isStruct(a)&&a.nom===nm));
+    else if(key.startsWith("cap:"))c.dons=c.dons.filter(d=>d.nom!==nm);
+    c.favs=(c.favs||[]).filter(x=>x!==key);schedule(c);rerenderPane();toast("« "+k.nom+" » retiré de la fiche")},"Retirer")};
   m.classList.add("cardm");tiltBind(m);
   m.querySelector("[data-x]").onclick=()=>m.remove();
   m.querySelector("[data-fav]").onclick=()=>{c.favs=c.favs||[];if(fav)c.favs=c.favs.filter(x=>x!==key);else c.favs.push(key);schedule(c);m.remove();rerenderPane()};
