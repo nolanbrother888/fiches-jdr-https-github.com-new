@@ -788,3 +788,127 @@ body.bgsac .tabs{background:rgba(20,13,8,.94)}
 body.bgsac #pane>.card :is(input,select,textarea),body.bgsac #hpane>.card :is(input,select,textarea){background:rgba(14,9,5,.62);border-color:rgba(170,130,80,.4)}
 body.bgsac .top{background:rgba(22,14,8,.8);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 body.bgsac #pane>.card .it+.it,body.bgsac #hpane>.card .it+.it{border-top-color:rgba(170,130,80,.35)}
+
+/* =====================================================================
+   THÈME NUIT & OR : fonds illustrés, cadres dorés, menus
+   Les cartes (card3, card4, bigcard) et leurs animations ne sont pas touchées.
+   ===================================================================== */
+@font-face{font-family:"Cinzel";font-weight:600;font-display:swap;src:url(fonts/cinzel-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:"Cinzel";font-weight:700;font-display:swap;src:url(fonts/cinzel-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:"Cormorant Garamond";font-weight:500;font-display:swap;src:url(fonts/cormorant-garamond-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:"Cormorant Garamond";font-weight:600;font-display:swap;src:url(fonts/cormorant-garamond-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:"Cormorant Garamond";font-weight:700;font-display:swap;src:url(fonts/cormorant-garamond-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:"Cormorant Garamond";font-weight:500;font-style:italic;font-display:swap;src:url(fonts/cormorant-garamond-latin-500-italic.woff2) format("woff2")}
+
+:root{
+  --nuit:#0B1020;--or:#D4AF6B;--or-clair:#F1D9A0;--or-sombre:#8A6A2E;--teal:#2E7D7B;
+  --bg:#0B1020;--panel:rgba(18,24,44,.86);--panel2:#1a2140;--line:rgba(212,175,107,.28);--txt:#EEE5D0;--mute:#9d978a;
+  --titre:"Cinzel",Georgia,"Times New Roman",serif;--lettre:"Cormorant Garamond",Georgia,serif;
+}
+/* les cartes gardent exactement leurs couleurs d'origine */
+.card3,.card4,.bigcard,.cardm,.hand,.deck{--panel:#25272b;--panel2:#2e3035;--line:#3a3d43;--txt:#ecebe7;--mute:#9a9ca3;--acc:#7bd88f;--acc2:#5fb873}
+html{background:var(--nuit)}
+h1,h2,h3{font-family:var(--titre)}
+
+/* ---- Fonds illustrés (portrait sur mobile, version large sur ordi) ---- */
+body.fd{background:transparent}
+body.fd.fd::before{content:"";position:fixed;inset:0;z-index:-1;
+  background:linear-gradient(180deg,rgba(11,16,32,.55) 0%,rgba(11,16,32,.35) 30%,rgba(11,16,32,.62) 60%,rgba(11,16,32,.86) 100%),var(--fond) center/cover no-repeat,var(--nuit)}
+body.fd-accueil{--fond:url(img/fonds/accueil.webp)}
+body.fd-combat{--fond:url(img/fonds/combat.webp)}
+body.fd-envois{--fond:url(img/fonds/envois.webp)}
+body.fd-grimoire{--fond:url(img/fonds/grimoire.webp)}
+body.fd-inventaire{--fond:url(img/fonds/inventaire.webp)}
+body.fd-joueurs{--fond:url(img/fonds/joueurs.webp)}
+body.fd-visuels{--fond:url(img/fonds/visuels.webp)}
+@media (min-aspect-ratio:1/1){
+  body.fd-accueil{--fond:url(img/fonds/accueil-l.webp)}
+  body.fd-combat{--fond:url(img/fonds/combat-l.webp)}
+  body.fd-envois{--fond:url(img/fonds/envois-l.webp)}
+  body.fd-grimoire{--fond:url(img/fonds/grimoire-l.webp)}
+  body.fd-inventaire{--fond:url(img/fonds/inventaire-l.webp)}
+  body.fd-joueurs{--fond:url(img/fonds/joueurs-l.webp)}
+  body.fd-visuels{--fond:url(img/fonds/visuels-l.webp)}
+}
+/* l'accueil laisse respirer le paysage en haut */
+body.fd.at-home::before{background:linear-gradient(180deg,rgba(11,16,32,.25) 0%,rgba(11,16,32,0) 20%,rgba(11,16,32,.1) 38%,rgba(11,16,32,.6) 58%,rgba(11,16,32,.9) 100%),var(--fond) center top/cover no-repeat,var(--nuit)}
+
+/* ---- Barre du haut ---- */
+body.fd .top{background:linear-gradient(180deg,rgba(7,10,22,.94),rgba(11,16,32,.84));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid var(--or-sombre);box-shadow:0 1px 0 rgba(212,175,107,.14),0 6px 20px rgba(0,0,0,.45)}
+body.fd .top h1{font-family:var(--titre);font-weight:700;color:var(--or-clair);letter-spacing:.06em;text-shadow:0 1px 0 #000,0 0 14px rgba(212,175,107,.25)}
+body.fd .top .ico{color:var(--or)}
+body.at-home .top{display:none}
+
+/* ---- Barre d'onglets du bas ---- */
+body.fd .tabs{background:linear-gradient(180deg,rgba(11,16,32,.92),#070a16);border-top:1px solid var(--or-sombre);box-shadow:0 -1px 0 rgba(212,175,107,.14),0 -8px 24px rgba(0,0,0,.45)}
+body.fd .tabs button{font-family:var(--lettre);font-weight:700;font-size:12.5px;letter-spacing:.02em;position:relative}
+body.fd .tabs button.on{color:var(--or)}
+body.fd .tabs button.on::before{content:"";position:absolute;top:0;left:22%;right:22%;height:2px;background:var(--or);box-shadow:0 0 8px var(--or)}
+.kic.kacc{background-image:url(img/icon.png);border-radius:50%}
+body.fd .tabs button:not(.on) .kic.kacc{filter:grayscale(.7) brightness(.8)}
+
+/* ---- Cadres dorés : panneaux ---- */
+body.fd .card{background:linear-gradient(180deg,rgba(24,30,54,.86),rgba(11,16,32,.9));border:1px solid var(--or-sombre);border-radius:8px;
+  box-shadow:inset 0 0 0 3px rgba(11,16,32,.85),inset 0 0 0 4px rgba(212,175,107,.32),0 8px 24px rgba(0,0,0,.45)}
+body.fd .card h3{font-family:var(--titre);color:var(--or);letter-spacing:.1em;padding-bottom:6px;border-bottom:1px solid rgba(212,175,107,.25)}
+body.fd .modal .box{background:linear-gradient(180deg,#161c34,#0b1020);border:1px solid var(--or-sombre);box-shadow:inset 0 0 0 3px #0b1020,inset 0 0 0 4px rgba(212,175,107,.4),0 20px 60px rgba(0,0,0,.7)}
+body.fd .modal h2{color:var(--or-clair)}
+body.fd .ch{background:linear-gradient(180deg,rgba(24,30,54,.88),rgba(11,16,32,.92));border-color:var(--or-sombre);box-shadow:inset 0 0 0 1px rgba(212,175,107,.18),0 6px 18px rgba(0,0,0,.4)}
+body.fd .ch .n{font-family:var(--titre);font-weight:700;color:var(--or-clair)}
+body.fd .av{box-shadow:0 0 0 2px rgba(11,16,32,.9),0 0 0 3px rgba(212,175,107,.5)}
+body.fd .nextses{background:linear-gradient(90deg,rgba(212,175,107,.2),rgba(11,16,32,.85));border-color:var(--or)}
+
+/* ---- Boutons, segments, champs ---- */
+body.fd .btn{background:linear-gradient(180deg,rgba(40,46,74,.95),rgba(15,20,38,.95));border:1px solid var(--or-sombre);color:var(--or-clair)}
+body.fd .btn:hover{border-color:var(--or)}
+body.fd .btn.pri{background:linear-gradient(180deg,#E8C77E,#B8924F);color:#1d1406;border-color:#F1D9A0;box-shadow:0 0 12px rgba(212,175,107,.3)}
+body.fd .btn.bad{color:#ff9a8e;border-color:#7a2a22}
+body.fd .seg{background:rgba(11,16,32,.8);border-color:var(--or-sombre)}
+body.fd .seg button.on{background:linear-gradient(180deg,rgba(212,175,107,.28),rgba(212,175,107,.12));color:var(--or-clair);box-shadow:inset 0 0 0 1px rgba(212,175,107,.5)}
+body.fd .chip.on{background:var(--or);border-color:var(--or-clair);color:#1d1406}
+body.fd input,body.fd select,body.fd textarea{background:rgba(7,10,22,.75);border-color:rgba(212,175,107,.3)}
+body.fd :is(input,select,textarea):focus{outline-color:var(--or)}
+body.fd .owner{color:var(--or)}
+/* le parchemin (Combat, Persos) et le sac (Inventaire) gardent leurs panneaux d'origine */
+body.fd.bgparch .top,body.fd.bgsac .top{background:linear-gradient(180deg,rgba(7,10,22,.94),rgba(11,16,32,.84))}
+body.fd.bgparch #hpane>.card{border:1px solid transparent}
+body.fd.bgparch #hpane>.card .btn:not(.pri){background:rgba(255,250,235,.6);color:#2c1d0d;border-color:#a88a58}
+body.fd.bgparch #hpane>.card :is(input,select,textarea){background:var(--panel2);border-color:var(--line)}
+body.fd.bgsac #pane>.card,body.fd.bgsac #hpane>.card{border-color:rgba(190,145,85,.55)}
+body.fd.bgsac #pane>.card :is(input,select,textarea),body.fd.bgsac #hpane>.card :is(input,select,textarea){background:rgba(14,9,5,.62);border-color:rgba(170,130,80,.4)}
+
+/* ---- Écran d'accueil ---- */
+.acc-hero{text-align:center;padding:8px 0 4px}
+.acc-logo{display:block;width:min(220px,54vw);margin:0 auto;filter:drop-shadow(0 4px 10px rgba(0,0,0,.7)) drop-shadow(0 0 22px rgba(212,175,107,.25));animation:accIn .9s cubic-bezier(.2,.7,.2,1) both}
+.acc-sub{margin:2px 0 0;font:italic 600 20px var(--lettre);color:#F3E7CC;text-shadow:0 1px 2px #000,0 0 10px #000,0 0 22px rgba(0,0,0,.9);animation:accIn .9s .15s cubic-bezier(.2,.7,.2,1) both}
+.orn{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:10px}
+.orn i{height:1px;width:70px;background:linear-gradient(90deg,transparent,var(--or))}
+.orn i:last-child{transform:scaleX(-1)}
+.orn b{width:7px;height:7px;background:var(--or);transform:rotate(45deg)}
+.acc-menu{display:flex;flex-direction:column;gap:10px;padding:12vh 6px 6px;max-width:520px;margin:0 auto}
+.cart{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:12px;padding:6px 14px 6px 10px;position:relative;
+  background:linear-gradient(180deg,rgba(26,32,56,.8),rgba(11,16,32,.88));border:1px solid var(--or-sombre);border-radius:6px;
+  box-shadow:inset 0 0 0 3px rgba(11,16,32,.9),inset 0 0 0 4px rgba(212,175,107,.45),0 4px 14px rgba(0,0,0,.5);
+  transition:transform .2s,box-shadow .2s,border-color .2s;animation:accIn .6s cubic-bezier(.2,.7,.2,1) both}
+.cart::before,.cart::after{content:"";position:absolute;top:50%;width:9px;height:9px;background:var(--nuit);border:1px solid var(--or);transform:translateY(-50%) rotate(45deg)}
+.cart::before{left:-5px}.cart::after{right:-5px}
+.cart:hover,.cart:focus-visible{border-color:var(--or);box-shadow:inset 0 0 0 3px rgba(11,16,32,.9),inset 0 0 0 4px var(--or),0 0 18px rgba(212,175,107,.3)}
+.cart:active{transform:scale(.98)}
+.cart-ic{width:48px;height:48px;flex:none;display:grid;place-items:center}
+.cart-ic img{width:48px;height:48px;object-fit:contain;border-radius:6px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+.cart-tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.cart-tx b{font:600 17px var(--titre);color:var(--or-clair);letter-spacing:.03em}
+.cart-tx small{font:500 15px var(--lettre);color:#bdb6a5;margin-top:1px}
+.cart-ch{color:var(--or);font-size:26px;line-height:1;opacity:.8}
+.acc-menu .cart:nth-child(2){animation-delay:.05s}.acc-menu .cart:nth-child(3){animation-delay:.1s}.acc-menu .cart:nth-child(4){animation-delay:.15s}
+.acc-menu .cart:nth-child(5){animation-delay:.2s}.acc-menu .cart:nth-child(6){animation-delay:.25s}.acc-menu .cart:nth-child(7){animation-delay:.3s}.acc-menu .cart:nth-child(8){animation-delay:.35s}
+.acc-pied{display:flex;gap:8px;justify-content:center;margin:18px 0 6px;flex-wrap:wrap}
+@keyframes accIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.acc-logo,.acc-sub,.cart{animation:none}}
+/* écran large : titre à gauche, menu sur deux colonnes */
+@media (min-width:900px){
+  body.at-home .wrap{max-width:1100px}
+  .acc-hero{padding-top:3vh}
+  .acc-logo{width:250px}
+  .acc-menu{display:grid;grid-template-columns:1fr 1fr;gap:16px 26px;max-width:900px;padding-top:5vh}
+}

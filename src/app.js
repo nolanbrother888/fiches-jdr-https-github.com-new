@@ -19,7 +19,7 @@ const ECOLES=["Abjuration","Divination","Enchantement","Évocation","Illusion","
 const RARETES=["Commun","Peu commun","Rare","Très rare","Légendaire","Artefact"];
 const COLORS=["#7bd88f","#6cb6ff","#b48cff","#f0a35e","#e5645c","#f2d16b","#5fd3c8","#e88ad0","#c0c0c0"];
 const TABS=[["id","Identité","🪪"],["car","Caracs","🎲"],["comp","Compét.","<i class=\"kic kpar\"></i>"],["combat","Combat","<i class=\"emb e-combat\"><i></i></i>"],["sorts","Sorts","✨"],["inv","Inventaire","<i class=\"emb e-inventaire\"><i></i></i>"],["dons","Dons","⭐"],["perso","Perso","🧩"],["notes","Notes","<i class=\"emb e-journal\"><i></i></i>"]];
-const HTABS=[["persos","Persos","<i class=\"emb e-perso\"><i></i></i>"],["combat","Combat","<i class=\"emb e-combat\"><i></i></i>"],["mj","Vue MJ","<i class=\"emb e-mj\"><i></i></i>"],["biblio","Biblio","<i class=\"emb e-biblio\"><i></i></i>"],["cartes","Cartes","<i class=\"emb e-carte\"><i></i></i>"],["commun","Commun","<i class=\"emb e-inventaire\"><i></i></i>"],["planning","Planning","<i class=\"emb e-planning\"><i></i><i class=\"pl-s\"></i><i class=\"pl-h\"></i></i>"],["journal","Journal","<i class=\"emb e-journal\"><i></i></i>"]];
+const HTABS=[["accueil","Accueil","<i class=\"kic kacc\"></i>"],["persos","Persos","<i class=\"emb e-perso\"><i></i></i>"],["combat","Combat","<i class=\"emb e-combat\"><i></i></i>"],["mj","Vue MJ","<i class=\"emb e-mj\"><i></i></i>"],["biblio","Grimoire","<i class=\"emb e-biblio\"><i></i></i>"],["cartes","Cartes","<i class=\"emb e-carte\"><i></i></i>"],["commun","Commun","<i class=\"emb e-inventaire\"><i></i></i>"],["planning","Planning","<i class=\"emb e-planning\"><i></i><i class=\"pl-s\"></i><i class=\"pl-h\"></i></i>"],["journal","Journal","<i class=\"emb e-journal\"><i></i></i>"]];
 const DISPO=["","oui","peut","non"];const DLAB={"":"?","oui":"Oui","peut":"Peut-être","non":"Non"};
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -87,7 +87,7 @@ const GDEF=()=>({regles:{items:{},init:false},journal:{texte:""},commun:{monnaie
 let G=GDEF();
 let remote=null,myId=null,me=null,readOnly=false,saveStatus="Connexion…";
 const USERS=new Map();
-let state={view:"home",home:"persos",cur:null,tab:"id",bibType:"sort",bibQ:"",bibNiv:"",persoFilter:"actifs",showPast:false};
+let state={view:"home",home:"accueil",cur:null,tab:"id",bibType:"sort",bibQ:"",bibNiv:"",persoFilter:"actifs",showPast:false};
 const LS=()=>"fichesJDR.fb."+(myId||"anon");
 let firstPersos=false;
 function lsLoad(){try{const r=JSON.parse(localStorage.getItem(LS())||"null");if(r){COLS.forEach(c=>(r.S&&r.S[c]||[]).forEach(o=>S[c].set(o.id,c==="persos"?normPerso(o):o)));G=Object.assign(GDEF(),r.G||{})}}catch(e){}}
@@ -172,12 +172,13 @@ const roBanner=()=>readOnly?'<div class="ro">👀 Lecture seule.</div>':'';
 function render(){
   document.body.classList.toggle("bgparch",state.view==="home"&&(state.home==="combat"||state.home==="persos"));
   document.body.classList.toggle("bgsac",(state.view==="home"&&state.home==="commun")||(state.view==="sheet"&&state.tab==="inv"));
+  setFond();
   if(state.view==="sheet"){const c=cur();if(!c){state.view="home";return render()}
     app.innerHTML='<div class="top"><div class="wrap"><button class="ico" data-act="back">‹</button>'+avatar(c,36)+'<h1 data-d="title">'+esc(c.nom)+'</h1><span class="status" id="st">'+esc(saveStatus)+'</span></div></div>'+
       '<div class="wrap">'+roBanner()+(!readOnly&&!canEdit(c)?'<div class="ro">🔒 Fiche d\'un autre joueur : lecture seule.</div>':'')+(!readOnly&&!c.ownerId&&myId?'<div class="ro" style="border-color:var(--acc);color:var(--acc);background:#1f3326">Cette fiche n\'a pas encore de propriétaire. <button class="btn sm" data-act="mine" style="margin-left:6px">C\'est mon perso</button></div>':'')+'<div id="pane">'+pane(c)+'</div></div>'+
       '<nav class="tabs"><div class="in">'+TABS.map(t=>'<button data-tab="'+t[0]+'" class="'+(state.tab===t[0]?"on"+(state._ptab!==state.tab?" pop":""):"")+'"><b>'+t[2]+'</b>'+t[1]+'</button>').join("")+'</div></nav>';
     derive();lockRO();state._ptab=state.tab;state._phome=state.home;return}
-  const title={persos:"<i class=kic></i> JDR Fable",combat:"<i class=kic></i> Combat",mj:"<i class=\"kic kmj\"></i> Vue MJ",biblio:"<i class=\"kic kbib\"></i> Bibliothèque",cartes:"🗺️ Cartes",commun:"💰 Inventaire commun",planning:"<i class=\"kic kplan\"></i> Planning",journal:"📖 Journal"}[state.home];
+  const title={accueil:"<i class=kic></i> JDR Fable",persos:"<i class=kic></i> Persos",combat:"<i class=kic></i> Combat",mj:"<i class=\"kic kmj\"></i> Vue MJ",biblio:"<i class=\"kic kbib\"></i> Grimoire",cartes:"🗺️ Cartes",commun:"💰 Inventaire commun",planning:"<i class=\"kic kplan\"></i> Planning",journal:"📖 Journal"}[state.home];
   app.innerHTML='<div class="top"><div class="wrap"><h1>'+title+'</h1><span class="status" id="st">'+esc(saveStatus)+'</span>'+(state.home==="persos"?'<button class="ico" data-act="io" title="Importer / exporter">⇅</button><button class="ico" data-act="logout" title="Se déconnecter">⎋</button>':'')+'</div></div>'+
     '<div class="wrap">'+roBanner()+'<div id="hpane">'+homePane()+'</div></div>'+
     '<nav class="tabs"><div class="in">'+HTABS.map(t=>'<button data-htab="'+t[0]+'" class="'+(state.home===t[0]?"on"+(state._phome!==state.home?" pop":""):"")+'"><b>'+t[2]+'</b>'+t[1]+'</button>').join("")+'</div></nav>';
@@ -189,8 +190,30 @@ function lockRO(){if(state.view==="sheet"&&!canEdit(cur())){app.querySelectorAll
 function nextAllDate(){const pl=G.planning.joueurs.filter(Boolean);if(!pl.length)return null;
   return [...S.sessions.values()].filter(s=>s.date&&s.date>=today()&&pl.every(p=>(s.dispo||{})[p]==="oui")).sort((a,b)=>a.date.localeCompare(b.date))[0]||null}
 
+// ---------- Thème Nuit & Or : fond illustré par onglet ----------
+const FONDS={accueil:"accueil",persos:"joueurs",combat:"combat",mj:"visuels",biblio:"grimoire",cartes:"accueil",commun:"inventaire",planning:"joueurs",journal:"envois"};
+const FONDS_FICHE={combat:"combat",sorts:"grimoire",inv:"inventaire"};
+function setFond(){
+  const f=state.view==="sheet"?(FONDS_FICHE[state.tab]||"joueurs"):(FONDS[state.home]||"accueil");
+  const b=document.body;[...b.classList].forEach(k=>{if(k.indexOf("fd-")===0)b.classList.remove(k)});
+  b.classList.add("fd","fd-"+f);b.classList.toggle("at-home",state.view==="home"&&state.home==="accueil");
+}
+const MENU=[["combat","Combat","Lance un combat, gère les tours","img/menu/combat.webp"],
+  ["persos","Persos","Fiches, PV et stats du groupe","img/menu/joueurs.webp"],
+  ["mj","Vue MJ","Tout le groupe d'un seul regard","img/emb/hd/mj.webp"],
+  ["biblio","Grimoire","Sorts et capacités","img/menu/grimoire.webp"],
+  ["commun","Inventaire commun","Le butin et la bourse du groupe","img/menu/inventaire.webp"],
+  ["cartes","Cartes","Monde, villes, donjons","img/menu/accueil.webp"],
+  ["planning","Planning","Les prochaines sessions","img/emb/planning.webp"],
+  ["journal","Journal","Résumés, PNJ, quêtes","img/menu/notes.webp"]];
+function accueilPane(){
+  return '<div class="acc-hero"><img class="acc-logo" src="img/intro/titre.webp" alt="JDR Fable"><p class="acc-sub">Ton assistant de jeu de rôle</p><div class="orn"><i></i><b></b><i></i></div></div>'+
+    '<div class="acc-menu">'+MENU.map(([k,t,st,img])=>'<button class="cart" data-htab="'+k+'"><span class="cart-ic"><img src="'+img+'" alt=""></span><span class="cart-tx"><b>'+t+'</b><small>'+st+'</small></span><span class="cart-ch">›</span></button>').join("")+'</div>'+
+    '<div class="acc-pied"><button class="btn sm" data-act="io">⇅ Importer / exporter</button>'+'<button class="btn sm" data-act="logout">⎋ Se déconnecter</button></div>';
+}
 function homePane(){
   switch(state.home){
+  case "accueil":return accueilPane();
   case "combat":return combatPane();
   case "persos":{const all=persos();const list=all.filter(c=>state.persoFilter==="tous"?true:state.persoFilter==="retires"?c.retire:!c.retire);
     const mine=list.filter(c=>myId&&c.ownerId===myId),others=list.filter(c=>!(myId&&c.ownerId===myId));
@@ -1104,7 +1127,7 @@ function castFx(c,k,then){
 // ===== Intros des onglets : une seule fois par onglet tant que l'appli est ouverte =====
 const seenTabs=new Set();
 const INTRO={persos:["Persos","Ouvre ta fiche et fais vivre ton héros","#4f9dff"],combat:["Combat","Initiative, cartes et dégâts du tour","#6cb6ff"],mj:["Vue MJ","Tout le groupe d'un seul regard","#b36bff"],
-  biblio:["Biblio","Tous les sorts, par classe et par niveau","#ff8a2a"],cartes:["Cartes","Les lieux de la campagne","#e0b46a"],commun:["Commun","Le butin et la bourse du groupe","#3ddc97"],
+  biblio:["Grimoire","Tous les sorts, par classe et par niveau","#ff8a2a"],cartes:["Cartes","Les lieux de la campagne","#e0b46a"],commun:["Commun","Le butin et la bourse du groupe","#3ddc97"],
   planning:["Planning","Les prochaines sessions","#ff4a3a"],journal:["Journal","La mémoire de l'aventure","#e8b04a"]};
 const EMB_IMG={persos:"perso",combat:"combat",mj:"mj",cartes:"carte",commun:"inventaire",journal:"journal"};
 function boltPath(x0,y0,x1,y1,n,amp){let d="M"+x0.toFixed(1)+" "+y0.toFixed(1);for(let i=1;i<n;i++){const t=i/n,x=x0+(x1-x0)*t,y=y0+(y1-y0)*t,dx=-(y1-y0),dy=(x1-x0),L=Math.hypot(dx,dy)||1,o=(Math.random()*2-1)*amp;d+=" L"+(x+dx/L*o).toFixed(1)+" "+(y+dy/L*o).toFixed(1)}return d+" L"+x1.toFixed(1)+" "+y1.toFixed(1)}
@@ -1778,6 +1801,6 @@ onAuthStateChanged(auth,async u=>{
   catch(e){if(e&&e.code==="permission-denied")joinScreen(u);else{app.innerHTML='<div class="login"><h1><i class=kic></i> JDR Fable</h1><p class="sub">Impossible de joindre la base. Vérifie ta connexion.</p><button class="btn pri" onclick="location.reload()" style="width:100%">Réessayer</button></div>'}}
 });
 // Bouton retour Android
-try{const C=window.Capacitor;if(C&&C.Plugins&&C.Plugins.App)C.Plugins.App.addListener("backButton",()=>{if(document.querySelector(".modal")){document.querySelector(".modal").remove();return}if(state.view==="sheet"){state.view="home";render();return}if(state.home!=="persos"){state.home="persos";render();return}C.Plugins.App.exitApp()})}catch(e){}
+try{const C=window.Capacitor;if(C&&C.Plugins&&C.Plugins.App)C.Plugins.App.addListener("backButton",()=>{if(document.querySelector(".modal")){document.querySelector(".modal").remove();return}if(state.view==="sheet"){state.view="home";render();return}if(state.home!=="accueil"){state.home="accueil";render();return}C.Plugins.App.exitApp()})}catch(e){}
 })();
 
