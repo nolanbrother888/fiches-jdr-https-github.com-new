@@ -1,9 +1,9 @@
 
 import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from "firebase/auth";
-import { initializeFirestore, persistentLocalCache, doc, collection, onSnapshot, setDoc, updateDoc, deleteDoc, getDoc, FieldPath, writeBatch, deleteField } from "firebase/firestore";
+import { initializeFirestore, persistentLocalCache, doc, collection, onSnapshot, setDoc, updateDoc, deleteDoc, getDoc, FieldPath, writeBatch, deleteField, query, where } from "firebase/firestore";
 import { firebaseConfig } from "./firebase-config.js";
-const fs={doc,collection,onSnapshot,setDoc,updateDoc,deleteDoc,getDoc,FieldPath,writeBatch,deleteField};
+const fs={doc,collection,onSnapshot,setDoc,updateDoc,deleteDoc,getDoc,FieldPath,writeBatch,deleteField,query,where};
 (function(){
 "use strict";
 // ---------- Règles ----------
@@ -19,7 +19,7 @@ const ECOLES=["Abjuration","Divination","Enchantement","Évocation","Illusion","
 const RARETES=["Commun","Peu commun","Rare","Très rare","Légendaire","Artefact"];
 const COLORS=["#7bd88f","#6cb6ff","#b48cff","#f0a35e","#e5645c","#f2d16b","#5fd3c8","#e88ad0","#c0c0c0"];
 const TABS=[["id","Identité","🪪"],["car","Caracs","🎲"],["comp","Compét.","<i class=\"kic kpar\"></i>"],["combat","Combat","<i class=\"emb e-combat\"><i></i></i>"],["sorts","Sorts","✨"],["inv","Inventaire","<i class=\"emb e-inventaire\"><i></i></i>"],["dons","Dons","⭐"],["perso","Perso","🧩"],["notes","Notes","<i class=\"emb e-journal\"><i></i></i>"]];
-const HTABS=[["accueil","Accueil","<i class=\"kic kacc\"></i>"],["persos","Persos","<i class=\"emb e-perso\"><i></i></i>"],["combat","Combat","<i class=\"emb e-combat\"><i></i></i>"],["mj","Vue MJ","<i class=\"emb e-mj\"><i></i></i>"],["biblio","Grimoire","<i class=\"emb e-biblio\"><i></i></i>"],["cartes","Cartes","<i class=\"emb e-carte\"><i></i></i>"],["commun","Commun","<i class=\"emb e-inventaire\"><i></i></i>"],["planning","Planning","<i class=\"emb e-planning\"><i></i><i class=\"pl-s\"></i><i class=\"pl-h\"></i></i>"],["journal","Journal","<i class=\"emb e-journal\"><i></i></i>"]];
+const HTABS=[["accueil","Accueil","<i class=\"kic kacc\"></i>"],["persos","Persos","<i class=\"emb e-perso\"><i></i></i>"],["combat","Combat","<i class=\"emb e-combat\"><i></i></i>"],["mj","Vue MJ","<i class=\"emb e-mj\"><i></i></i>"],["biblio","Grimoire","<i class=\"emb e-biblio\"><i></i></i>"],["cartes","Cartes","<i class=\"emb e-carte\"><i></i></i>"],["commun","Commun","<i class=\"emb e-inventaire\"><i></i></i>"],["planning","Planning","<i class=\"emb e-planning\"><i></i><i class=\"pl-s\"></i><i class=\"pl-h\"></i></i>"],["journal","Journal","<i class=\"emb e-journal\"><i></i></i>"],["messages","Messages","<i class=\"kic kmsg\"></i>"]];
 const DISPO=["","oui","peut","non"];const DLAB={"":"?","oui":"Oui","peut":"Peut-être","non":"Non"};
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -133,6 +133,7 @@ function subscribe(){
   });
   fs.onSnapshot(fs.collection(db,"groupe"),snap=>{let ch=false;snap.docChanges().forEach(x=>{const id=x.doc.id;if(id.startsWith("son-")){if(x.type==="removed")SONS.delete(id);else SONS.set(id,Object.assign({id},x.doc.data()));return}if(!id.startsWith("carte-"))return;if(x.type==="removed")CARTES.delete(id);else CARTES.set(id,Object.assign({id},x.doc.data()));ch=true});if(ch&&state.home==="cartes"&&state.view==="home")softRender()},()=>{});
   fs.onSnapshot(fs.collection(db,"users"),snap=>{snap.docs.forEach(d=>USERS.set(d.id,d.data().nom||""));softRender()},()=>{});
+  subscribeMsg(db);
 }
 const ownerName=c=>c.ownerId?(c.ownerId===myId?"toi":(USERS.get(c.ownerId)||"un joueur")):"";
 
@@ -178,12 +179,13 @@ function render(){
       '<div class="wrap">'+roBanner()+(!readOnly&&!canEdit(c)?'<div class="ro">🔒 Fiche d\'un autre joueur : lecture seule.</div>':'')+(!readOnly&&!c.ownerId&&myId?'<div class="ro" style="border-color:var(--acc);color:var(--acc);background:#1f3326">Cette fiche n\'a pas encore de propriétaire. <button class="btn sm" data-act="mine" style="margin-left:6px">C\'est mon perso</button></div>':'')+'<div id="pane">'+pane(c)+'</div></div>'+
       '<nav class="tabs"><div class="in">'+TABS.map(t=>'<button data-tab="'+t[0]+'" class="'+(state.tab===t[0]?"on"+(state._ptab!==state.tab?" pop":""):"")+'"><b>'+t[2]+'</b>'+t[1]+'</button>').join("")+'</div></nav>';
     derive();lockRO();state._ptab=state.tab;state._phome=state.home;return}
-  const title={accueil:"<i class=kic></i> JDR Fable",persos:"<i class=kic></i> Persos",combat:"<i class=kic></i> Combat",mj:"<i class=\"kic kmj\"></i> Vue MJ",biblio:"<i class=\"kic kbib\"></i> Grimoire",cartes:"🗺️ Cartes",commun:"💰 Inventaire commun",planning:"<i class=\"kic kplan\"></i> Planning",journal:"📖 Journal"}[state.home];
+  const title={accueil:"<i class=kic></i> JDR Fable",persos:"<i class=kic></i> Persos",combat:"<i class=kic></i> Combat",mj:"<i class=\"kic kmj\"></i> Vue MJ",biblio:"<i class=\"kic kbib\"></i> Grimoire",cartes:"🗺️ Cartes",commun:"💰 Inventaire commun",planning:"<i class=\"kic kplan\"></i> Planning",journal:"📖 Journal",messages:"<i class=\"kic kmsg\"></i> Messages"}[state.home];
   app.innerHTML='<div class="top"><div class="wrap"><h1>'+title+'</h1><span class="status" id="st">'+esc(saveStatus)+'</span>'+(state.home==="persos"?'<button class="ico" data-act="io" title="Importer / exporter">⇅</button><button class="ico" data-act="logout" title="Se déconnecter">⎋</button>':'')+'</div></div>'+
     '<div class="wrap">'+roBanner()+'<div id="hpane">'+homePane()+'</div></div>'+
     '<nav class="tabs"><div class="in">'+HTABS.map(t=>'<button data-htab="'+t[0]+'" class="'+(state.home===t[0]?"on"+(state._phome!==state.home?" pop":""):"")+'"><b>'+t[2]+'</b>'+t[1]+'</button>').join("")+'</div></nav>';
   lockRO();if(state.home==="combat")derive();
-  state._ptab=state.tab;state._phome=state.home;
+  state._ptab=state.tab;state._phome=state.home;majBadges();
+  const ml=document.getElementById("msglist");if(ml)ml.scrollTop=ml.scrollHeight;
 }
 function lockRO(){if(state.view==="sheet"&&!canEdit(cur())){app.querySelectorAll("#pane input,#pane select,#pane textarea,#pane button:not([data-tab])").forEach(e=>e.disabled=true);return}if(!readOnly)return;app.querySelectorAll("#pane input,#pane select,#pane textarea,#hpane input,#hpane select,#hpane textarea").forEach(e=>{if(e.id!=="bibq"&&e.id!=="bibniv")e.disabled=true})}
 
@@ -191,7 +193,7 @@ function nextAllDate(){const pl=G.planning.joueurs.filter(Boolean);if(!pl.length
   return [...S.sessions.values()].filter(s=>s.date&&s.date>=today()&&pl.every(p=>(s.dispo||{})[p]==="oui")).sort((a,b)=>a.date.localeCompare(b.date))[0]||null}
 
 // ---------- Thème Nuit & Or : fond illustré par onglet ----------
-const FONDS={accueil:"accueil",persos:"joueurs",combat:"combat",mj:"visuels",biblio:"grimoire",cartes:"accueil",commun:"inventaire",planning:"joueurs",journal:"envois"};
+const FONDS={accueil:"accueil",persos:"joueurs",combat:"combat",mj:"visuels",biblio:"grimoire",cartes:"accueil",commun:"inventaire",planning:"joueurs",journal:"envois",messages:"envois"};
 const FONDS_FICHE={combat:"combat",sorts:"grimoire",inv:"inventaire"};
 function setFond(){
   const f=state.view==="sheet"?(FONDS_FICHE[state.tab]||"joueurs"):(FONDS[state.home]||"accueil");
@@ -205,15 +207,96 @@ const MENU=[["combat","Combat","Lance un combat, gère les tours","img/menu/comb
   ["commun","Inventaire commun","Le butin et la bourse du groupe","img/menu/inventaire.webp"],
   ["cartes","Cartes","Monde, villes, donjons","img/menu/accueil.webp"],
   ["planning","Planning","Les prochaines sessions","img/emb/planning.webp"],
-  ["journal","Journal","Résumés, PNJ, quêtes","img/menu/notes.webp"]];
+  ["journal","Journal","Résumés, PNJ, quêtes","img/menu/notes.webp"],
+  ["messages","Messages","Discussions privées avec le MJ et les joueurs","img/menu/envois.webp"]];
 function accueilPane(){
-  return '<div class="acc-hero"><img class="acc-logo" src="img/intro/titre.webp" alt="JDR Fable"><p class="acc-sub">Ton assistant de jeu de rôle</p><div class="orn"><i></i><b></b><i></i></div></div>'+
-    '<div class="acc-menu">'+MENU.map(([k,t,st,img])=>'<button class="cart" data-htab="'+k+'"><span class="cart-ic"><img src="'+img+'" alt=""></span><span class="cart-tx"><b>'+t+'</b><small>'+st+'</small></span><span class="cart-ch">›</span></button>').join("")+'</div>'+
+  const an=state._phome!=="accueil"?" anim":"";return '<div class="acc-hero'+an+'"><img class="acc-logo" src="img/intro/titre.webp" alt="JDR Fable"><p class="acc-sub">Ton assistant de jeu de rôle</p><div class="orn"><i></i><b></b><i></i></div></div>'+
+    '<div class="acc-menu'+(state._phome!=="accueil"||state.view!=="home"?" anim":"")+'">'+MENU.map(([k,t,st,img])=>'<button class="cart" data-htab="'+k+'"><span class="cart-ic"><img src="'+img+'" alt=""></span><span class="cart-tx"><b>'+t+'</b><small>'+st+'</small></span><span class="cart-ch">›</span></button>').join("")+'</div>'+
     '<div class="acc-pied"><button class="btn sm" data-act="io">⇅ Importer / exporter</button>'+'<button class="btn sm" data-act="logout">⎋ Se déconnecter</button></div>';
+}
+// ---------- Messagerie interne : MJ <-> joueurs, joueurs <-> joueurs si le MJ l'autorise ----------
+let MJ=null,MSG_OK=[],msgErr="";const MSGS=new Map();
+const convId=(a,b)=>[a,b].sort().join("_");
+const nomU=u=>u===myId?"Toi":(USERS.get(u)||"Joueur");
+const estMJ=()=>!!myId&&MJ===myId;
+function luMap(){try{return JSON.parse(localStorage.getItem("fj_lu_"+myId)||"{}")}catch(e){return{}}}
+function marquerLu(cv){const m=luMap();m[cv]=Date.now();try{localStorage.setItem("fj_lu_"+myId,JSON.stringify(m))}catch(e){}}
+function nonLus(cv){const lu=luMap();let n=0;MSGS.forEach(m=>{if(m.a===myId&&(!cv||m.conv===cv)&&m.ts>(lu[m.conv]||0))n++});return n}
+function peutEcrire(u){if(!myId||!u||u===myId)return false;if(estMJ()||u===MJ)return true;return MSG_OK.includes(convId(myId,u))}
+function subscribeMsg(db){
+  fs.onSnapshot(fs.doc(db,"roles","mj"),x=>{MJ=x.exists()?x.data().uid:null;majMsg(true)},()=>{});
+  fs.onSnapshot(fs.doc(db,"roles","messagerie"),x=>{MSG_OK=x.exists()&&Array.isArray(x.data().paires)?x.data().paires:[];majMsg(true)},()=>{});
+  let first=true;
+  fs.onSnapshot(fs.query(fs.collection(db,"messages"),fs.where("p","array-contains",myId)),snap=>{
+    msgErr="";let neuf=null;
+    snap.docChanges().forEach(x=>{if(x.type==="removed"){MSGS.delete(x.doc.id);return}const m=Object.assign({id:x.doc.id},x.doc.data());if(x.type==="added"&&!first&&m.de!==myId)neuf=m;MSGS.set(x.doc.id,m)});
+    first=false;
+    if(neuf&&!(state.view==="home"&&state.home==="messages"&&state.msgConv===neuf.conv)){toast("✉️ "+nomU(neuf.de)+" : "+String(neuf.texte||"").slice(0,60));try{navigator.vibrate&&navigator.vibrate([0,60,40,60])}catch(e){}}
+    majMsg();
+  },e=>{msgErr=e&&e.code==="permission-denied"?"regles":"reseau";majMsg(true)});
+}
+function majMsg(full){
+  const l=document.getElementById("msglist");
+  if(l&&state.msgConv&&!full){marquerLu(state.msgConv);l.innerHTML=bullesHTML(state.msgConv);l.scrollTop=l.scrollHeight;majBadges();return}
+  softRender();majBadges();
+}
+function majBadges(){
+  if(!myId)return;const n=nonLus();
+  document.querySelectorAll('[data-htab="messages"] .bdg').forEach(b=>b.remove());
+  if(n)document.querySelectorAll('[data-htab="messages"]').forEach(b=>{const i=document.createElement("i");i.className="bdg";i.textContent=n>9?"9+":String(n);const ch=b.querySelector(".cart-ch");if(ch)b.insertBefore(i,ch);else b.appendChild(i)});
+}
+function bullesHTML(cv){
+  const ms=[...MSGS.values()].filter(m=>m.conv===cv).sort((a,b)=>a.ts-b.ts);
+  if(!ms.length)return '<div class="msg-vide">Aucun message pour l\'instant. Écris le premier !</div>';
+  let last="";
+  return ms.map(m=>{const d=new Date(m.ts||0);const j=d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});const sep=j!==last?'<div class="msg-jour">'+esc(j)+'</div>':'';last=j;
+    return sep+'<div class="bulle'+(m.de===myId?" moi":"")+'"><div class="bt">'+esc(m.texte).replace(/\n/g,"<br>")+'</div><div class="bh">'+d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})+'</div></div>'}).join("");
+}
+const avMini=u=>'<span class="av-mini'+(u===MJ?" mj":"")+'">'+esc(nomU(u).charAt(0).toUpperCase())+'</span>';
+const tagMJ=u=>u===MJ?' <span class="tag tag-mj">MJ</span>':'';
+function messagesPane(){
+  if(!myId)return '<div class="card">Connecte-toi pour utiliser la messagerie.</div>';
+  let h=msgErr==="regles"?'<div class="ro">⚠️ La messagerie est bloquée par Firebase : il faut coller le nouveau fichier <b>firestore.rules</b> dans Firestore &gt; Règles, puis Publier.</div>':'';
+  if(state.msgConv){const u=state.msgAvec,ok=peutEcrire(u);marquerLu(state.msgConv);
+    return h+'<div class="card msg-conv"><div class="msg-tete"><button class="ico" data-act="msgback" title="Retour">‹</button>'+avMini(u)+'<b>'+esc(nomU(u))+tagMJ(u)+'</b></div>'+
+      '<div id="msglist" class="msg-list">'+bullesHTML(state.msgConv)+'</div>'+
+      (ok?'<div class="msg-saisie"><textarea id="msgtxt" rows="1" maxlength="2000" placeholder="Ton message…"></textarea><button class="btn pri" data-act="msgsend">Envoyer</button></div>'
+         :'<div class="hint" style="text-align:center;margin-top:10px">Le MJ n\'a pas ouvert la discussion entre vous deux.</div>')+'</div>';}
+  if(!MJ)h+='<div class="card"><h3>Maître du jeu</h3><div class="hint" style="margin:-4px 0 10px">Aucun MJ n\'est désigné. Le MJ peut écrire à tout le monde et choisit quels joueurs ont le droit de s\'écrire entre eux.</div><button class="btn pri" data-act="msgjemj" style="width:100%">🎲 C\'est moi le MJ</button></div>';
+  const der=u=>{const cv=convId(myId,u);let d=null;MSGS.forEach(m=>{if(m.conv===cv&&(!d||m.ts>d.ts))d=m});return d};
+  const cs=[...USERS.keys()].filter(u=>u!==myId&&(peutEcrire(u)||der(u)))
+    .sort((a,b)=>(b===MJ)-(a===MJ)||((der(b)||{}).ts||0)-((der(a)||{}).ts||0)||nomU(a).localeCompare(nomU(b)));
+  h+='<div class="card"><h3>Discussions</h3>'+(cs.length?cs.map(u=>{const d=der(u),n=nonLus(convId(myId,u));
+    return '<button class="msg-ct'+(n?" nl":"")+'" data-act="msgopen" data-u="'+esc(u)+'">'+avMini(u)+'<span class="msg-ci"><b>'+esc(nomU(u))+tagMJ(u)+'</b><small>'+(d?(d.de===myId?"Toi : ":"")+esc(String(d.texte||"").slice(0,70)):"Nouvelle discussion")+'</small></span>'+(n?'<i class="bdg">'+n+'</i>':'<span class="cart-ch">›</span>')+'</button>'}).join("")
+    :'<div class="hint">'+(MJ?"Personne d\'autre dans le groupe pour l\'instant.":"Dès qu\'un MJ est désigné, tu pourras lui écrire.")+'</div>')+'</div>';
+  if(estMJ()){const js=[...USERS.keys()].filter(u=>u!==MJ).sort((a,b)=>nomU(a).localeCompare(nomU(b)));const pr=[];
+    for(let i=0;i<js.length;i++)for(let j=i+1;j<js.length;j++)pr.push([js[i],js[j]]);
+    h+='<div class="card"><h3>Qui peut se parler</h3><div class="hint" style="margin:-4px 0 10px">Les joueurs peuvent toujours écrire au MJ. Coche les duos de joueurs qui ont le droit de s\'écrire entre eux. Leurs messages restent privés.</div>'+
+      (pr.length?pr.map(([a,b])=>{const k=convId(a,b);return '<label class="msg-perm"><input type="checkbox" data-msgperm="'+esc(k)+'"'+(MSG_OK.includes(k)?" checked":"")+'><span>'+esc(nomU(a))+' <i>↔</i> '+esc(nomU(b))+'</span></label>'}).join(""):'<div class="hint">Il faut au moins deux joueurs dans le groupe.</div>')+
+      '<button class="btn sm" data-act="msgpasser" style="margin-top:12px">Passer le rôle de MJ à quelqu\'un d\'autre</button></div>';}
+  return h;
+}
+function envoyerMsg(){
+  const t=document.getElementById("msgtxt");if(!t||!remote)return;const txt=t.value.trim();const u=state.msgAvec;if(!txt||!peutEcrire(u))return;
+  const id=uid(),m={de:myId,a:u,p:[myId,u],conv:convId(myId,u),texte:txt.slice(0,2000),ts:Date.now()};
+  t.value="";MSGS.set(id,Object.assign({id},m));majMsg();t.focus();
+  fs.setDoc(fs.doc(remote.db,"messages",id),m).catch(e=>{MSGS.delete(id);majMsg();toast(e&&e.code==="permission-denied"?"Message refusé (discussion fermée ou règles Firebase à mettre à jour)":"Message non envoyé, vérifie ta connexion")});
+}
+function msgAct(a,d){
+  if(a==="msgopen"){state.msgAvec=d.u;state.msgConv=convId(myId,d.u);render();setTimeout(()=>{const t=document.getElementById("msgtxt");if(t&&matchMedia("(min-width:900px)").matches)t.focus()},50);return true}
+  if(a==="msgback"){state.msgConv=null;state.msgAvec=null;render();return true}
+  if(a==="msgsend"){envoyerMsg();return true}
+  if(a==="msgjemj"){if(!remote)return true;fs.setDoc(fs.doc(remote.db,"roles","mj"),{uid:myId,nom:(me&&me.nom)||""}).then(()=>toast("Tu es le MJ 🎲")).catch(()=>toast("Impossible : un MJ est peut-être déjà désigné"));return true}
+  if(a==="msgpasser"){const js=[...USERS.keys()].filter(u=>u!==myId);
+    const m=modal('<h2>Nouveau MJ</h2><div class="hint" style="margin-bottom:10px">Tu perdras les droits de MJ sur la messagerie.</div>'+(js.length?js.map(u=>'<button class="btn" data-newmj="'+esc(u)+'" style="width:100%;margin-bottom:6px">'+esc(nomU(u))+'</button>').join(""):'<div class="hint">Personne d\'autre dans le groupe.</div>')+'<div class="acts"><button class="btn" data-x>Annuler</button></div>');
+    m.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.x!==undefined){m.remove();return}const nu=b.dataset.newmj;if(!nu)return;
+      fs.setDoc(fs.doc(remote.db,"roles","mj"),{uid:nu,nom:USERS.get(nu)||""}).then(()=>{toast(nomU(nu)+" est maintenant le MJ");m.remove()}).catch(()=>toast("Changement refusé"))});return true}
+  return false;
 }
 function homePane(){
   switch(state.home){
   case "accueil":return accueilPane();
+  case "messages":return messagesPane();
   case "combat":return combatPane();
   case "persos":{const all=persos();const list=all.filter(c=>state.persoFilter==="tous"?true:state.persoFilter==="retires"?c.retire:!c.retire);
     const mine=list.filter(c=>myId&&c.ownerId===myId),others=list.filter(c=>!(myId&&c.ownerId===myId));
@@ -450,13 +533,17 @@ app.addEventListener("change",e=>{
   if(el.id==="dmgtype"){state.dmgType=el.value;const pc=el.closest("[data-cbp]")?S.persos.get(el.closest("[data-cbp]").dataset.cbp):(state.view==="sheet"?c:S.persos.get(state.cbPerso));const h=document.getElementById("dmghint");if(h&&pc)h.textContent=dmgHint(pc,el.value);return}
   if(el.dataset.file==="avatar"&&el.files[0]){loadAvatar(el.files[0]);return}
   if(el.dataset.gk&&el.dataset.rr!==undefined&&el.type!=="checkbox"){rerenderPane();return}
+  if(el.dataset.msgperm!==undefined){if(!estMJ()||!remote)return;const k=el.dataset.msgperm;const L=MSG_OK.filter(x=>x!==k);if(el.checked)L.push(k);MSG_OK=L;
+    fs.setDoc(fs.doc(remote.db,"roles","messagerie"),{paires:L}).catch(()=>{toast("Autorisation non enregistrée");el.checked=!el.checked});return}
   if(!el.dataset.k||!c)return;
   if(el.tagName==="SELECT"||el.type==="checkbox"){if(el.dataset.rr!==undefined||el.dataset.k==="maitriseAuto"||el.dataset.k==="armure")rerenderPane()}
 });
+app.addEventListener("keydown",e=>{if(e.target&&e.target.id==="msgtxt"&&e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDefault();envoyerMsg()}});
+app.addEventListener("input",e=>{const t=e.target;if(t&&t.id==="msgtxt"){t.style.height="auto";t.style.height=Math.min(t.scrollHeight,140)+"px"}});
 app.addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;const c=cur();const d=b.dataset;
   if(d.open){state.cur=d.open;state.view="sheet";state.tab="id";render();window.scrollTo(0,0);return}
-  if(d.htab){tabIntro(d.htab);state.view="home";state.home=d.htab;render();window.scrollTo(0,0);return}
+  if(d.htab){if(d.htab==="messages"&&state.home!=="messages"){state.msgConv=null;state.msgAvec=null}tabIntro(d.htab);state.view="home";state.home=d.htab;render();window.scrollTo(0,0);return}
   if(d.tab){state.tab=d.tab;render();window.scrollTo(0,0);return}
   if(d.pf){state.persoFilter=d.pf;rerenderPane();return}
   if(d.bt&&!d.act){state.bibType=d.bt;state.bibNiv="";rerenderPane();return}
@@ -494,6 +581,7 @@ function act(a,c,d){
   if(a==="deckf"){state.deckF=d.f;rerenderPane();return}
   if(a==="defmode"&&c){c.defMode=d.v;schedule(c);rerenderPane();return}
   if(a==="rcfg"){if(readOnly)return;rgEnsure();const raw=d.v,v=raw==="true"?true:raw==="false"?false:raw;G.regles.cfg=Object.assign({},G.regles.cfg,{[d.k]:v});save("groupe","regles");rerenderPane();return}
+  if(msgAct(a,d))return;
   if(a==="mjtab"){state.mjTab=d.v;rerenderPane();window.scrollTo(0,0);return}
   if(a==="rgadd"){rgEnsure();const ord=Math.max(-1,...Object.values(G.regles.items).map(r=>num(r.ord)))+1;G.regles.items["r"+uid()]={titre:"",texte:"",ord};save("groupe","regles");rerenderPane();setTimeout(()=>{const i=[...document.querySelectorAll('.rgc input')].pop();if(i)i.focus()},50);return}
   if(a==="rgdel"){const r=G.regles.items[d.id];confirmBox("Supprimer la règle « "+((r&&r.titre)||"sans nom")+" » pour tout le groupe ?",()=>{delete G.regles.items[d.id];save("groupe","regles");rerenderPane()});return}

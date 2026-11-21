@@ -28,6 +28,49 @@ service cloud.firestore {
         && (resource.data.ownerId == "" || resource.data.ownerId == request.auth.uid);
     }
 
+    // ---- Messagerie ----
+    function mjUid() {
+      return get(/databases/$(database)/documents/roles/mj).data.uid;
+    }
+    function estMJ() {
+      return exists(/databases/$(database)/documents/roles/mj) && mjUid() == request.auth.uid;
+    }
+
+    // Qui est le MJ : le premier qui se déclare, puis seul le MJ peut passer la main
+    match /roles/mj {
+      allow read: if membre();
+      allow create: if membre() && request.resource.data.uid == request.auth.uid;
+      allow update: if membre() && resource.data.uid == request.auth.uid
+        && exists(/databases/$(database)/documents/users/$(request.resource.data.uid));
+      allow delete: if false;
+    }
+
+    // Duos de joueurs autorisés à s'écrire : seul le MJ décide
+    match /roles/messagerie {
+      allow read: if membre();
+      allow write: if membre() && estMJ();
+    }
+
+    // Messages : lisibles uniquement par les deux personnes de la discussion
+    match /messages/{id} {
+      allow read: if membre() && request.auth.uid in resource.data.p;
+      allow create: if membre()
+        && request.resource.data.de == request.auth.uid
+        && request.resource.data.a != request.auth.uid
+        && exists(/databases/$(database)/documents/users/$(request.resource.data.a))
+        && request.resource.data.p.size() == 2
+        && request.resource.data.p.hasAll([request.resource.data.de, request.resource.data.a])
+        && request.resource.data.conv in [request.resource.data.de + '_' + request.resource.data.a, request.resource.data.a + '_' + request.resource.data.de]
+        && request.resource.data.texte is string
+        && request.resource.data.texte.size() > 0 && request.resource.data.texte.size() <= 2000
+        && (estMJ()
+            || (exists(/databases/$(database)/documents/roles/mj) && mjUid() == request.resource.data.a)
+            || (exists(/databases/$(database)/documents/roles/messagerie)
+                && request.resource.data.conv in get(/databases/$(database)/documents/roles/messagerie).data.paires));
+      allow update: if false;
+      allow delete: if membre() && resource.data.de == request.auth.uid;
+    }
+
     // Données communes du groupe
     match /{col}/{id} {
       allow read, write: if membre()
