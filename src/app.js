@@ -171,6 +171,7 @@ const app=document.getElementById("app");
 const roBanner=()=>readOnly?'<div class="ro">👀 Lecture seule.</div>':'';
 function render(){
   document.body.classList.toggle("bgparch",state.view==="home"&&(state.home==="combat"||state.home==="persos"));
+  document.body.classList.toggle("bgsac",(state.view==="home"&&state.home==="commun")||(state.view==="sheet"&&state.tab==="inv"));
   if(state.view==="sheet"){const c=cur();if(!c){state.view="home";return render()}
     app.innerHTML='<div class="top"><div class="wrap"><button class="ico" data-act="back">‹</button>'+avatar(c,36)+'<h1 data-d="title">'+esc(c.nom)+'</h1><span class="status" id="st">'+esc(saveStatus)+'</span></div></div>'+
       '<div class="wrap">'+roBanner()+(!readOnly&&!canEdit(c)?'<div class="ro">🔒 Fiche d\'un autre joueur : lecture seule.</div>':'')+(!readOnly&&!c.ownerId&&myId?'<div class="ro" style="border-color:var(--acc);color:var(--acc);background:#1f3326">Cette fiche n\'a pas encore de propriétaire. <button class="btn sm" data-act="mine" style="margin-left:6px">C\'est mon perso</button></div>':'')+'<div id="pane">'+pane(c)+'</div></div>'+
@@ -1747,7 +1748,7 @@ const fbApp=initializeApp(firebaseConfig);const auth=getAuth(fbApp);window.__aut
 const fdb=initializeFirestore(fbApp,{localCache:persistentLocalCache()});
 let started=false;
 const errMsg=e=>({"auth/invalid-credential":"E-mail ou mot de passe incorrect.","auth/invalid-email":"Adresse e-mail invalide.","auth/email-already-in-use":"Cette adresse a déjà un compte : connecte-toi.","auth/weak-password":"Mot de passe trop court (6 caractères minimum).","auth/missing-password":"Entre un mot de passe.","auth/network-request-failed":"Pas de connexion internet.","permission-denied":"Code du groupe incorrect."}[e&&e.code]||("Erreur : "+((e&&(e.code||e.message))||"inconnue")));
-function loginScreen(mode){document.body.classList.remove("bgparch");
+function loginScreen(mode){document.body.classList.remove("bgparch","bgsac");
   const reg=mode==="reg";
   app.innerHTML='<div class="login"><h1><i class=kic></i> JDR Fable</h1><div class="sub">'+(reg?"Créer ton compte":"Connexion")+'</div><div class="grid">'+
     '<div><label class="f">E-mail</label><input id="le" type="email" autocomplete="email"></div>'+

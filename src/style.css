@@ -776,3 +776,15 @@ body.bgparch .reacbox h3{color:#8a2418}
 .ip-em{position:absolute;left:33%;top:44%;width:3%;aspect-ratio:1;border-radius:50%;background:#ffcf5a;box-shadow:0 0 8px #ff5a1a,0 0 3px #fff;opacity:0;animation:ipem .8s ease-out var(--d) both}
 @keyframes ipem{0%{opacity:0;transform:none}10%{opacity:1}100%{opacity:0;transform:translate(var(--x),var(--y)) scale(.4)}}
 @media (prefers-reduced-motion:reduce){.tabs .e-planning>i{animation:none!important}}
+/* Commun et Inventaire : on est dans le sac */
+body.bgsac{background:transparent}
+body.bgsac::before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(120% 80% at 50% 45%,rgba(0,0,0,0) 30%,rgba(0,0,0,.65) 100%),linear-gradient(rgba(10,6,3,.2),rgba(10,6,3,.35)),url(img/bg/sac-portrait.webp) center 40%/cover no-repeat}
+@media (min-aspect-ratio:1/1){body.bgsac::before{background:radial-gradient(120% 80% at 50% 45%,rgba(0,0,0,0) 30%,rgba(0,0,0,.65) 100%),linear-gradient(rgba(10,6,3,.42),rgba(10,6,3,.55)),url(img/bg/sac.webp) center/cover no-repeat}}
+body.bgsac .top{background:rgba(26,17,10,.92);border-bottom-color:#4a3420}
+body.bgsac #pane>.card,body.bgsac #hpane>.card{background:rgba(22,14,8,.46);margin-bottom:26px;border-color:rgba(190,145,85,.55);-webkit-backdrop-filter:blur(1.2px);backdrop-filter:blur(1.2px);box-shadow:0 6px 18px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,220,160,.08);--panel2:rgba(255,235,200,.07);--line:rgba(170,130,80,.45)}
+body.bgsac #pane>.card h3,body.bgsac #hpane>.card h3{color:#e8c27a;font-family:Georgia,"Times New Roman",serif;letter-spacing:.06em}
+body.bgsac .catt{color:#d9a75a}
+body.bgsac .tabs{background:rgba(20,13,8,.94)}
+body.bgsac #pane>.card :is(input,select,textarea),body.bgsac #hpane>.card :is(input,select,textarea){background:rgba(14,9,5,.62);border-color:rgba(170,130,80,.4)}
+body.bgsac .top{background:rgba(22,14,8,.8);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+body.bgsac #pane>.card .it+.it,body.bgsac #hpane>.card .it+.it{border-top-color:rgba(170,130,80,.35)}
