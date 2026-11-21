@@ -182,7 +182,7 @@ function render(){
   const title={accueil:"<i class=kic></i> JDR Fable",persos:"<i class=kic></i> Persos",combat:"<i class=kic></i> Combat",mj:"<i class=\"kic kmj\"></i> Vue MJ",biblio:"<i class=\"kic kbib\"></i> Grimoire",cartes:"🗺️ Cartes",commun:"💰 Inventaire commun",planning:"<i class=\"kic kplan\"></i> Planning",journal:"📖 Journal",messages:"<i class=\"kic kmsg\"></i> Messages"}[state.home];
   app.innerHTML='<div class="top"><div class="wrap"><h1>'+title+'</h1><span class="status" id="st">'+esc(saveStatus)+'</span>'+(state.home==="persos"?'<button class="ico" data-act="io" title="Importer / exporter">⇅</button><button class="ico" data-act="logout" title="Se déconnecter">⎋</button>':'')+'</div></div>'+
     '<div class="wrap">'+roBanner()+'<div id="hpane">'+homePane()+'</div></div>'+
-    '<nav class="tabs"><div class="in">'+HTABS.map(t=>'<button data-htab="'+t[0]+'" class="'+(state.home===t[0]?"on"+(state._phome!==state.home?" pop":""):"")+'"><b>'+t[2]+'</b>'+t[1]+'</button>').join("")+'</div></nav>';
+    barHTML();
   lockRO();if(state.home==="combat")derive();
   state._ptab=state.tab;state._phome=state.home;majBadges();
   const ml=document.getElementById("msglist");if(ml)ml.scrollTop=ml.scrollHeight;
@@ -198,7 +198,8 @@ const FONDS_FICHE={combat:"combat",sorts:"grimoire",inv:"inventaire"};
 function setFond(){
   const f=state.view==="sheet"?(FONDS_FICHE[state.tab]||"joueurs"):(FONDS[state.home]||"accueil");
   const b=document.body;[...b.classList].forEach(k=>{if(k.indexOf("fd-")===0)b.classList.remove(k)});
-  b.classList.add("fd","fd-"+f);b.classList.toggle("at-home",state.view==="home"&&state.home==="accueil");
+  b.classList.add("fd","fd-"+f);
+  if(state.view==="sheet"){const c=cur();if(c&&myId&&c.ownerId===myId)try{localStorage.setItem("fj_monperso",c.id)}catch(e){}}b.classList.toggle("at-home",state.view==="home"&&state.home==="accueil");
 }
 const MENU=[["combat","Combat","Lance un combat, gère les tours","img/menu/combat.webp"],
   ["persos","Persos","Fiches, PV et stats du groupe","img/menu/joueurs.webp"],
@@ -231,7 +232,7 @@ function subscribeMsg(db){
     msgErr="";let neuf=null;
     snap.docChanges().forEach(x=>{if(x.type==="removed"){MSGS.delete(x.doc.id);return}const m=Object.assign({id:x.doc.id},x.doc.data());if(x.type==="added"&&!first&&m.de!==myId)neuf=m;MSGS.set(x.doc.id,m)});
     first=false;
-    if(neuf&&!(state.view==="home"&&state.home==="messages"&&state.msgConv===neuf.conv)){toast("✉️ "+nomU(neuf.de)+" : "+String(neuf.texte||"").slice(0,60));try{navigator.vibrate&&navigator.vibrate([0,60,40,60])}catch(e){}}
+    if(neuf&&!(state.view==="home"&&state.home==="messages"&&state.msgConv===neuf.conv)){toastMsg(neuf);try{navigator.vibrate&&navigator.vibrate([0,60,40,60])}catch(e){}}
     majMsg();
   },e=>{msgErr=e&&e.code==="permission-denied"?"regles":"reseau";majMsg(true)});
 }
@@ -250,7 +251,7 @@ function bullesHTML(cv){
   if(!ms.length)return '<div class="msg-vide">Aucun message pour l\'instant. Écris le premier !</div>';
   let last="";
   return ms.map(m=>{const d=new Date(m.ts||0);const j=d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});const sep=j!==last?'<div class="msg-jour">'+esc(j)+'</div>':'';last=j;
-    return sep+'<div class="bulle'+(m.de===myId?" moi":"")+'"><div class="bt">'+esc(m.texte).replace(/\n/g,"<br>")+'</div><div class="bh">'+d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})+'</div></div>'}).join("");
+    return sep+'<div class="bulle'+(m.de===myId?" moi":"")+(m.annonce?" ann":"")+(m.secret?" sec":"")+'">'+(m.annonce?'<div class="b-lab">📢 Annonce au groupe</div>':m.secret?'<div class="b-lab">✉️ Message secret</div>':'')+'<div class="bt">'+esc(m.texte).replace(/\n/g,"<br>")+'</div><div class="bh">'+d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})+'</div></div>'}).join("");
 }
 const avMini=u=>'<span class="av-mini'+(u===MJ?" mj":"")+'">'+esc(nomU(u).charAt(0).toUpperCase())+'</span>';
 const tagMJ=u=>u===MJ?' <span class="tag tag-mj">MJ</span>':'';
@@ -263,6 +264,7 @@ function messagesPane(){
       (ok?'<div class="msg-saisie"><textarea id="msgtxt" rows="1" maxlength="2000" placeholder="Ton message…"></textarea><button class="btn pri" data-act="msgsend">Envoyer</button></div>'
          :'<div class="hint" style="text-align:center;margin-top:10px">Le MJ n\'a pas ouvert la discussion entre vous deux.</div>')+'</div>';}
   if(!MJ)h+='<div class="card"><h3>Maître du jeu</h3><div class="hint" style="margin:-4px 0 10px">Aucun MJ n\'est désigné. Le MJ peut écrire à tout le monde et choisit quels joueurs ont le droit de s\'écrire entre eux.</div><button class="btn pri" data-act="msgjemj" style="width:100%">🎲 C\'est moi le MJ</button></div>';
+  h+=annoncesHTML();
   const der=u=>{const cv=convId(myId,u);let d=null;MSGS.forEach(m=>{if(m.conv===cv&&(!d||m.ts>d.ts))d=m});return d};
   const cs=[...USERS.keys()].filter(u=>u!==myId&&(peutEcrire(u)||der(u)))
     .sort((a,b)=>(b===MJ)-(a===MJ)||((der(b)||{}).ts||0)-((der(a)||{}).ts||0)||nomU(a).localeCompare(nomU(b)));
@@ -276,16 +278,64 @@ function messagesPane(){
       '<button class="btn sm" data-act="msgpasser" style="margin-top:12px">Passer le rôle de MJ à quelqu\'un d\'autre</button></div>';}
   return h;
 }
+function msgDoc(u,txt,extra){return Object.assign({de:myId,a:u,p:[myId,u],conv:convId(myId,u),texte:String(txt).slice(0,2000),ts:Date.now()},extra||{})}
+const msgErrTxt=e=>e&&e.code==="permission-denied"?"Message refusé (discussion fermée ou règles Firebase à mettre à jour)":"Message non envoyé, vérifie ta connexion";
+function envoyerA(u,txt,extra){
+  if(!remote||!txt||!peutEcrire(u))return Promise.reject({code:"permission-denied"});
+  const id=uid(),m=msgDoc(u,txt,extra);MSGS.set(id,Object.assign({id},m));majMsg();
+  return fs.setDoc(fs.doc(remote.db,"messages",id),m).catch(e=>{MSGS.delete(id);majMsg();throw e});
+}
 function envoyerMsg(){
-  const t=document.getElementById("msgtxt");if(!t||!remote)return;const txt=t.value.trim();const u=state.msgAvec;if(!txt||!peutEcrire(u))return;
-  const id=uid(),m={de:myId,a:u,p:[myId,u],conv:convId(myId,u),texte:txt.slice(0,2000),ts:Date.now()};
-  t.value="";MSGS.set(id,Object.assign({id},m));majMsg();t.focus();
-  fs.setDoc(fs.doc(remote.db,"messages",id),m).catch(e=>{MSGS.delete(id);majMsg();toast(e&&e.code==="permission-denied"?"Message refusé (discussion fermée ou règles Firebase à mettre à jour)":"Message non envoyé, vérifie ta connexion")});
+  const t=document.getElementById("msgtxt");if(!t)return;const txt=t.value.trim();if(!txt)return;
+  t.value="";t.style.height="";envoyerA(state.msgAvec,txt).catch(e=>toast(msgErrTxt(e)));t.focus();
+}
+function ouvrirConv(u){state.view="home";state.home="messages";state.msgAvec=u;state.msgConv=convId(myId,u);render();window.scrollTo(0,0)}
+function toastMsg(m){
+  document.querySelectorAll(".toast-msg").forEach(x=>x.remove());
+  const d=document.createElement("button");d.className="toast-msg";
+  d.innerHTML='<span class="tm-ic">'+(m.annonce?"📢":"✉️")+'</span><span class="tm-tx"><b>'+esc(nomU(m.de))+(m.annonce?" · Annonce":"")+'</b>'+esc(String(m.texte||"").slice(0,90))+'<small>Toucher pour ouvrir</small></span>';
+  d.onclick=()=>{d.remove();ouvrirConv(m.de)};document.body.appendChild(d);setTimeout(()=>d.remove(),6000);
+}
+function envoyerAnnonce(){
+  const t=document.getElementById("annoncetxt");if(!t||!remote||!estMJ())return;const txt=t.value.trim();if(!txt)return;
+  const dest=[...USERS.keys()].filter(u=>u!==myId);if(!dest.length){toast("Personne dans le groupe pour l'instant");return}
+  const grp=uid(),b=fs.writeBatch(remote.db),ids=[];
+  dest.forEach(u=>{const id=uid(),m=msgDoc(u,txt,{annonce:true,grp});ids.push(id);MSGS.set(id,Object.assign({id},m));b.set(fs.doc(remote.db,"messages",id),m)});
+  t.value="";majMsg(true);
+  b.commit().then(()=>toast("📢 Annonce envoyée à "+dest.length+" joueur"+(dest.length>1?"s":""))).catch(e=>{ids.forEach(i=>MSGS.delete(i));majMsg(true);toast(msgErrTxt(e))});
+}
+function annoncesHTML(){
+  const vu=new Set(),L=[];
+  [...MSGS.values()].filter(m=>m.annonce&&(m.a===myId||m.de===myId)).sort((a,b)=>b.ts-a.ts).forEach(m=>{const k=m.grp||m.id;if(vu.has(k))return;vu.add(k);L.push(m)});
+  const mj=estMJ();if(!mj&&!L.length)return "";
+  return '<div class="card annonces"><h3>📢 Annonces</h3>'+
+    (mj?'<div class="msg-saisie ann"><textarea id="annoncetxt" rows="2" maxlength="2000" placeholder="Un message pour tout le groupe…"></textarea><button class="btn pri" data-act="annonce">Envoyer à tous</button></div>':'')+
+    L.slice(0,3).map(m=>{const d=new Date(m.ts||0);return '<div class="ann-it"><div class="ann-h"><b>'+esc(m.de===myId?"Toi":nomU(m.de))+'</b><span>'+d.toLocaleDateString("fr-FR",{day:"numeric",month:"short"})+' · '+d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})+'</span></div><div class="ann-t">'+esc(m.texte).replace(/\n/g,"<br>")+'</div></div>'}).join("")+
+    (mj&&!L.length?'<div class="hint">Aucune annonce envoyée pour l\'instant.</div>':'')+'</div>';
+}
+function msgSecret(u,nom){
+  const m=modal('<h2>✉️ Message secret</h2><div class="hint" style="margin-bottom:8px">Pour '+esc(nom||nomU(u))+' ('+esc(nomU(u))+'). Personne d\'autre ne le verra.</div><textarea id="secrettxt" rows="4" maxlength="2000" placeholder="Tu sens une présence derrière toi…" style="width:100%"></textarea><div class="acts"><button class="btn" data-x>Annuler</button><button class="btn pri" data-go>Envoyer</button></div>');
+  const ta=m.querySelector("#secrettxt");setTimeout(()=>ta.focus(),50);
+  m.querySelector("[data-x]").onclick=()=>m.remove();
+  m.querySelector("[data-go]").onclick=()=>{const txt=ta.value.trim();if(!txt)return;m.remove();envoyerA(u,txt,{secret:true}).then(()=>toast("✉️ Message secret envoyé")).catch(e=>toast(msgErrTxt(e)))};
+}
+function barHTML(){
+  const ic=k=>(HTABS.find(t=>t[0]===k)||[])[2]||"";const live=!!(G.combat&&G.combat.actif);
+  const it=[["accueil","Accueil",ic("accueil")],estMJ()?["mj","Vue MJ",ic("mj")]:["persos","Mon perso",ic("persos"),"monperso"],
+    ["combat","Combat",ic("combat"),"","mid"+(live?" live":"")],["biblio","Grimoire",ic("biblio")],["messages","Messages",ic("messages")]];
+  return '<nav class="tabs bar5"><div class="in">'+it.map(([k,l,i,act,cl])=>{const on=state.home===k;
+    return '<button '+(act?'data-act="'+act+'"':'data-htab="'+k+'"')+' class="'+[cl||"",on?"on"+(state._phome!==state.home?" pop":""):""].join(" ").trim()+'"><b>'+i+'</b>'+l+(k==="combat"&&live?'<em class="live-dot"></em>':'')+'</button>'}).join("")+'</div></nav>';
 }
 function msgAct(a,d){
   if(a==="msgopen"){state.msgAvec=d.u;state.msgConv=convId(myId,d.u);render();setTimeout(()=>{const t=document.getElementById("msgtxt");if(t&&matchMedia("(min-width:900px)").matches)t.focus()},50);return true}
   if(a==="msgback"){state.msgConv=null;state.msgAvec=null;render();return true}
   if(a==="msgsend"){envoyerMsg();return true}
+  if(a==="annonce"){envoyerAnnonce();return true}
+  if(a==="msgsecret"){msgSecret(d.u,d.nom);return true}
+  if(a==="monperso"){const mine=persos().filter(c=>c.ownerId===myId&&!c.retire);let last=null;try{last=localStorage.getItem("fj_monperso")}catch(e){}
+    const c=mine.find(x=>x.id===last)||mine[0];
+    if(!c){state.view="home";state.home="persos";render();toast("Ouvre ta fiche et touche « C'est mon perso »");return true}
+    state.cur=c.id;state.view="sheet";state.tab=state.tab||"id";render();window.scrollTo(0,0);return true}
   if(a==="msgjemj"){if(!remote)return true;fs.setDoc(fs.doc(remote.db,"roles","mj"),{uid:myId,nom:(me&&me.nom)||""}).then(()=>toast("Tu es le MJ 🎲")).catch(()=>toast("Impossible : un MJ est peut-être déjà désigné"));return true}
   if(a==="msgpasser"){const js=[...USERS.keys()].filter(u=>u!==myId);
     const m=modal('<h2>Nouveau MJ</h2><div class="hint" style="margin-bottom:10px">Tu perdras les droits de MJ sur la messagerie.</div>'+(js.length?js.map(u=>'<button class="btn" data-newmj="'+esc(u)+'" style="width:100%;margin-bottom:6px">'+esc(nomU(u))+'</button>').join(""):'<div class="hint">Personne d\'autre dans le groupe.</div>')+'<div class="acts"><button class="btn" data-x>Annuler</button></div>');
@@ -1776,6 +1826,7 @@ function combatPane(){
         '<div class="grow"><b>'+esc(l.nom||"?")+'</b>'+(p?'<div class="small mute">PV '+p.pv.act+'/'+p.pv.max+' · '+defTxt(p)+(p.etats.length?' · <span style="color:var(--warn)">'+esc(p.etats.join(", "))+'</span>':'')+'</div>':
           (l.cache&&!mineL?'<div class="small mute row" style="gap:6px">'+(dead?'<span style="color:var(--bad)">💀 Vaincu</span>':'PV <b class="qq">???</b>')+(readOnly||dead?'':'<button class="chip" data-act="cbdmg" data-line="'+l.id+'">− Dégâts</button>')+'</div>':
           '<div class="small mute row" style="gap:4px">PV <input class="mini-in" type="number" data-cpv="'+l.id+'" value="'+num(l.pv)+'"> / <input class="mini-in" type="number" data-cpvmax="'+l.id+'" value="'+num(l.pvmax)+'">'+(l.cache?' <span title="Les autres voient ???">🙈</span>':'')+(readOnly?'':'<button class="chip" data-act="cbdmg" data-line="'+l.id+'">−</button>')+'</div>'))+'</div>'+
+        (p&&p.ownerId&&p.ownerId!==myId&&estMJ()?'<button class="ico msg-sec" data-act="msgsecret" data-u="'+esc(p.ownerId)+'" data-nom="'+esc(p.nom||"")+'" title="Message secret">✉️</button>':'')+
         '<input class="ini-in" type="number" inputmode="numeric" placeholder="Init" data-cinit="'+l.id+'" value="'+(l.init===""||l.init==null?"":l.init)+'" '+(ed?"":"disabled")+'>'+
         (p&&ed?'<button class="ico" data-act="cbroll" data-line="'+l.id+'" title="Lancer 1d20 + initiative">🎲</button>':'')+
         (!l.persoId&&!readOnly?'<button class="del" data-act="cbdel" data-line="'+l.id+'">✕</button>':'')+'</div>'}).join("")+'</div>'+
