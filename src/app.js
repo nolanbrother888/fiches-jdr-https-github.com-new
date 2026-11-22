@@ -208,8 +208,7 @@ const MENU=[["combat","Combat","Lance un combat, gère les tours","img/menu/comb
   ["commun","Inventaire commun","Le butin et la bourse du groupe","img/menu/inventaire.webp"],
   ["cartes","Cartes","Monde, villes, donjons","img/menu/accueil.webp"],
   ["planning","Planning","Les prochaines sessions","img/emb/planning.webp"],
-  ["journal","Journal","Résumés, PNJ, quêtes","img/menu/notes.webp"],
-  ["messages","Messages","Discussions privées avec le MJ et les joueurs","img/menu/envois.webp"]];
+  ["journal","Journal","Résumés, PNJ, quêtes","img/menu/notes.webp"]];
 function accueilPane(){
   const an=state._phome!=="accueil"?" anim":"";return '<div class="acc-hero'+an+'"><img class="acc-logo" src="img/intro/titre.webp" alt="JDR Fable"><p class="acc-sub">Ton assistant de jeu de rôle</p><div class="orn"><i></i><b></b><i></i></div></div>'+
     '<div class="acc-menu'+(state._phome!=="accueil"||state.view!=="home"?" anim":"")+'">'+MENU.map(([k,t,st,img])=>'<button class="cart" data-htab="'+k+'"><span class="cart-ic"><img src="'+img+'" alt=""></span><span class="cart-tx"><b>'+t+'</b><small>'+st+'</small></span><span class="cart-ch">›</span></button>').join("")+'</div>'+
