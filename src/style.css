@@ -990,3 +990,7 @@ body.fd.bgsac #pane>.card :is(input,select,textarea),body.fd.bgsac #hpane>.card 
 .bulle.sec{border-color:#e0574a;background:linear-gradient(180deg,rgba(140,42,28,.35),rgba(30,37,64,.92))}
 .bulle.sec .b-lab{color:#ffb3a8}
 .msg-sec{font-size:16px;padding:0 4px}
+.msg-tete .msg-del{margin-left:auto;font-size:17px;opacity:.75}
+.msg-tete .msg-del:hover{opacity:1}
+.fin-camp{border-color:#7a2a22!important}
+.fin-camp h3{color:#ff9a8e!important}

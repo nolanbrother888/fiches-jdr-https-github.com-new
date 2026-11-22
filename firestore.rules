@@ -68,7 +68,8 @@ service cloud.firestore {
             || (exists(/databases/$(database)/documents/roles/messagerie)
                 && request.resource.data.conv in get(/databases/$(database)/documents/roles/messagerie).data.paires));
       allow update: if false;
-      allow delete: if membre() && resource.data.de == request.auth.uid;
+      // chacun peut effacer les messages des discussions dont il fait partie (fin de campagne, effacer une discussion)
+      allow delete: if membre() && request.auth.uid in resource.data.p;
     }
 
     // Données communes du groupe

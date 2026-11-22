@@ -1,7 +1,7 @@
 
 import { initializeApp } from "firebase/app";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from "firebase/auth";
-import { initializeFirestore, persistentLocalCache, doc, collection, onSnapshot, setDoc, updateDoc, deleteDoc, getDoc, FieldPath, writeBatch, deleteField, query, where } from "firebase/firestore";
+import { initializeFirestore, persistentLocalCache, doc, collection, onSnapshot, setDoc, updateDoc, deleteDoc, getDoc, FieldPath, writeBatch, deleteField, query, where, disableNetwork, enableNetwork } from "firebase/firestore";
 import { firebaseConfig } from "./firebase-config.js";
 const fs={doc,collection,onSnapshot,setDoc,updateDoc,deleteDoc,getDoc,FieldPath,writeBatch,deleteField,query,where};
 (function(){
@@ -210,12 +210,26 @@ const MENU=[["combat","Combat","Lance un combat, gère les tours","img/menu/comb
   ["planning","Planning","Les prochaines sessions","img/emb/planning.webp"],
   ["journal","Journal","Résumés, PNJ, quêtes","img/menu/notes.webp"]];
 function accueilPane(){
-  const an=state._phome!=="accueil"?" anim":"";return '<div class="acc-hero'+an+'"><img class="acc-logo" src="img/intro/titre.webp" alt="JDR Fable"><p class="acc-sub">Ton assistant de jeu de rôle</p><div class="orn"><i></i><b></b><i></i></div></div>'+
+  const an=state._phome!=="accueil"?" anim":"";return '<div class="acc-hero'+an+'"><img class="acc-logo" src="img/menu/titre-accueil.webp" alt="JDR Fable"><p class="acc-sub">Ton assistant de jeu de rôle</p><div class="orn"><i></i><b></b><i></i></div></div>'+
     '<div class="acc-menu'+(state._phome!=="accueil"||state.view!=="home"?" anim":"")+'">'+MENU.map(([k,t,st,img])=>'<button class="cart" data-htab="'+k+'"><span class="cart-ic"><img src="'+img+'" alt=""></span><span class="cart-tx"><b>'+t+'</b><small>'+st+'</small></span><span class="cart-ch">›</span></button>').join("")+'</div>'+
     '<div class="acc-pied"><button class="btn sm" data-act="io">⇅ Importer / exporter</button>'+'<button class="btn sm" data-act="logout">⎋ Se déconnecter</button></div>';
 }
+// ---------- Temps réel : relance la connexion quand l'appli revient au premier plan ----------
+// Sur téléphone, Android coupe la connexion de l'appli en arrière-plan ; sans ça, les nouveautés
+// (messages, combat…) n'arrivaient qu'après une actualisation.
+function reveilTempsReel(db){
+  let dernier=0,enCours=false;
+  const relancer=()=>{if(document.hidden||enCours)return;const t=Date.now();if(t-dernier<4000)return;dernier=t;enCours=true;
+    disableNetwork(db).then(()=>enableNetwork(db)).catch(()=>{}).finally(()=>{enCours=false;softRender()})};
+  document.addEventListener("visibilitychange",relancer);
+  window.addEventListener("focus",relancer);
+  window.addEventListener("online",relancer);
+  try{const C=window.Capacitor;if(C&&C.Plugins&&C.Plugins.App)C.Plugins.App.addListener("resume",relancer)}catch(e){}
+  // filet de sécurité : si l'appli reste ouverte longtemps, on vérifie la connexion toutes les 2 minutes
+  setInterval(()=>{if(!document.hidden&&Date.now()-dernier>120000)relancer()},30000);
+}
 // ---------- Messagerie interne : MJ <-> joueurs, joueurs <-> joueurs si le MJ l'autorise ----------
-let MJ=null,MSG_OK=[],msgErr="";const MSGS=new Map();
+let MJ=null,MSG_OK=[],PURGE=0,msgErr="";const MSGS=new Map();
 const convId=(a,b)=>[a,b].sort().join("_");
 const nomU=u=>u===myId?"Toi":(USERS.get(u)||"Joueur");
 const estMJ=()=>!!myId&&MJ===myId;
@@ -225,15 +239,35 @@ function nonLus(cv){const lu=luMap();let n=0;MSGS.forEach(m=>{if(m.a===myId&&(!c
 function peutEcrire(u){if(!myId||!u||u===myId)return false;if(estMJ()||u===MJ)return true;return MSG_OK.includes(convId(myId,u))}
 function subscribeMsg(db){
   fs.onSnapshot(fs.doc(db,"roles","mj"),x=>{MJ=x.exists()?x.data().uid:null;majMsg(true)},()=>{});
-  fs.onSnapshot(fs.doc(db,"roles","messagerie"),x=>{MSG_OK=x.exists()&&Array.isArray(x.data().paires)?x.data().paires:[];majMsg(true)},()=>{});
+  fs.onSnapshot(fs.doc(db,"roles","messagerie"),x=>{const d=x.exists()?x.data():{};MSG_OK=Array.isArray(d.paires)?d.paires:[];PURGE=+d.purge||0;purger();majMsg(true)},()=>{});
   let first=true;
   fs.onSnapshot(fs.query(fs.collection(db,"messages"),fs.where("p","array-contains",myId)),snap=>{
     msgErr="";let neuf=null;
     snap.docChanges().forEach(x=>{if(x.type==="removed"){MSGS.delete(x.doc.id);return}const m=Object.assign({id:x.doc.id},x.doc.data());if(x.type==="added"&&!first&&m.de!==myId)neuf=m;MSGS.set(x.doc.id,m)});
-    first=false;
+    first=false;purger();if(neuf&&(neuf.ts||0)<=PURGE)neuf=null;
     if(neuf&&!(state.view==="home"&&state.home==="messages"&&state.msgConv===neuf.conv)){toastMsg(neuf);try{navigator.vibrate&&navigator.vibrate([0,60,40,60])}catch(e){}}
     majMsg();
   },e=>{msgErr=e&&e.code==="permission-denied"?"regles":"reseau";majMsg(true)});
+}
+// Fin de campagne : tout message antérieur à la date de purge disparaît, et chacun supprime ceux de ses discussions
+function purger(){
+  if(!PURGE)return;
+  MSGS.forEach((m,id)=>{if((m.ts||0)<=PURGE){MSGS.delete(id);if(remote&&Array.isArray(m.p)&&m.p.includes(myId))fs.deleteDoc(fs.doc(remote.db,"messages",id)).catch(()=>{})}});
+  if(state.msgConv&&![...MSGS.values()].some(m=>m.conv===state.msgConv)&&!peutEcrire(state.msgAvec)){state.msgConv=null;state.msgAvec=null}
+}
+function confirmer(titre,texte,label,fn){
+  const m=modal('<h2>'+titre+'</h2><div class="hint" style="margin-bottom:12px">'+texte+'</div><div class="acts"><button class="btn" data-x>Annuler</button><button class="btn bad" data-ok>'+label+'</button></div>');
+  m.querySelector("[data-x]").onclick=()=>m.remove();m.querySelector("[data-ok]").onclick=()=>{m.remove();fn()};
+}
+function effacerConv(cv){
+  if(!remote)return;const ids=[...MSGS.values()].filter(m=>m.conv===cv).map(m=>m.id);if(!ids.length)return;
+  const b=fs.writeBatch(remote.db);ids.forEach(id=>b.delete(fs.doc(remote.db,"messages",id)));
+  const sauve=ids.map(id=>MSGS.get(id));ids.forEach(id=>MSGS.delete(id));render();
+  b.commit().then(()=>toast("🗑️ Discussion effacée")).catch(e=>{sauve.forEach(m=>MSGS.set(m.id,m));render();toast(e&&e.code==="permission-denied"?"Effacement refusé : recolle les nouvelles règles Firebase":"Effacement impossible, vérifie ta connexion")});
+}
+function finCampagne(){
+  if(!remote||!estMJ())return;
+  fs.setDoc(fs.doc(remote.db,"roles","messagerie"),{paires:[],purge:Date.now()}).then(()=>toast("🧹 Messagerie effacée pour tout le groupe")).catch(()=>toast("Effacement impossible, vérifie ta connexion"));
 }
 function majMsg(full){
   const l=document.getElementById("msglist");
@@ -258,7 +292,7 @@ function messagesPane(){
   if(!myId)return '<div class="card">Connecte-toi pour utiliser la messagerie.</div>';
   let h=msgErr==="regles"?'<div class="ro">⚠️ La messagerie est bloquée par Firebase : il faut coller le nouveau fichier <b>firestore.rules</b> dans Firestore &gt; Règles, puis Publier.</div>':'';
   if(state.msgConv){const u=state.msgAvec,ok=peutEcrire(u);marquerLu(state.msgConv);
-    return h+'<div class="card msg-conv"><div class="msg-tete"><button class="ico" data-act="msgback" title="Retour">‹</button>'+avMini(u)+'<b>'+esc(nomU(u))+tagMJ(u)+'</b></div>'+
+    return h+'<div class="card msg-conv"><div class="msg-tete"><button class="ico" data-act="msgback" title="Retour">‹</button>'+avMini(u)+'<b>'+esc(nomU(u))+tagMJ(u)+'</b>'+([...MSGS.values()].some(m=>m.conv===state.msgConv)?'<button class="ico msg-del" data-act="msgeffacer" title="Effacer cette discussion">🗑️</button>':'')+'</div>'+
       '<div id="msglist" class="msg-list">'+bullesHTML(state.msgConv)+'</div>'+
       (ok?'<div class="msg-saisie"><textarea id="msgtxt" rows="1" maxlength="2000" placeholder="Ton message…"></textarea><button class="btn pri" data-act="msgsend">Envoyer</button></div>'
          :'<div class="hint" style="text-align:center;margin-top:10px">Le MJ n\'a pas ouvert la discussion entre vous deux.</div>')+'</div>';}
@@ -274,7 +308,8 @@ function messagesPane(){
     for(let i=0;i<js.length;i++)for(let j=i+1;j<js.length;j++)pr.push([js[i],js[j]]);
     h+='<div class="card"><h3>Qui peut se parler</h3><div class="hint" style="margin:-4px 0 10px">Les joueurs peuvent toujours écrire au MJ. Coche les duos de joueurs qui ont le droit de s\'écrire entre eux. Leurs messages restent privés.</div>'+
       (pr.length?pr.map(([a,b])=>{const k=convId(a,b);return '<label class="msg-perm"><input type="checkbox" data-msgperm="'+esc(k)+'"'+(MSG_OK.includes(k)?" checked":"")+'><span>'+esc(nomU(a))+' <i>↔</i> '+esc(nomU(b))+'</span></label>'}).join(""):'<div class="hint">Il faut au moins deux joueurs dans le groupe.</div>')+
-      '<button class="btn sm" data-act="msgpasser" style="margin-top:12px">Passer le rôle de MJ à quelqu\'un d\'autre</button></div>';}
+      '<button class="btn sm" data-act="msgpasser" style="margin-top:12px">Passer le rôle de MJ à quelqu\'un d\'autre</button></div>'+
+      '<div class="card fin-camp"><h3>Fin de campagne</h3><div class="hint" style="margin:-4px 0 10px">Efface tous les messages du groupe (discussions, annonces, messages secrets) et remet à zéro « Qui peut se parler ». C\'est définitif.</div><button class="btn bad" data-act="fincampagne" style="width:100%">🧹 Effacer toute la messagerie</button></div>';}
   return h;
 }
 function msgDoc(u,txt,extra){return Object.assign({de:myId,a:u,p:[myId,u],conv:convId(myId,u),texte:String(txt).slice(0,2000),ts:Date.now()},extra||{})}
@@ -330,6 +365,8 @@ function msgAct(a,d){
   if(a==="msgback"){state.msgConv=null;state.msgAvec=null;render();return true}
   if(a==="msgsend"){envoyerMsg();return true}
   if(a==="annonce"){envoyerAnnonce();return true}
+  if(a==="msgeffacer"){const cv=state.msgConv,u=state.msgAvec;confirmer("Effacer cette discussion ?","Tous les messages avec "+esc(nomU(u))+" seront supprimés, pour toi <b>et</b> pour "+esc(nomU(u))+". C'est définitif.","Effacer",()=>effacerConv(cv));return true}
+  if(a==="fincampagne"){confirmer("🧹 Effacer toute la messagerie ?","Tous les messages de <b>tout le groupe</b> vont disparaître : discussions, annonces, messages secrets. Les autorisations entre joueurs seront remises à zéro. C'est définitif.","Tout effacer",finCampagne);return true}
   if(a==="msgsecret"){msgSecret(d.u,d.nom);return true}
   if(a==="monperso"){const mine=persos().filter(c=>c.ownerId===myId&&!c.retire);let last=null;try{last=localStorage.getItem("fj_monperso")}catch(e){}
     const c=mine.find(x=>x.id===last)||mine[0];
@@ -1906,7 +1943,7 @@ function combatAct(a,d){
 
 // ---------- Démarrage, connexion ----------
 const fbApp=initializeApp(firebaseConfig);const auth=getAuth(fbApp);window.__auth=auth;
-const fdb=initializeFirestore(fbApp,{localCache:persistentLocalCache()});
+const fdb=initializeFirestore(fbApp,{localCache:persistentLocalCache(),experimentalAutoDetectLongPolling:true});
 let started=false;
 const errMsg=e=>({"auth/invalid-credential":"E-mail ou mot de passe incorrect.","auth/invalid-email":"Adresse e-mail invalide.","auth/email-already-in-use":"Cette adresse a déjà un compte : connecte-toi.","auth/weak-password":"Mot de passe trop court (6 caractères minimum).","auth/missing-password":"Entre un mot de passe.","auth/network-request-failed":"Pas de connexion internet.","permission-denied":"Code du groupe incorrect."}[e&&e.code]||("Erreur : "+((e&&(e.code||e.message))||"inconnue")));
 function loginScreen(mode){document.body.classList.remove("bgparch","bgsac");
@@ -1931,7 +1968,7 @@ function joinScreen(u){
   document.getElementById("jgo").onclick=async()=>{const nom=document.getElementById("jn").value.trim(),code=document.getElementById("jc").value.trim();if(!nom||!code)return err("Remplis les deux champs.");
     try{await setDoc(doc(fdb,"users",u.uid),{nom,code,email:u.email||""});me={nom};start()}catch(e){err(errMsg(e))}};
 }
-function start(){if(started)return;started=true;remote={db:fdb};lsLoad();render();subscribe();if(state.view==="home")setTimeout(()=>tabIntro(state.home),350);setTimeout(loadSRD,1500)}
+function start(){if(started)return;started=true;remote={db:fdb};reveilTempsReel(fdb);lsLoad();render();subscribe();if(state.view==="home")setTimeout(()=>tabIntro(state.home),350);setTimeout(loadSRD,1500)}
 onAuthStateChanged(auth,async u=>{
   if(!u){started=false;myId=null;return loginScreen("")}
   myId=u.uid;
